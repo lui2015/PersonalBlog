@@ -22,7 +22,7 @@ export default function Home() {
         {/* 数据面板 */}
         <StatsModule />
 
-        {/* 最新博客 */}
+        {/* 我的作品 */}
         <LatestBlogModule />
 
         {/* 双栏：技能雷达 + 随机语录 */}

@@ -2,40 +2,51 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const quotes = [
-  { text: "代码是写给人看的，只是顺便能在机器上运行。", author: "Harold Abelson" },
-  { text: "简单是可靠的先决条件。", author: "Edsger Dijkstra" },
-  { text: "任何足够先进的技术都和魔法无异。", author: "Arthur C. Clarke" },
-  { text: "最好的代码是没有代码。", author: "Jeff Atwood" },
-  { text: "We are all in the gutter, but some of us are looking at the stars.", author: "Oscar Wilde" },
-];
+import { useContent } from "@/lib/ContentContext";
 
 export default function QuoteModule() {
+  const { content } = useContent();
+  const quotes = content.quotes;
   const [current, setCurrent] = useState(0);
   const [displayText, setDisplayText] = useState("");
 
   useEffect(() => {
-    const quote = quotes[current].text;
+    if (current >= quotes.length) setCurrent(0);
+  }, [quotes.length, current]);
+
+  useEffect(() => {
+    const quote = quotes[current];
+    if (!quote) return;
     let i = 0;
     setDisplayText("");
     const timer = setInterval(() => {
-      if (i < quote.length) {
-        setDisplayText(quote.slice(0, i + 1));
+      if (i < quote.text.length) {
+        setDisplayText(quote.text.slice(0, i + 1));
         i++;
       } else {
         clearInterval(timer);
       }
     }, 50);
     return () => clearInterval(timer);
-  }, [current]);
+  }, [current, quotes]);
 
   useEffect(() => {
+    if (quotes.length <= 1) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % quotes.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, []);
+  }, [quotes.length]);
+
+  if (quotes.length === 0) {
+    return (
+      <div className="cyber-card p-6 hud-corner text-gray-500 text-sm font-[family-name:var(--font-mono)] flex items-center justify-center min-h-[250px]">
+        // 暂无语录
+      </div>
+    );
+  }
+
+  const quote = quotes[current] ?? quotes[0];
 
   return (
     <motion.div
@@ -61,9 +72,7 @@ export default function QuoteModule() {
               {displayText}
               <span className="inline-block w-2 h-5 bg-cyber-green/80 ml-1 animate-pulse" />
             </p>
-            <p className="text-sm text-gray-500 text-right">
-              — {quotes[current].author}
-            </p>
+            <p className="text-sm text-gray-500 text-right">— {quote.author}</p>
           </motion.div>
         </AnimatePresence>
       </div>

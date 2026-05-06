@@ -2,40 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-
-const poems = [
-  {
-    title: "静夜思",
-    author: "李白",
-    dynasty: "唐",
-    content: "床前明月光，疑是地上霜。\n举头望明月，低头思故乡。",
-  },
-  {
-    title: "登鹳雀楼",
-    author: "王之涣",
-    dynasty: "唐",
-    content: "白日依山尽，黄河入海流。\n欲穷千里目，更上一层楼。",
-  },
-  {
-    title: "春晓",
-    author: "孟浩然",
-    dynasty: "唐",
-    content: "春眠不觉晓，处处闻啼鸟。\n夜来风雨声，花落知多少。",
-  },
-  {
-    title: "望庐山瀑布",
-    author: "李白",
-    dynasty: "唐",
-    content: "日照香炉生紫烟，遥看瀑布挂前川。\n飞流直下三千尺，疑是银河落九天。",
-  },
-];
+import { useContent } from "@/lib/ContentContext";
 
 export default function PoemModule() {
+  const { content } = useContent();
+  const poems = content.poems;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
-  const poem = poems[currentIndex];
+
+  // poems 列表变化时重置索引
+  useEffect(() => {
+    if (currentIndex >= poems.length) setCurrentIndex(0);
+  }, [poems.length, currentIndex]);
+
+  const poem = poems[currentIndex] ?? poems[0];
 
   useEffect(() => {
+    if (!poem) return;
     let charIndex = 0;
     setDisplayedText("");
     const timer = setInterval(() => {
@@ -47,11 +30,20 @@ export default function PoemModule() {
       }
     }, 100);
     return () => clearInterval(timer);
-  }, [currentIndex, poem.content]);
+  }, [poem]);
 
   const nextPoem = () => {
+    if (poems.length === 0) return;
     setCurrentIndex((prev) => (prev + 1) % poems.length);
   };
+
+  if (!poem) {
+    return (
+      <div className="cyber-card p-6 hud-corner text-gray-500 text-sm font-[family-name:var(--font-mono)]">
+        // 暂无诗词数据
+      </div>
+    );
+  }
 
   return (
     <motion.div

@@ -8,7 +8,7 @@ export default function BootAnimation() {
   const [lines, setLines] = useState<string[]>([]);
 
   const bootSequence = [
-    "> INITIALIZING CYBERSPACE v2.0...",
+    "> INITIALIZING 鲁力铭 v2.0...",
     "> LOADING NEURAL NETWORK...",
     "> ESTABLISHING SECURE CONNECTION...",
     "> RENDERING HOLOGRAPHIC INTERFACE...",
@@ -50,7 +50,7 @@ export default function BootAnimation() {
           <div className="w-full max-w-lg p-8">
             <div className="mb-6 text-center">
               <h1 className="font-[family-name:var(--font-orbitron)] text-2xl text-cyber-blue neon-text">
-                CYBERSPACE
+                鲁力铭
               </h1>
             </div>
             <div className="cyber-card p-6 font-[family-name:var(--font-mono)] text-sm">

@@ -1,5 +1,11 @@
 # 个人空间网页 - 产品需求文档（PRD）
 
+> 版本：v0.2 ｜ 最后更新：2026-05-06
+>
+> 变更记录：
+> - v0.2（2026-05-06）：新增第 10 章「管理后台实现现状」、第 11 章「部署方案」；同步更新验收标准勾选状态。
+> - v0.1：初版需求。
+
 ## 1. 项目概述
 
 ### 1.1 项目名称
@@ -286,13 +292,97 @@ CyberSpace - 赛博朋克风格个人空间
 
 ## 9. 验收标准
 
-- [ ] 首页加载后 1s 内完成赛博启动动画并展示核心内容
-- [ ] 所有页面在 PC/平板/手机三端显示正常
-- [ ] 首页模块可通过后台自由增删、排序、配置
-- [ ] 诗词模块和相框模块在首页正确展示且动画流畅
-- [ ] 博客文章支持 Markdown 渲染和代码高亮
+- [x] 首页加载后 1s 内完成赛博启动动画并展示核心内容
+- [x] 所有页面在 PC/平板/手机三端显示正常
+- [x] 首页模块可通过后台自由增删、排序、配置
+- [x] 诗词模块和相框模块在首页正确展示且动画流畅
+- [x] 博客文章支持 Markdown 渲染和代码高亮
 - [ ] 视频播放功能正常，支持外链嵌入
 - [ ] 相册支持大图浏览和相册分组
-- [ ] 整体视觉风格统一为赛博朋克主题
-- [ ] 动画效果流畅，无明显卡顿（60fps）
-- [ ] 管理后台功能完整，操作流畅
+- [x] 整体视觉风格统一为赛博朋克主题
+- [x] 动画效果流畅，无明显卡顿（60fps）
+- [x] 管理后台功能完整，操作流畅
+
+---
+
+## 10. 管理后台实现现状（v0.2 新增）
+
+### 10.1 已上线模块
+路径 `/admin`，登录后通过 `AdminPanel` 统一入口，左侧导航进入各内容编辑页：
+
+| 路由 | 功能 | 状态 |
+|------|------|------|
+| `/admin/login` | 简易口令登录（前端校验，存储于 `AuthContext`） | ✅ |
+| `/admin/hero` | 首页 Hero 区域（标题、副标题、头像）编辑 | ✅ |
+| `/admin/poems` | 诗词模块 CRUD（题目/作者/朝代/正文） | ✅ |
+| `/admin/photos` | 相框模块 CRUD（图片 URL/标题/描述） | ✅ |
+| `/admin/stats` | 数据面板 CRUD（标签/数值/后缀/配色） | ✅ |
+| `/admin/skills` | 技能雷达 CRUD（名称/等级 0-100） | ✅ |
+| `/admin/quotes` | 一言/语录 CRUD | ✅ |
+| `/admin/works` | 博客文章 CRUD（slug/标题/摘要/分类/标签/封面/Markdown 正文） | ✅ |
+
+### 10.2 通用编辑能力
+- `ItemListEditor`：列表型内容的统一新增/排序/删除组件
+- `ImageUploader`：图片本地选择 → Base64 转换上传，落到 `localStorage`
+- 所有内容编辑实时反映到首页/博客页（基于 `ContentContext`）
+
+### 10.3 数据模型（详见 `src/lib/types.ts`）
+```
+SiteContent {
+  hero, poems[], photos[], stats[], skills[], quotes[], works[]
+}
+```
+
+### 10.4 当前存储方案与限制
+- 使用浏览器 **`localStorage`** 持久化（`ContentContext` + `defaultContent.ts` 兜底默认值）
+- ⚠️ 限制：
+  - 内容仅存在编辑者本机浏览器，**不会同步到服务端**，访客看到的是默认内容
+  - 无多端同步、无版本历史、无富媒体外链
+- 后续演进路线（P1）：抽取 `ContentRepository` 接口，可切换为
+  1. 文件型：构建期写入 `content.json`（适合个人站、低频更新）
+  2. 服务型：Next.js Route Handlers + SQLite/PostgreSQL（多端同步）
+  3. Headless CMS：接入 Notion / Sanity / Strapi
+
+### 10.5 已知待补需求
+- [ ] 视频模块（PRD §3.3）：仅有占位页，未接入数据
+- [ ] 相册模块（PRD §3.4）：未上线
+- [ ] 评论系统（P2-07）
+- [ ] 全文搜索（P2-05）
+- [ ] 内容服务端持久化（见 10.4）
+
+---
+
+## 11. 部署方案（v0.2 新增）
+
+### 11.1 目标环境
+- 腾讯云轻量应用服务器
+- 域名：`https://www.luliming.xyz`
+- 共享服务器，**必须保证不影响其他已运行服务**
+
+### 11.2 隔离策略
+| 维度 | 设计 |
+|------|------|
+| 应用端口 | Next.js 仅监听 `127.0.0.1:3100`（本地回环，不开放公网） |
+| 进程管理 | PM2 单独命名 `luliming-blog`，独立日志目录 `/var/log/luliming-blog/` |
+| 项目目录 | `/var/www/luliming-blog/`，蓝绿发布（`releases/<ts>` + `current` 软链） |
+| Nginx | 仅新增 drop-in 文件 `/etc/nginx/conf.d/luliming.xyz.conf`，不动主配置 |
+| Node | 优先复用现有 Node 20+；缺失则提示用 nvm 单独安装，避免污染依赖旧 Node 的服务 |
+| HTTPS | Let's Encrypt webroot 模式签发单域证书，互不影响 |
+| 回滚 | `current` 软链切换 + 健康检查失败自动回滚，保留最近 5 个版本 |
+
+### 11.3 部署产物
+仓库内 `deploy/` 目录提供：
+- `deploy/server-setup.sh`：一次性环境准备（幂等）
+- `deploy/deploy.sh`：每次发版执行（预检 → 构建 → 蓝绿切换 → 健康检查 → 自动回滚）
+- `deploy/nginx/luliming.xyz.conf`：Nginx 站点配置（HTTP→HTTPS、安全响应头、gzip、静态资源缓存）
+- `deploy/DEPLOY.md`：完整部署文档（含 DNS、证书、回滚、卸载步骤）
+- 项目根 `ecosystem.config.js`：PM2 进程定义
+
+### 11.4 上线检查清单
+- [ ] DNS：`luliming.xyz` 与 `www.luliming.xyz` A 记录指向服务器公网 IP
+- [ ] 安全组：开放 `80/tcp`、`443/tcp`，**不**开放 3100
+- [ ] 服务器现状体检（端口/Nginx/Node）通过，无冲突
+- [ ] `nginx -T` 验证 `server_name` 不与既有站点重叠
+- [ ] Let's Encrypt 证书签发成功
+- [ ] PM2 `pm2 save && pm2 startup` 配置开机自启
+- [ ] 健康检查 `curl https://www.luliming.xyz/` 返回 200

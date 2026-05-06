@@ -1,28 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const photos = [
-  {
-    src: "https://picsum.photos/seed/cyber1/600/400",
-    title: "城市夜景",
-    desc: "霓虹灯下的未来都市",
-  },
-  {
-    src: "https://picsum.photos/seed/cyber2/600/400",
-    title: "星空银河",
-    desc: "仰望浩瀚宇宙",
-  },
-  {
-    src: "https://picsum.photos/seed/cyber3/600/400",
-    title: "科技之光",
-    desc: "代码构建的数字世界",
-  },
-];
+import { useContent } from "@/lib/ContentContext";
 
 export default function PhotoFrameModule() {
+  const { content } = useContent();
+  const photos = content.photos;
   const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (current >= photos.length) setCurrent(0);
+  }, [photos.length, current]);
+
+  if (photos.length === 0) {
+    return (
+      <div className="cyber-card p-6 hud-corner text-gray-500 text-sm font-[family-name:var(--font-mono)]">
+        // 暂无图片
+      </div>
+    );
+  }
+
+  const photo = photos[current] ?? photos[0];
 
   return (
     <motion.div
@@ -60,19 +59,16 @@ export default function PhotoFrameModule() {
             transition={{ duration: 0.5 }}
             className="absolute inset-0"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={photos[current].src}
-              alt={photos[current].title}
+              src={photo.src}
+              alt={photo.title}
               className="w-full h-full object-cover"
             />
-            {/* 扫描线叠加 */}
             <div className="absolute inset-0 scanlines" />
-            {/* 信息覆盖 */}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-cyber-black/90 to-transparent">
-              <p className="text-cyber-blue text-sm font-medium">
-                {photos[current].title}
-              </p>
-              <p className="text-gray-400 text-xs">{photos[current].desc}</p>
+              <p className="text-cyber-blue text-sm font-medium">{photo.title}</p>
+              <p className="text-gray-400 text-xs">{photo.desc}</p>
             </div>
           </motion.div>
         </AnimatePresence>

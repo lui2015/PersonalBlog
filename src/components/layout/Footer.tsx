@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const socialLinks = [
   { name: "GitHub", href: "https://github.com", icon: "⟨/⟩" },
@@ -7,13 +10,23 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const router = useRouter();
+
+  const handleBrandDoubleClick = () => {
+    router.push("/admin/login");
+  };
+
   return (
     <footer className="relative border-t border-cyber-border bg-cyber-black/80 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-center md:text-left">
-            <p className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-blue">
-              CYBERSPACE
+            <p
+              onDoubleClick={handleBrandDoubleClick}
+              title="双击进入管理"
+              className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-blue cursor-default select-none hover:text-cyber-purple transition-colors"
+            >
+              鲁力铭
             </p>
             <p className="text-xs text-gray-500 mt-1">
               © {new Date().getFullYear()} All Rights Reserved

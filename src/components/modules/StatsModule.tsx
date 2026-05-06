@@ -2,24 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useContent } from "@/lib/ContentContext";
 
-const stats = [
-  { label: "文章", value: 42, suffix: "篇", color: "cyber-blue" },
-  { label: "视频", value: 18, suffix: "个", color: "cyber-purple" },
-  { label: "相册", value: 7, suffix: "组", color: "cyber-pink" },
-  { label: "访客", value: 12580, suffix: "", color: "cyber-green" },
-];
-
-function AnimatedNumber({ value, duration = 2000 }: { value: number; duration?: number }) {
+function AnimatedNumber({
+  value,
+  duration = 2000,
+}: {
+  value: number;
+  duration?: number;
+}) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    setCount(0);
     let start = 0;
-    const increment = value / (duration / 16);
+    const target = Number(value) || 0;
+    const increment = target / (duration / 16);
     const timer = setInterval(() => {
       start += increment;
-      if (start >= value) {
-        setCount(value);
+      if (start >= target) {
+        setCount(target);
         clearInterval(timer);
       } else {
         setCount(Math.floor(start));
@@ -32,6 +34,11 @@ function AnimatedNumber({ value, duration = 2000 }: { value: number; duration?: 
 }
 
 export default function StatsModule() {
+  const { content } = useContent();
+  const stats = content.stats;
+
+  if (stats.length === 0) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -42,10 +49,14 @@ export default function StatsModule() {
         ◈ SYSTEM STATUS
       </h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div
+        className={`grid grid-cols-2 ${
+          stats.length >= 4 ? "md:grid-cols-4" : `md:grid-cols-${stats.length}`
+        } gap-4`}
+      >
         {stats.map((stat, i) => (
           <motion.div
-            key={stat.label}
+            key={stat.id}
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}

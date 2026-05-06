@@ -53,7 +53,7 @@ const videos = [
   },
   {
     id: "6",
-    title: "从零搭建个人博客全流程",
+    title: "从零搭建个人作品站全流程",
     category: "教程",
     duration: "25:11",
     cover: "https://picsum.photos/seed/vid6/640/360",

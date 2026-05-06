@@ -7,7 +7,7 @@ const timeline = [
   { year: "2021", title: "全栈开发", desc: "学习 Node.js、数据库、云服务" },
   { year: "2022", title: "深入前端", desc: "React 生态系统，TypeScript" },
   { year: "2023", title: "开源贡献", desc: "参与多个开源项目" },
-  { year: "2024", title: "技术分享", desc: "开始写博客和录制技术视频" },
+  { year: "2024", title: "技术分享", desc: "开始分享作品和录制技术视频" },
   { year: "2025", title: "全栈创作者", desc: "融合技术与创意，持续输出" },
 ];
 

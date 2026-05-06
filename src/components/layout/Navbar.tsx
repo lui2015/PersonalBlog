@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const navItems = [
   { href: "/", label: "首页", icon: "⌂" },
   { href: "/about", label: "关于我", icon: "◈" },
-  { href: "/blog", label: "博客", icon: "✦" },
+  { href: "/blog", label: "我的作品", icon: "✦" },
   { href: "/videos", label: "视频", icon: "▶" },
   { href: "/gallery", label: "相册", icon: "◫" },
 ];
@@ -22,10 +22,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="font-[family-name:var(--font-orbitron)] text-xl text-cyber-blue neon-text group-hover:text-cyber-purple transition-colors">
-              CYBER
-            </span>
-            <span className="font-[family-name:var(--font-orbitron)] text-xl text-cyber-purple">
-              SPACE
+              鲁力铭
             </span>
           </Link>
 

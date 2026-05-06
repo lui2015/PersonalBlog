@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ParticleBackground from "@/components/effects/ParticleBackground";
 import BootAnimation from "@/components/effects/BootAnimation";
+import Providers from "./Providers";
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -26,9 +27,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CyberSpace - 个人空间",
-  description: "赛博朋克风格个人空间 - 博客、视频、相册",
-  keywords: ["个人博客", "赛博朋克", "技术博客"],
+  title: "鲁力铭 - 个人空间",
+  description: "赛博朋克风格个人空间 - 我的作品、视频、相册",
+  keywords: ["个人作品", "赛博朋克", "技术分享"],
 };
 
 export default function RootLayout({
@@ -41,11 +42,13 @@ export default function RootLayout({
       <body
         className={`${orbitron.variable} ${rajdhani.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <BootAnimation />
-        <ParticleBackground />
-        <Navbar />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <Providers>
+          <BootAnimation />
+          <ParticleBackground />
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
