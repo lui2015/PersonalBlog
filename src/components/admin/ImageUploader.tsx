@@ -38,8 +38,37 @@ export default function ImageUploader({
     }
     setBusy(true);
     try {
-      const dataUrl = await readAndCompress(file, maxDimension, maxSizeMB);
-      onChange(dataUrl);
+      // 1) 浏览器侧压缩，减少带宽
+      const compressed = await compressImage(file, maxDimension, maxSizeMB);
+      // 2) 上传到服务端
+      const form = new FormData();
+      form.append("file", compressed, compressed.name);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "same-origin",
+        body: form,
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          setErr("未登录或登录已过期");
+          return;
+        }
+        let msg = `上传失败：HTTP ${res.status}`;
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (j?.error) msg = `上传失败：${j.error}`;
+        } catch {
+          /* ignore */
+        }
+        setErr(msg);
+        return;
+      }
+      const data = (await res.json()) as { ok: boolean; url?: string };
+      if (data.ok && data.url) {
+        onChange(data.url);
+      } else {
+        setErr("上传失败：服务端未返回 URL");
+      }
     } catch (e) {
       console.error(e);
       setErr("图片处理失败");
@@ -67,7 +96,7 @@ export default function ImageUploader({
           className={btnGhost + " whitespace-nowrap"}
           disabled={busy}
         >
-          {busy ? "处理中..." : "上传本地图片"}
+          {busy ? "上传中..." : "上传本地图片"}
         </button>
         {value && (
           <button
@@ -120,22 +149,28 @@ export default function ImageUploader({
 }
 
 /**
- * 读取文件 → 自动压缩 → 返回 dataURL（base64）
- * 超出 maxDimension 会等比缩放，并按需要降低 jpeg 质量直至小于 maxSizeMB。
+ * 浏览器侧压缩：超尺寸缩放 + jpeg 质量循环。
+ * 返回一个 File，便于 FormData 上传时保留文件名/类型。
  */
-function readAndCompress(
+function compressImage(
   file: File,
   maxDimension: number,
   maxSizeMB: number
-): Promise<string> {
+): Promise<File> {
   return new Promise((resolve, reject) => {
+    // 不可压缩的格式（svg/gif）直接原样上传
+    if (file.type === "image/svg+xml" || file.type === "image/gif") {
+      resolve(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);
     reader.onload = () => {
       const src = reader.result as string;
       const img = new Image();
       img.onerror = () => reject(new Error("decode failed"));
-      img.onload = () => {
+      img.onload = async () => {
         try {
           const { width: w0, height: h0 } = img;
           const scale = Math.min(1, maxDimension / Math.max(w0, h0));
@@ -149,23 +184,25 @@ function readAndCompress(
           if (!ctx) return reject(new Error("no canvas ctx"));
           ctx.drawImage(img, 0, 0, w, h);
 
-          // PNG 透明优先 PNG，否则用 jpeg+质量循环
-          const isPng = file.type === "image/png";
           const target = maxSizeMB * 1024 * 1024;
+          const isPng = file.type === "image/png";
 
           if (isPng) {
-            const out = canvas.toDataURL("image/png");
-            // PNG 没法降质量，太大就回退转 jpeg
-            if (estimateBytes(out) <= target) return resolve(out);
+            const blob = await canvasToBlob(canvas, "image/png");
+            if (blob && blob.size <= target) {
+              return resolve(toFile(blob, file.name, ".png"));
+            }
+            // PNG 太大，回退到 jpeg
           }
 
           let q = 0.92;
-          let out = canvas.toDataURL("image/jpeg", q);
-          while (estimateBytes(out) > target && q > 0.4) {
+          let blob = await canvasToBlob(canvas, "image/jpeg", q);
+          while (blob && blob.size > target && q > 0.4) {
             q -= 0.1;
-            out = canvas.toDataURL("image/jpeg", q);
+            blob = await canvasToBlob(canvas, "image/jpeg", q);
           }
-          resolve(out);
+          if (!blob) return reject(new Error("encode failed"));
+          resolve(toFile(blob, file.name, ".jpg"));
         } catch (e) {
           reject(e);
         }
@@ -176,10 +213,15 @@ function readAndCompress(
   });
 }
 
-function estimateBytes(dataUrl: string) {
-  // dataURL: "data:...;base64,XXXX"
-  const i = dataUrl.indexOf(",");
-  if (i < 0) return dataUrl.length;
-  const b64 = dataUrl.slice(i + 1);
-  return Math.floor((b64.length * 3) / 4);
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality?: number
+): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+function toFile(blob: Blob, originalName: string, ext: string): File {
+  const base = originalName.replace(/\.[^.]+$/, "") || "image";
+  return new File([blob], `${base}${ext}`, { type: blob.type });
 }

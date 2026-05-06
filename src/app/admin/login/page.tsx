@@ -19,15 +19,20 @@ export default function AdminLoginPage() {
     }
   }, [ready, authed, router]);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError("");
-    const ok = login(username.trim(), password);
-    if (ok) {
-      router.replace("/admin");
-    } else {
-      setError("身份核验失败：账号或密码错误");
+    try {
+      const ok = await login(username.trim(), password);
+      if (ok) {
+        router.replace("/admin");
+      } else {
+        setError("身份核验失败：账号或密码错误");
+        setSubmitting(false);
+      }
+    } catch {
+      setError("网络异常，请稍后重试");
       setSubmitting(false);
     }
   };

@@ -64,8 +64,8 @@ export default function AdminLayout({
             </h1>
           </div>
           <button
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               router.replace("/");
             }}
             className="text-xs text-gray-400 hover:text-cyber-pink border border-cyber-border hover:border-cyber-pink px-3 py-1.5 transition-all font-[family-name:var(--font-mono)]"

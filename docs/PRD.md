@@ -1,8 +1,9 @@
 # 个人空间网页 - 产品需求文档（PRD）
 
-> 版本：v0.2 ｜ 最后更新：2026-05-06
+> 版本：v0.3 ｜ 最后更新：2026-05-07
 >
 > 变更记录：
+> - v0.3（2026-05-07）：内容存储从 `localStorage` 升级为**服务端持久化**；新增鉴权、上传、内容读写 API；Nginx 直出 `/uploads/`；新增第 12 章「服务端持久化与鉴权」、第 13 章「运维与备份」；同步更新 §10.4 / §10.5 / §11。
 > - v0.2（2026-05-06）：新增第 10 章「管理后台实现现状」、第 11 章「部署方案」；同步更新验收标准勾选状态。
 > - v0.1：初版需求。
 
@@ -323,8 +324,8 @@ CyberSpace - 赛博朋克风格个人空间
 
 ### 10.2 通用编辑能力
 - `ItemListEditor`：列表型内容的统一新增/排序/删除组件
-- `ImageUploader`：图片本地选择 → Base64 转换上传，落到 `localStorage`
-- 所有内容编辑实时反映到首页/博客页（基于 `ContentContext`）
+- `ImageUploader`：图片选择 → **POST `/api/upload`** → 服务端写入磁盘并返回 `/uploads/xxx` URL（v0.3 起；旧版为 Base64 落 localStorage）
+- 所有内容编辑实时反映到首页/博客页（基于 `ContentContext`，v0.3 起从 `/api/content` 拉取并 PUT 回写）
 
 ### 10.3 数据模型（详见 `src/lib/types.ts`）
 ```
@@ -333,56 +334,172 @@ SiteContent {
 }
 ```
 
-### 10.4 当前存储方案与限制
-- 使用浏览器 **`localStorage`** 持久化（`ContentContext` + `defaultContent.ts` 兜底默认值）
-- ⚠️ 限制：
-  - 内容仅存在编辑者本机浏览器，**不会同步到服务端**，访客看到的是默认内容
-  - 无多端同步、无版本历史、无富媒体外链
-- 后续演进路线（P1）：抽取 `ContentRepository` 接口，可切换为
-  1. 文件型：构建期写入 `content.json`（适合个人站、低频更新）
-  2. 服务型：Next.js Route Handlers + SQLite/PostgreSQL（多端同步）
-  3. Headless CMS：接入 Notion / Sanity / Strapi
+### 10.4 存储方案（v0.3 升级）
+**服务端持久化**，内容随服务器一份，访客与编辑者看同一份数据。
+
+| 维度 | 实现 |
+|------|------|
+| 存储后端 | 抽象 `Storage` 接口（`src/lib/server/storage.ts`），当前实现为本地文件系统 |
+| 内容文件 | `${DATA_DIR}/site-content.json`（容器内 `/app/.data/site-content.json`） |
+| 上传文件 | `${DATA_DIR}/uploads/<timestamp>_<rand>.<ext>` |
+| 持久化 | Docker volume：宿主机 `/opt/luliming-blog/data` → 容器 `/app/.data`；容器重建数据不丢 |
+| 默认内容 | 文件不存在时回落 `defaultContent.ts`，首次写入时落盘 |
+| 未来切换 | 新增 `Storage` 实现（如 COS/S3）+ 切换 env 即可，业务代码无感 |
+
+⚠️ 历史数据迁移：旧版 `localStorage` 数据需通过后台「**导出 JSON / 导入 JSON**」按钮迁移到服务端。
 
 ### 10.5 已知待补需求
 - [ ] 视频模块（PRD §3.3）：仅有占位页，未接入数据
 - [ ] 相册模块（PRD §3.4）：未上线
 - [ ] 评论系统（P2-07）
 - [ ] 全文搜索（P2-05）
-- [ ] 内容服务端持久化（见 10.4）
+- [x] ~~内容服务端持久化~~（v0.3 已完成，见 §12）
 
 ---
 
-## 11. 部署方案（v0.2 新增）
+## 11. 部署方案（v0.3 更新）
 
 ### 11.1 目标环境
-- 腾讯云轻量应用服务器
+- 腾讯云轻量应用服务器（`ap-guangzhou`，实例 `lhins-gd7emk5l`，公网 `159.75.56.177`）
 - 域名：`https://www.luliming.xyz`
 - 共享服务器，**必须保证不影响其他已运行服务**
 
-### 11.2 隔离策略
+### 11.2 实际架构（v0.3）
+```
+[公网 443] → Nginx (宿主机)
+              ├── /uploads/*  → alias /opt/luliming-blog/data/uploads/  （直出磁盘，不经 Node）
+              └── 其余流量    → http://127.0.0.1:3100
+                                 └── Docker 容器 luliming-blog (Next.js standalone)
+                                       ├── --env-file /opt/luliming-blog/.env
+                                       └── -v /opt/luliming-blog/data:/app/.data
+```
+
+### 11.3 隔离策略
 | 维度 | 设计 |
 |------|------|
-| 应用端口 | Next.js 仅监听 `127.0.0.1:3100`（本地回环，不开放公网） |
-| 进程管理 | PM2 单独命名 `luliming-blog`，独立日志目录 `/var/log/luliming-blog/` |
-| 项目目录 | `/var/www/luliming-blog/`，蓝绿发布（`releases/<ts>` + `current` 软链） |
-| Nginx | 仅新增 drop-in 文件 `/etc/nginx/conf.d/luliming.xyz.conf`，不动主配置 |
-| Node | 优先复用现有 Node 20+；缺失则提示用 nvm 单独安装，避免污染依赖旧 Node 的服务 |
-| HTTPS | Let's Encrypt webroot 模式签发单域证书，互不影响 |
-| 回滚 | `current` 软链切换 + 健康检查失败自动回滚，保留最近 5 个版本 |
+| 应用端口 | Docker 容器内 Next.js 监听 3000，宿主机绑 `127.0.0.1:3100`（不开公网） |
+| 进程管理 | Docker `--restart=unless-stopped`，容器名 `luliming-blog` |
+| 项目目录 | 仓库 `/opt/luliming-blog/repo`、数据 `/opt/luliming-blog/data`、备份 `/opt/luliming-blog/backups`、密钥 `/opt/luliming-blog/.env`（chmod 600） |
+| Nginx | 仅维护 drop-in 文件 `/etc/nginx/conf.d/luliming.conf`，不动主配置；新增 `location /uploads/` |
+| HTTPS | Let's Encrypt（已存在） |
+| 安全组 | 开放 `80/tcp`、`443/tcp`，**不**开放 3100 |
 
-### 11.3 部署产物
-仓库内 `deploy/` 目录提供：
-- `deploy/server-setup.sh`：一次性环境准备（幂等）
-- `deploy/deploy.sh`：每次发版执行（预检 → 构建 → 蓝绿切换 → 健康检查 → 自动回滚）
-- `deploy/nginx/luliming.xyz.conf`：Nginx 站点配置（HTTP→HTTPS、安全响应头、gzip、静态资源缓存）
-- `deploy/DEPLOY.md`：完整部署文档（含 DNS、证书、回滚、卸载步骤）
-- 项目根 `ecosystem.config.js`：PM2 进程定义
+### 11.4 部署产物
+仓库内提供：
+- `Dockerfile`（多阶段构建，alpine + standalone 输出，声明 `VOLUME ["/app/.data"]`）
+- `deploy/server-setup.sh`、`deploy/deploy.sh`、`deploy/nginx/luliming.xyz.conf`、`deploy/DEPLOY.md`
+- `ecosystem.config.js`：备用 PM2 进程定义
 
-### 11.4 上线检查清单
-- [ ] DNS：`luliming.xyz` 与 `www.luliming.xyz` A 记录指向服务器公网 IP
-- [ ] 安全组：开放 `80/tcp`、`443/tcp`，**不**开放 3100
-- [ ] 服务器现状体检（端口/Nginx/Node）通过，无冲突
-- [ ] `nginx -T` 验证 `server_name` 不与既有站点重叠
-- [ ] Let's Encrypt 证书签发成功
-- [ ] PM2 `pm2 save && pm2 startup` 配置开机自启
-- [ ] 健康检查 `curl https://www.luliming.xyz/` 返回 200
+### 11.5 上线检查清单
+- [x] DNS：`luliming.xyz` 与 `www.luliming.xyz` 指向服务器
+- [x] 安全组：仅开放 80/443
+- [x] Nginx 配置不与既有站点重叠
+- [x] Let's Encrypt 证书签发并自动续签
+- [x] 容器 `--restart=unless-stopped` 配置开机自启
+- [x] 健康检查 `curl https://www.luliming.xyz/` 返回 200
+- [x] `/api/content` 公开可读、`/api/login` + 私有路由鉴权正确
+
+---
+
+## 12. 服务端持久化与鉴权（v0.3 新增）
+
+### 12.1 API 清单（Next.js Route Handlers）
+| 方法 | 路径 | 鉴权 | 说明 |
+|------|------|------|------|
+| GET | `/api/content` | 公开 | 读取站点内容（首页 SSR/客户端均使用） |
+| PUT | `/api/content` | 需登录 | 全量覆盖站点内容 |
+| POST | `/api/login` | 公开 | 登录，签发 session cookie |
+| POST | `/api/logout` | 需登录 | 清除 session |
+| GET | `/api/me` | 公开 | 返回当前登录态（未登录返回 `null`） |
+| POST | `/api/upload` | 需登录 | `multipart/form-data` 单文件上传，返回 `{ url: "/uploads/xxx" }` |
+
+源码位置：`src/app/api/*/route.ts`、共用逻辑 `src/lib/server/{auth,content,paths,storage}.ts`。
+
+### 12.2 鉴权设计
+| 项 | 实现 |
+|----|------|
+| 凭证存储 | 用户名明文 + scrypt 密码哈希 (`scrypt$<saltHex>$<hashHex>`) 写入服务器 `/opt/luliming-blog/.env` |
+| Session | HMAC-SHA256 自签 cookie，结构 `<payloadBase64Url>.<sigBase64Url>`，载荷含 `{ uid, exp }` |
+| Cookie | `httpOnly` + `secure`（HTTPS 下） + `sameSite=lax`，有效期 7 天 |
+| 服务端校验 | 每个受保护路由通过 `requireAuth()` 解析并验签 cookie，过期/被改动则 401 |
+| 速率限制 | 登录失败计数 + 短时延迟（防暴力破解） |
+| 密钥 | `SESSION_SECRET` 48 字节随机，写入 `.env`；轮换会使所有人下线 |
+
+### 12.3 环境变量
+| 变量 | 必填 | 示例 | 说明 |
+|------|------|------|------|
+| `ADMIN_USERNAME` | ✅ | `luli` | 管理员用户名 |
+| `ADMIN_PASSWORD_HASH` | ✅ | `scrypt$<hex>$<hex>` | scrypt(password, saltHex, 64) 后拼装 |
+| `SESSION_SECRET` | ✅ | 48 字节随机 hex | session HMAC 密钥 |
+| `DATA_DIR` | 推荐 | `/app/.data` | 内容/上传根目录，容器内默认 `/app/.data` |
+| `PUBLIC_BASE_URL` | 可选 | `https://www.luliming.xyz` | 用于生成绝对 URL |
+
+> 生成密码哈希示例（注意：salt 在 hash 与 verify 必须使用同一形态，本项目统一使用 hex 字符串作为 salt）：
+> ```bash
+> node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');const h=c.scryptSync('YOUR_PWD',s,64).toString('hex');process.stdout.write('scrypt$'+s+'$'+h)"
+> ```
+
+### 12.4 上传文件流转
+1. 后台 `ImageUploader` 选择文件 → `POST /api/upload`
+2. 服务端校验登录 + 文件类型（仅 `image/*`） + 大小上限
+3. 写入 `${DATA_DIR}/uploads/<ts>_<rand>.<ext>`，返回 `{ url: "/uploads/<filename>" }`
+4. 浏览器请求 `/uploads/xxx` 时，**Nginx 直接 alias 到磁盘**，不经过 Node，CDN 缓存 30 天
+
+### 12.5 安全要点
+- ❌ 密码不再硬编码进前端 bundle
+- ✅ Session 服务端验签，前端无法伪造
+- ✅ `/api/content` 写入受 `requireAuth` 保护
+- ✅ `.env` 权限 600，仓库 `.gitignore` 排除所有 `.env*`
+- ✅ 上传白名单 `image/*`，文件名重新生成（避免路径穿越/MIME 欺骗）
+
+---
+
+## 13. 运维与备份（v0.3 新增）
+
+### 13.1 数据布局
+```
+/opt/luliming-blog/
+├── repo/                # 代码（git checkout）
+├── data/                # 业务数据（Docker volume 挂载）
+│   ├── site-content.json
+│   └── uploads/
+├── backups/             # 自动备份归档
+├── .env                 # 凭证 + secret，chmod 600
+└── backup.sh            # 备份脚本
+```
+
+### 13.2 自动备份
+- cron：每天 03:15 执行 `/opt/luliming-blog/backup.sh`
+- 产物：`/opt/luliming-blog/backups/luliming-blog-YYYYMMDD-HHMM.tar.gz`，包含 `data/` 全部内容
+- 保留：14 天，超过自动清理
+- 日志：`/opt/luliming-blog/backup.log`
+
+### 13.3 发布流程（增量更新）
+1. 本地 `rsync`（排除 `node_modules`/`.next`/`.git`）到服务器临时 staging 目录
+2. `rsync --delete` 进 `repo/`（保留 `Dockerfile`、`.dockerignore`、`public/`）
+3. `docker build -t luliming-blog:latest .`
+4. `docker stop && docker rm && docker run`（**必须**重建容器，`docker restart` 不会重读 `--env-file`）
+5. 烟测：`/api/content`、`/api/login`、`/uploads/*`、首页
+
+### 13.4 容量与单点风险
+- 当前磁盘 24G+ 空余，预计可支撑 1-2 年图片增长
+- 轻量服务器为单点，建议每月手工下载一次 `backups/` 到本地或异地存储
+- 长期演进：图片切 COS / 对象存储（替换 `Storage` 实现即可）
+
+### 13.5 常用排障命令
+```bash
+# 查看容器
+docker ps --filter name=luliming-blog
+docker logs --tail=100 luliming-blog
+# 重新部署
+cd /opt/luliming-blog/repo && docker build -t luliming-blog:latest .
+docker stop luliming-blog && docker rm luliming-blog
+docker run -d --name luliming-blog --restart=unless-stopped \
+  --env-file /opt/luliming-blog/.env \
+  -v /opt/luliming-blog/data:/app/.data \
+  -p 127.0.0.1:3100:3000 luliming-blog:latest
+# 校验密码哈希
+docker exec luliming-blog node -e "..."
+# Nginx
+nginx -t && systemctl reload nginx
+```

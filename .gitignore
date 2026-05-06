@@ -4,3 +4,6 @@ out
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# 本地数据目录（站点内容 JSON + 用户上传图片）
+.data
