@@ -1,0 +1,286 @@
+@import "tailwindcss";
+
+/* ========== 赛博朋克设计系统 ========== */
+
+@theme {
+  --color-cyber-black: #0a0a0f;
+  --color-cyber-dark: #0d1b2a;
+  --color-cyber-blue: #00f0ff;
+  --color-cyber-purple: #bf00ff;
+  --color-cyber-pink: #ff0080;
+  --color-cyber-green: #39ff14;
+  --color-cyber-yellow: #f0e000;
+  --color-cyber-card: rgba(13, 27, 42, 0.8);
+  --color-cyber-border: rgba(0, 240, 255, 0.3);
+
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-rajdhani: "Rajdhani", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ========== 基础样式 ========== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-cyber-blue) var(--color-cyber-black);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--color-cyber-black);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-cyber-blue);
+  border-radius: 3px;
+}
+
+body {
+  background: var(--color-cyber-black);
+  color: #e0e0e0;
+  font-family: var(--font-rajdhani), sans-serif;
+  overflow-x: hidden;
+}
+
+/* ========== 霓虹发光效果 ========== */
+.neon-text {
+  text-shadow:
+    0 0 7px var(--color-cyber-blue),
+    0 0 10px var(--color-cyber-blue),
+    0 0 21px var(--color-cyber-blue),
+    0 0 42px var(--color-cyber-blue);
+}
+
+.neon-text-purple {
+  text-shadow:
+    0 0 7px var(--color-cyber-purple),
+    0 0 10px var(--color-cyber-purple),
+    0 0 21px var(--color-cyber-purple);
+}
+
+.neon-text-pink {
+  text-shadow:
+    0 0 7px var(--color-cyber-pink),
+    0 0 10px var(--color-cyber-pink),
+    0 0 21px var(--color-cyber-pink);
+}
+
+.neon-border {
+  box-shadow:
+    0 0 5px var(--color-cyber-blue),
+    inset 0 0 5px var(--color-cyber-blue),
+    0 0 10px var(--color-cyber-blue);
+  border: 1px solid var(--color-cyber-blue);
+}
+
+.neon-border-purple {
+  box-shadow:
+    0 0 5px var(--color-cyber-purple),
+    inset 0 0 5px var(--color-cyber-purple);
+  border: 1px solid var(--color-cyber-purple);
+}
+
+/* ========== 毛玻璃卡片 ========== */
+.cyber-card {
+  background: var(--color-cyber-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-cyber-border);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-cyber-blue), transparent);
+  animation: scan-line 3s linear infinite;
+}
+
+@keyframes scan-line {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* ========== Glitch 效果 ========== */
+.glitch {
+  position: relative;
+  animation: glitch-skew 4s infinite linear alternate-reverse;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  color: var(--color-cyber-pink);
+  animation: glitch-effect 3s infinite linear alternate-reverse;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+  transform: translate(-2px, -1px);
+  opacity: 0.8;
+}
+
+.glitch::after {
+  color: var(--color-cyber-blue);
+  animation: glitch-effect 2s infinite linear alternate-reverse;
+  clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+  transform: translate(2px, 1px);
+  opacity: 0.8;
+}
+
+@keyframes glitch-effect {
+  0% { transform: translate(0); }
+  20% { transform: translate(-3px, 3px); }
+  40% { transform: translate(-3px, -3px); }
+  60% { transform: translate(3px, 3px); }
+  80% { transform: translate(3px, -3px); }
+  100% { transform: translate(0); }
+}
+
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  20% { transform: skew(0deg); }
+  21% { transform: skew(0.5deg); }
+  22% { transform: skew(0deg); }
+  100% { transform: skew(0deg); }
+}
+
+/* ========== 呼吸灯边框 ========== */
+.breathing-border {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+@keyframes breathing {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--color-cyber-blue), 0 0 10px var(--color-cyber-blue);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--color-cyber-blue), 0 0 30px var(--color-cyber-blue);
+  }
+}
+
+/* ========== 扫描线背景 ========== */
+.scanlines {
+  position: relative;
+}
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 240, 255, 0.03) 2px,
+    rgba(0, 240, 255, 0.03) 4px
+  );
+  pointer-events: none;
+}
+
+/* ========== 数字雨背景 ========== */
+.matrix-bg {
+  background-image:
+    radial-gradient(ellipse at top, rgba(0, 240, 255, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom, rgba(191, 0, 255, 0.05) 0%, transparent 60%);
+}
+
+/* ========== 打字机效果 ========== */
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--color-cyber-blue);
+  animation: typing 3.5s steps(30, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: var(--color-cyber-blue); }
+}
+
+/* ========== 电流流动动画 ========== */
+.electric-flow {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--color-cyber-blue) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: flow 2s linear infinite;
+}
+
+@keyframes flow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ========== 全息投影效果 ========== */
+.hologram {
+  position: relative;
+}
+.hologram::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg,
+    var(--color-cyber-blue),
+    var(--color-cyber-purple),
+    var(--color-cyber-pink),
+    var(--color-cyber-blue)
+  );
+  background-size: 400% 400%;
+  animation: hologram-shift 4s ease infinite;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0.6;
+  filter: blur(4px);
+}
+
+@keyframes hologram-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ========== 六边形头像 ========== */
+.hexagon {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* ========== HUD 角标 ========== */
+.hud-corner {
+  position: relative;
+}
+.hud-corner::before,
+.hud-corner::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--color-cyber-blue);
+  border-style: solid;
+}
+.hud-corner::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+.hud-corner::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
