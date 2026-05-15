@@ -110,6 +110,7 @@ body {
 .glitch {
   position: relative;
   animation: glitch-skew 4s infinite linear alternate-reverse;
+  overflow: hidden;
 }
 
 .glitch::before,

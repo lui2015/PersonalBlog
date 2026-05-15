@@ -77,7 +77,7 @@ export default function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1
-            className="font-[family-name:var(--font-orbitron)] text-5xl md:text-7xl lg:text-8xl font-bold text-cyber-blue glitch mb-4"
+            className="font-[family-name:var(--font-orbitron)] text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-cyber-blue glitch mb-4 break-words"
             data-text={title}
           >
             {title}
@@ -88,7 +88,7 @@ export default function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.8 }}
-          className="font-[family-name:var(--font-rajdhani)] text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto"
+          className="font-[family-name:var(--font-rajdhani)] text-base sm:text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto px-2"
         >
           {subtitle}
         </motion.p>
@@ -101,13 +101,13 @@ export default function HeroSection() {
         >
           <a
             href="/blog"
-            className="px-6 py-3 border border-cyber-blue text-cyber-blue font-[family-name:var(--font-orbitron)] text-sm hover:bg-cyber-blue/10 hover:shadow-[0_0_20px_var(--color-cyber-blue)] transition-all duration-300"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 border border-cyber-blue text-cyber-blue font-[family-name:var(--font-orbitron)] text-xs sm:text-sm hover:bg-cyber-blue/10 hover:shadow-[0_0_20px_var(--color-cyber-blue)] transition-all duration-300"
           >
             探索我的作品
           </a>
           <a
             href="/about"
-            className="px-6 py-3 border border-cyber-purple text-cyber-purple font-[family-name:var(--font-orbitron)] text-sm hover:bg-cyber-purple/10 hover:shadow-[0_0_20px_var(--color-cyber-purple)] transition-all duration-300"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 border border-cyber-purple text-cyber-purple font-[family-name:var(--font-orbitron)] text-xs sm:text-sm hover:bg-cyber-purple/10 hover:shadow-[0_0_20px_var(--color-cyber-purple)] transition-all duration-300"
           >
             了解更多
           </a>

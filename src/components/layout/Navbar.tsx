@@ -10,6 +10,7 @@ const navItems = [
   { href: "/blog", label: "我的作品", icon: "✦" },
   { href: "/videos", label: "视频", icon: "▶" },
   { href: "/gallery", label: "相册", icon: "◫" },
+  { href: "https://www.luliming.xyz/tools/", label: "我的工具", icon: "⚙" },
 ];
 
 export default function Navbar() {
@@ -28,17 +29,23 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="relative px-4 py-2 text-sm font-medium text-gray-300 hover:text-cyber-blue transition-colors group"
-              >
-                <span className="mr-1 opacity-50">{item.icon}</span>
-                {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-cyber-blue group-hover:w-full transition-all duration-300 shadow-[0_0_5px_var(--color-cyber-blue)]" />
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isExternal = item.href.startsWith("http");
+              const Tag = isExternal ? "a" : Link;
+              const extraProps = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
+              return (
+                <Tag
+                  key={item.href}
+                  href={item.href}
+                  {...extraProps}
+                  className="relative px-4 py-2 text-sm font-medium text-gray-300 hover:text-cyber-blue transition-colors group"
+                >
+                  <span className="mr-1 opacity-50">{item.icon}</span>
+                  {item.label}
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-cyber-blue group-hover:w-full transition-all duration-300 shadow-[0_0_5px_var(--color-cyber-blue)]" />
+                </Tag>
+              );
+            })}
           </div>
 
           {/* Mobile Hamburger */}
@@ -75,23 +82,29 @@ export default function Navbar() {
             className="md:hidden fixed inset-0 top-16 bg-cyber-black/95 backdrop-blur-lg z-40 scanlines"
           >
             <div className="flex flex-col items-center justify-center h-full space-y-6">
-              {navItems.map((item, i) => (
-                <motion.div
-                  key={item.href}
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="text-2xl font-[family-name:var(--font-orbitron)] text-gray-300 hover:text-cyber-blue transition-colors"
+              {navItems.map((item, i) => {
+                const isExternal = item.href.startsWith("http");
+                const Tag = isExternal ? "a" : Link;
+                const extraProps = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
+                return (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
                   >
-                    <span className="mr-3 text-cyber-purple">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Tag
+                      href={item.href}
+                      {...extraProps}
+                      onClick={() => setIsOpen(false)}
+                      className="text-2xl font-[family-name:var(--font-orbitron)] text-gray-300 hover:text-cyber-blue transition-colors"
+                    >
+                      <span className="mr-3 text-cyber-purple">{item.icon}</span>
+                      {item.label}
+                    </Tag>
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         )}

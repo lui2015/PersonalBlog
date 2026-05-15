@@ -92,16 +92,16 @@ export default function SkillRadarModule() {
       initial={{ opacity: 0, x: -50 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
-      className="cyber-card p-6 hud-corner"
+      className="cyber-card p-4 sm:p-6 hud-corner"
     >
-      <h3 className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-blue mb-6">
+      <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-blue mb-4 sm:mb-6">
         ◈ SKILL RADAR
       </h3>
 
-      <div className="flex flex-col md:flex-row items-center gap-6">
-        <canvas ref={canvasRef} className="w-[200px] h-[200px]" />
+      <div className="flex flex-col items-center gap-4 sm:gap-6">
+        <canvas ref={canvasRef} className="w-[160px] h-[160px] sm:w-[200px] sm:h-[200px]" />
 
-        <div className="flex-1 space-y-3 w-full">
+        <div className="w-full space-y-2.5 sm:space-y-3">
           {skills.map((skill, i) => (
             <motion.div
               key={skill.id}

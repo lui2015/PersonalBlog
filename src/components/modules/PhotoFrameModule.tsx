@@ -28,10 +28,10 @@ export default function PhotoFrameModule() {
       initial={{ opacity: 0, x: 50 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
-      className="cyber-card p-6 hud-corner"
+      className="cyber-card p-4 sm:p-6 hud-corner"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-purple">
+        <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-purple">
           ◈ PHOTO FRAME
         </h3>
         <div className="flex gap-1">

@@ -45,14 +45,14 @@ export default function StatsModule() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      <h3 className="font-[family-name:var(--font-orbitron)] text-lg text-cyber-blue mb-6 text-center">
+      <h3 className="font-[family-name:var(--font-orbitron)] text-base sm:text-lg text-cyber-blue mb-4 sm:mb-6 text-center">
         ◈ SYSTEM STATUS
       </h3>
 
       <div
         className={`grid grid-cols-2 ${
           stats.length >= 4 ? "md:grid-cols-4" : `md:grid-cols-${stats.length}`
-        } gap-4`}
+        } gap-3 sm:gap-4`}
       >
         {stats.map((stat, i) => (
           <motion.div
@@ -61,10 +61,10 @@ export default function StatsModule() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1 }}
-            className="cyber-card p-6 text-center breathing-border"
+            className="cyber-card p-4 sm:p-6 text-center breathing-border"
           >
             <div
-              className={`font-[family-name:var(--font-orbitron)] text-3xl md:text-4xl font-bold text-${stat.color} mb-2`}
+              className={`font-[family-name:var(--font-orbitron)] text-2xl sm:text-3xl md:text-4xl font-bold text-${stat.color} mb-1 sm:mb-2`}
             >
               <AnimatedNumber value={stat.value} />
             </div>

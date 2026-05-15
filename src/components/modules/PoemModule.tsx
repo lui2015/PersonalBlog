@@ -50,10 +50,10 @@ export default function PoemModule() {
       initial={{ opacity: 0, x: -50 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
-      className="cyber-card p-6 hud-corner"
+      className="cyber-card p-4 sm:p-6 hud-corner"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-blue">
+        <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-blue">
           ◈ POETRY MODULE
         </h3>
         <button
@@ -64,7 +64,7 @@ export default function PoemModule() {
         </button>
       </div>
 
-      <div className="relative min-h-[200px] flex flex-col justify-center">
+      <div className="relative min-h-[160px] sm:min-h-[200px] flex flex-col justify-center">
         {/* 数字雨背景装饰 */}
         <div className="absolute inset-0 opacity-5 overflow-hidden pointer-events-none">
           <div className="text-[8px] text-cyber-green leading-none break-all">
@@ -73,13 +73,13 @@ export default function PoemModule() {
         </div>
 
         <div className="relative z-10 text-center">
-          <h4 className="text-lg text-cyber-purple mb-1 font-medium">
+          <h4 className="text-base sm:text-lg text-cyber-purple mb-1 font-medium">
             {poem.title}
           </h4>
-          <p className="text-xs text-gray-500 mb-4">
+          <p className="text-xs text-gray-500 mb-3 sm:mb-4">
             [{poem.dynasty}] {poem.author}
           </p>
-          <div className="text-lg leading-relaxed text-gray-200 whitespace-pre-line min-h-[80px]">
+          <div className="text-base sm:text-lg leading-relaxed text-gray-200 whitespace-pre-line min-h-[60px] sm:min-h-[80px]">
             {displayedText}
             <span className="inline-block w-0.5 h-5 bg-cyber-blue ml-1 animate-pulse" />
           </div>

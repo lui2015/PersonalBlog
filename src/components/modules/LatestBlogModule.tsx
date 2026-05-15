@@ -14,13 +14,13 @@ export default function LatestBlogModule() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-[family-name:var(--font-orbitron)] text-lg text-cyber-blue">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+        <h3 className="font-[family-name:var(--font-orbitron)] text-base sm:text-lg text-cyber-blue">
           ◈ LATEST WORKS
         </h3>
         <Link
           href="/blog"
-          className="text-xs text-gray-500 hover:text-cyber-blue border border-cyber-border px-3 py-1 hover:border-cyber-blue transition-all"
+          className="text-xs text-gray-500 hover:text-cyber-blue border border-cyber-border px-3 py-1.5 hover:border-cyber-blue transition-all whitespace-nowrap shrink-0"
         >
           查看全部 →
         </Link>
@@ -31,7 +31,7 @@ export default function LatestBlogModule() {
           // 还没有作品
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {posts.map((post, i) => (
             <motion.article
               key={post.id}
@@ -40,10 +40,10 @@ export default function LatestBlogModule() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ y: -5 }}
-              className="cyber-card p-5 group hover:border-cyber-blue/50 transition-all duration-300"
+              className="cyber-card p-4 sm:p-5 group hover:border-cyber-blue/50 transition-all duration-300"
             >
               <Link href={`/blog/${post.slug}`} className="block">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-2 sm:mb-3">
                   <span className="text-[10px] px-2 py-0.5 border border-cyber-purple/50 text-cyber-purple rounded">
                     {post.category}
                   </span>
@@ -52,15 +52,15 @@ export default function LatestBlogModule() {
                   </span>
                 </div>
 
-                <h4 className="text-base font-medium text-gray-200 group-hover:text-cyber-blue transition-colors mb-2 line-clamp-2">
+                <h4 className="text-sm sm:text-base font-medium text-gray-200 group-hover:text-cyber-blue transition-colors mb-2 line-clamp-2">
                   {post.title}
                 </h4>
 
-                <p className="text-sm text-gray-500 line-clamp-2 mb-3">
+                <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 mb-3">
                   {post.excerpt}
                 </p>
 
-                <div className="text-xs text-gray-600 font-[family-name:var(--font-mono)]">
+                <div className="text-[10px] sm:text-xs text-gray-600 font-[family-name:var(--font-mono)]">
                   {post.date}
                 </div>
               </Link>

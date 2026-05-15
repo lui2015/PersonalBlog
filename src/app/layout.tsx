@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ParticleBackground from "@/components/effects/ParticleBackground";
-import BootAnimation from "@/components/effects/BootAnimation";
+
 import Providers from "./Providers";
 
 const orbitron = Orbitron({
@@ -38,12 +38,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" className="overflow-x-hidden">
       <body
-        className={`${orbitron.variable} ${rajdhani.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${orbitron.variable} ${rajdhani.variable} ${jetbrainsMono.variable} antialiased overflow-x-hidden`}
       >
         <Providers>
-          <BootAnimation />
           <ParticleBackground />
           <Navbar />
           <main className="min-h-screen">{children}</main>

@@ -53,9 +53,9 @@ export default function QuoteModule() {
       initial={{ opacity: 0, x: 50 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
-      className="cyber-card p-6 hud-corner flex flex-col justify-center min-h-[250px]"
+      className="cyber-card p-4 sm:p-6 hud-corner flex flex-col justify-center min-h-[200px] sm:min-h-[250px]"
     >
-      <h3 className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-green mb-6">
+      <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-green mb-4 sm:mb-6">
         ◈ RANDOM QUOTE
       </h3>
 
@@ -67,7 +67,7 @@ export default function QuoteModule() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <p className="text-lg text-gray-200 font-[family-name:var(--font-mono)] leading-relaxed mb-4">
+            <p className="text-sm sm:text-lg text-gray-200 font-[family-name:var(--font-mono)] leading-relaxed mb-4 break-words">
               <span className="text-cyber-green mr-2">$</span>
               {displayText}
               <span className="inline-block w-2 h-5 bg-cyber-green/80 ml-1 animate-pulse" />
