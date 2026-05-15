@@ -3,9 +3,9 @@ import type { SiteContent } from "./types";
 export const DEFAULT_CONTENT: SiteContent = {
   hero: {
     title: "鲁力铭",
-    subtitle: "欢迎来到我的赛博空间 —— 记录代码、创意与生活",
+    subtitle: "欢迎来到我的空间，愿你我终将不凡",
     avatarText: "鲁",
-    avatarUrl: "",
+    avatarUrl: "/images/avatar.jpg",
   },
   poems: [
     {
