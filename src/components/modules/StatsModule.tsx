@@ -38,12 +38,15 @@ function AnimatedNumber({
 /**
  * 根据 stat.label 关键字推断跳转路径。
  * 命中则首页卡片可点击；未命中则保持纯展示。
+ * - 文章 / 视频 / 相册 跳转独立路由
+ * - 诗集 用首页锚点（PoemModule 在首页内嵌展示，没有独立路由）
  */
 function inferHref(label: string): string | null {
   const l = label.trim();
   if (/文章|博客|作品|blog|article|post/i.test(l)) return "/blog";
   if (/视频|video/i.test(l)) return "/videos";
   if (/相册|图库|gallery|photo/i.test(l)) return "/gallery";
+  if (/诗集|诗词|poem/i.test(l)) return "/#poems";
   return null;
 }
 

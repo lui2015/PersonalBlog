@@ -195,13 +195,27 @@ export default function GalleryPage() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="relative max-w-5xl max-h-[90vh] mx-4"
+                className="relative max-w-5xl max-h-[90vh] mx-4 touch-pan-y select-none"
                 onClick={(e) => e.stopPropagation()}
+                drag="x"
+                dragSnapToOrigin
+                dragElastic={0.2}
+                dragMomentum={false}
+                onDragEnd={(_, info) => {
+                  // 触摸滑动 / 鼠标拖拽切图：距离阈值 80px 或速度阈值 500
+                  const { offset, velocity } = info;
+                  if (offset.x < -80 || velocity.x < -500) {
+                    navigateLightbox(1);
+                  } else if (offset.x > 80 || velocity.x > 500) {
+                    navigateLightbox(-1);
+                  }
+                }}
               >
                 <img
                   src={lightboxImage}
                   alt=""
-                  className="max-w-full max-h-[85vh] object-contain rounded"
+                  className="max-w-full max-h-[85vh] object-contain rounded pointer-events-none"
+                  draggable={false}
                 />
 
                 {/* Navigation */}
