@@ -62,7 +62,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: "s1", label: "文章", value: 42, suffix: "篇", color: "cyber-blue" },
     { id: "s2", label: "视频", value: 18, suffix: "个", color: "cyber-purple" },
     { id: "s3", label: "相册", value: 7, suffix: "组", color: "cyber-pink" },
-    { id: "s4", label: "访客", value: 12580, suffix: "", color: "cyber-green" },
+    { id: "s4", label: "诗集", value: 4, suffix: "首", color: "cyber-green" },
   ],
   skills: [
     { id: "sk1", name: "React/Next.js", level: 90 },
