@@ -8,9 +8,9 @@ const navItems = [
   { href: "/", label: "首页", icon: "⌂" },
   { href: "/about", label: "关于我", icon: "◈" },
   { href: "/blog", label: "我的作品", icon: "✦" },
+  { href: "https://www.luliming.xyz/tools/", label: "我的工具", icon: "⚙" },
   { href: "/videos", label: "视频", icon: "▶" },
   { href: "/gallery", label: "相册", icon: "◫" },
-  { href: "https://www.luliming.xyz/tools/", label: "我的工具", icon: "⚙" },
 ];
 
 export default function Navbar() {
