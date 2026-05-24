@@ -20,8 +20,20 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-cyber-black/70 border-b border-cyber-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 group">
+          {/* Logo：单击回首页；双击进入 TargetSystem */}
+          <Link
+            href="/"
+            className="flex items-center space-x-2 group select-none"
+            title="单击回首页 · 双击进入 TargetSystem"
+            onDoubleClick={(e) => {
+              e.preventDefault();
+              window.open(
+                "https://www.luliming.xyz/TargetSystem/",
+                "_blank",
+                "noopener,noreferrer"
+              );
+            }}
+          >
             <span className="font-[family-name:var(--font-orbitron)] text-xl text-cyber-blue neon-text group-hover:text-cyber-purple transition-colors">
               鲁力铭
             </span>
