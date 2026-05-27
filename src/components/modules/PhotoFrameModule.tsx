@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useContent } from "@/lib/ContentContext";
 
@@ -77,23 +78,31 @@ export default function PhotoFrameModule() {
       viewport={{ once: true }}
       className="cyber-card p-4 sm:p-6 hud-corner"
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-2">
         <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-purple">
           ◈ PHOTO FRAME
         </h3>
-        <div className="flex gap-1">
-          {photos.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i, i > current ? 1 : -1)}
-              aria-label={`切换到第 ${i + 1} 张`}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === current
-                  ? "bg-cyber-blue shadow-[0_0_5px_var(--color-cyber-blue)]"
-                  : "bg-gray-600"
-              }`}
-            />
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i, i > current ? 1 : -1)}
+                aria-label={`切换到第 ${i + 1} 张`}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  i === current
+                    ? "bg-cyber-blue shadow-[0_0_5px_var(--color-cyber-blue)]"
+                    : "bg-gray-600"
+                }`}
+              />
+            ))}
+          </div>
+          <Link
+            href="/gallery"
+            className="text-xs text-cyber-purple/80 hover:text-cyber-purple border border-cyber-purple/40 px-2 py-1 hover:border-cyber-purple hover:shadow-[0_0_10px_rgba(255,46,234,0.35)] transition-all"
+          >
+            查看更多 →
+          </Link>
         </div>
       </div>
 
