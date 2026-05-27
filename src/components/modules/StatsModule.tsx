@@ -46,7 +46,7 @@ function inferHref(label: string): string | null {
   if (/文章|博客|作品|blog|article|post/i.test(l)) return "/blog";
   if (/视频|video/i.test(l)) return "/videos";
   if (/相册|图库|gallery|photo/i.test(l)) return "/gallery";
-  if (/诗集|诗词|poem/i.test(l)) return "/#poems";
+  if (/诗集|诗词|poem/i.test(l)) return "/poems";
   return null;
 }
 

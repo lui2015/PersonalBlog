@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useContent } from "@/lib/ContentContext";
 
@@ -52,16 +53,24 @@ export default function PoemModule() {
       viewport={{ once: true }}
       className="cyber-card p-4 sm:p-6 hud-corner"
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-2">
         <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-blue">
           ◈ POETRY MODULE
         </h3>
-        <button
-          onClick={nextPoem}
-          className="text-xs text-gray-500 hover:text-cyber-blue border border-cyber-border px-2 py-1 hover:border-cyber-blue transition-all"
-        >
-          换一首
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={nextPoem}
+            className="text-xs text-gray-500 hover:text-cyber-blue border border-cyber-border px-2 py-1 hover:border-cyber-blue transition-all"
+          >
+            换一首
+          </button>
+          <Link
+            href="/poems"
+            className="text-xs text-cyber-blue/80 hover:text-cyber-blue border border-cyber-blue/40 px-2 py-1 hover:border-cyber-blue hover:shadow-[0_0_10px_rgba(0,229,255,0.35)] transition-all"
+          >
+            查看更多 →
+          </Link>
+        </div>
       </div>
 
       <div className="relative min-h-[160px] sm:min-h-[200px] flex flex-col justify-center">
