@@ -13,7 +13,7 @@ const timeline = [
 
 const socialLinks = [
   { name: "GitHub", url: "https://github.com", icon: "⟨/⟩" },
-  { name: "Bilibili", url: "https://bilibili.com", icon: "▶" },
+  { name: "Bilibili", url: "https://space.bilibili.com/675642138?spm_id_from=333.337.0.0", icon: "▶" },
   { name: "微博", url: "https://weibo.com", icon: "W" },
   { name: "Email", url: "mailto:hello@example.com", icon: "✉" },
 ];
@@ -64,7 +64,7 @@ export default function AboutPage() {
                 CYBER_USER
               </h2>
               <p className="text-cyber-purple text-sm mb-4 font-[family-name:var(--font-mono)]">
-                全栈开发者 / 创意编程爱好者
+                鲁力铭 互联网项目经理
               </p>
               <p className="text-gray-300 leading-relaxed mb-6">
                 热爱编程与创意设计，专注于 Web 全栈开发。喜欢探索技术与艺术的交汇点，
