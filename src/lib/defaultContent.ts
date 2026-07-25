@@ -72,6 +72,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: "sk5", name: "UI/UX Design", level: 70 },
     { id: "sk6", name: "DevOps", level: 65 },
   ],
+  myskills: [],
   quotes: [
     {
       id: "q1",
