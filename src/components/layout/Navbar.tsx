@@ -11,6 +11,7 @@ const navItems = [
   { href: "https://www.luliming.xyz/tools/", label: "我的工具", icon: "⚙" },
   { href: "/videos", label: "视频", icon: "▶" },
   { href: "/gallery", label: "相册", icon: "◫" },
+  { href: "/download", label: "下载", icon: "⬇" },
 ];
 
 export default function Navbar() {
