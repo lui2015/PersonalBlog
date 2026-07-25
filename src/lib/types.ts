@@ -48,6 +48,12 @@ export interface Work {
   content: string; // markdown
 }
 
+export interface MySkill {
+  id: string;
+  name: string;
+  url: string; // 技能地址 / 链接
+}
+
 export interface SiteContent {
   hero: {
     title: string;
@@ -59,6 +65,7 @@ export interface SiteContent {
   photos: Photo[];
   stats: Stat[];
   skills: Skill[];
+  myskills: MySkill[]; // 我的技能（名称 + 地址）
   quotes: Quote[];
   works: Work[];
 }

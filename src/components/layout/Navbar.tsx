@@ -12,6 +12,7 @@ const navItems = [
   { href: "/videos", label: "视频", icon: "▶" },
   { href: "/gallery", label: "相册", icon: "◫" },
   { href: "/download", label: "下载", icon: "⬇" },
+  { href: "/skills", label: "我的技能", icon: "◆" },
 ];
 
 export default function Navbar() {
