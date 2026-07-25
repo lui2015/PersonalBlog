@@ -126,6 +126,25 @@ function SkillCard({
   onDelete: (id: string) => void;
 }) {
   const [confirmDel, setConfirmDel] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(skill.url);
+    } catch {
+      // 退化方案：execCommand
+      const ta = document.createElement("textarea");
+      ta.value = skill.url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <motion.div
@@ -151,14 +170,23 @@ function SkillCard({
           <h3 className="text-lg font-semibold text-white mb-1 truncate">
             {skill.name}
           </h3>
-          <a
-            href={skill.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-cyber-blue hover:text-cyber-purple transition-colors font-[family-name:var(--font-mono)] break-all underline decoration-dotted underline-offset-4"
-          >
-            {skill.url}
-          </a>
+          <div className="flex items-center gap-2 min-w-0">
+            <a
+              href={skill.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-cyber-blue hover:text-cyber-purple transition-colors font-[family-name:var(--font-mono)] break-all underline decoration-dotted underline-offset-4 min-w-0"
+            >
+              {skill.url}
+            </a>
+            <button
+              onClick={copyUrl}
+              className="shrink-0 p-1.5 text-xs text-gray-500 hover:text-cyber-green border border-transparent hover:border-cyber-green/40 rounded transition-all active:scale-90"
+              title={copied ? "已复制" : "复制链接"}
+            >
+              {copied ? "✓" : "⧉"}
+            </button>
+          </div>
         </div>
 
         {/* Actions (admin only) */}
