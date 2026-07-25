@@ -45,6 +45,7 @@ function mergeWithDefault(p: Partial<SiteContent>): SiteContent {
     photos: p.photos ?? DEFAULT_CONTENT.photos,
     stats: p.stats ?? DEFAULT_CONTENT.stats,
     skills: p.skills ?? DEFAULT_CONTENT.skills,
+    myskills: p.myskills ?? DEFAULT_CONTENT.myskills,
     quotes: p.quotes ?? DEFAULT_CONTENT.quotes,
     works: p.works ?? DEFAULT_CONTENT.works,
   };
