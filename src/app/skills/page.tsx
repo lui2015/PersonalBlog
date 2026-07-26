@@ -11,6 +11,39 @@ function uid() {
   return `ms${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** 复制文本到剪贴板：优先用 Clipboard API，失败退化到 execCommand。返回是否成功。 */
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* 退化 */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.width = "1px";
+    ta.style.height = "1px";
+    ta.style.padding = "0";
+    ta.style.border = "none";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 /* ── Modal: 新增 / 编辑 ── */
 function SkillModal({
   open,
@@ -127,23 +160,17 @@ function SkillCard({
 }) {
   const [confirmDel, setConfirmDel] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyErr, setCopyErr] = useState(false);
 
   const copyUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(skill.url);
-    } catch {
-      // 退化方案：execCommand
-      const ta = document.createElement("textarea");
-      ta.value = skill.url;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+    const ok = await copyToClipboard(skill.url);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } else {
+      setCopyErr(true);
+      setTimeout(() => setCopyErr(false), 1500);
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -182,9 +209,9 @@ function SkillCard({
             <button
               onClick={copyUrl}
               className="shrink-0 p-1.5 text-xs text-gray-500 hover:text-cyber-green border border-transparent hover:border-cyber-green/40 rounded transition-all active:scale-90"
-              title={copied ? "已复制" : "复制链接"}
+              title={copied ? "已复制" : copyErr ? "复制失败，请手动复制" : "复制链接"}
             >
-              {copied ? "✓" : "⧉"}
+              {copied ? "✓" : copyErr ? "✗" : "⧉"}
             </button>
           </div>
         </div>
