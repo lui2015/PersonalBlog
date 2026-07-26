@@ -3,7 +3,7 @@ import type { SiteContent } from "./types";
 export const DEFAULT_CONTENT: SiteContent = {
   hero: {
     title: "鲁力铭",
-    subtitle: "大鹏一日同风起，扶摇直上九万里",
+    subtitle: "坚冰下的细流应耐心等待，破冰之日终会带来",
     avatarText: "鲁",
     avatarUrl: "/images/avatar.jpg",
   },
