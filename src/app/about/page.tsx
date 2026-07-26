@@ -64,7 +64,7 @@ export default function AboutPage() {
                 鲁力铭
               </h2>
               <p className="text-cyber-purple text-sm mb-4 font-[family-name:var(--font-mono)]">
-                互联网项目经理 / 高级项目经理
+                互联网高级项目经理
               </p>
               <p className="text-gray-300 leading-relaxed mb-6">
                 本人拥有 11 年工作经验（4 年研发 + 7 年项目管理），工作积极主动、责任心强，
