@@ -1,11 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useContent } from "@/lib/ContentContext";
+
+// 粒子迸发角度分布（16 个方向）
+const PARTICLES = Array.from({ length: 16 }, (_, i) => {
+  const angle = (i * (360 / 16) * Math.PI) / 180;
+  const dist = 90 + (i % 3) * 22;
+  return { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist };
+});
 
 export default function HeroSection() {
   const { content } = useContent();
   const { title, subtitle, avatarText, avatarUrl } = content.hero;
+  const [burstKey, setBurstKey] = useState(0);
+  const [pulse, setPulse] = useState(false);
+
+  const triggerBurst = () => {
+    setBurstKey((k) => k + 1);
+    setPulse(true);
+    setTimeout(() => setPulse(false), 500);
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -29,46 +45,93 @@ export default function HeroSection() {
           transition={{ duration: 0.8, delay: 0.1, type: "spring" }}
           className="flex justify-center mb-8"
         >
-          <div className="relative">
-            {/* 外层光环 */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyber-blue via-cyber-purple to-cyber-pink blur-xl opacity-60 animate-pulse" />
-            {/* 旋转外框 */}
-            <div
-              className="absolute -inset-3 rounded-full border border-cyber-blue/40"
-              style={{
-                background:
-                  "conic-gradient(from 0deg, transparent, var(--color-cyber-blue), transparent, var(--color-cyber-purple), transparent)",
-                WebkitMask:
-                  "radial-gradient(circle, transparent 62%, black 63%)",
-                mask: "radial-gradient(circle, transparent 62%, black 63%)",
-                animation: "spin 6s linear infinite",
-              }}
-            />
-            {/* 头像本体 */}
-            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-2 border-cyber-blue shadow-[0_0_30px_var(--color-cyber-blue)]">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt={title}
-                  className="w-full h-full object-cover"
+          <motion.button
+            type="button"
+            onClick={triggerBurst}
+            whileHover={{ scale: 1.05 }}
+            animate={{ scale: pulse ? 0.9 : 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            className="relative cursor-pointer outline-none"
+            title="点击头像，触发能量迸发"
+            aria-label="点击头像触发特效"
+          >
+            <div className="relative">
+              {/* 外层光环 */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyber-blue via-cyber-purple to-cyber-pink blur-xl opacity-60 animate-pulse" />
+              {/* 旋转外框 */}
+              <div
+                className="absolute -inset-3 rounded-full border border-cyber-blue/40"
+                style={{
+                  background:
+                    "conic-gradient(from 0deg, transparent, var(--color-cyber-blue), transparent, var(--color-cyber-purple), transparent)",
+                  WebkitMask:
+                    "radial-gradient(circle, transparent 62%, black 63%)",
+                  mask: "radial-gradient(circle, transparent 62%, black 63%)",
+                  animation: "spin 6s linear infinite",
+                }}
+              />
+              {/* 头像本体 */}
+              <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-2 border-cyber-blue shadow-[0_0_30px_var(--color-cyber-blue)]">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyber-dark via-cyber-black to-cyber-dark flex items-center justify-center">
+                    <span className="font-[family-name:var(--font-orbitron)] text-3xl md:text-4xl text-cyber-blue neon-text">
+                      {avatarText || "?"}
+                    </span>
+                  </div>
+                )}
+                {/* 扫描线特效 */}
+                <div className="absolute inset-0 scanlines pointer-events-none" />
+                {/* 点击闪光层 */}
+                <motion.div
+                  initial={false}
+                  animate={{ opacity: pulse ? 0.7 : 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute inset-0 bg-cyber-blue/40 mix-blend-screen"
                 />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-cyber-dark via-cyber-black to-cyber-dark flex items-center justify-center">
-                  <span className="font-[family-name:var(--font-orbitron)] text-3xl md:text-4xl text-cyber-blue neon-text">
-                    {avatarText || "?"}
-                  </span>
+              </div>
+              {/* HUD 角标 */}
+              <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-cyber-blue" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-cyber-blue" />
+              <span className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-cyber-blue" />
+              <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-cyber-blue" />
+
+              {/* 点击触发的能量环 + 粒子迸发 */}
+              {burstKey > 0 && (
+                <div
+                  key={burstKey}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  {[0, 0.1, 0.2].map((delay, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ scale: 1, opacity: 0.85 }}
+                      animate={{ scale: 3, opacity: 0 }}
+                      transition={{ duration: 1.1, delay, ease: "easeOut" }}
+                      className={`absolute w-32 h-32 md:w-40 md:h-40 rounded-full border-2 ${
+                        i % 2 === 0 ? "border-cyber-blue" : "border-cyber-pink"
+                      }`}
+                    />
+                  ))}
+                  {PARTICLES.map((p, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                      animate={{ x: p.x, y: p.y, opacity: 0, scale: 0 }}
+                      transition={{ duration: 0.9, ease: "easeOut" }}
+                      className="absolute w-1.5 h-1.5 rounded-full bg-cyber-pink shadow-[0_0_8px_var(--color-cyber-pink)]"
+                    />
+                  ))}
                 </div>
               )}
-              {/* 扫描线特效 */}
-              <div className="absolute inset-0 scanlines pointer-events-none" />
             </div>
-            {/* HUD 角标 */}
-            <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-cyber-blue" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-cyber-blue" />
-            <span className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-cyber-blue" />
-            <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-cyber-blue" />
-          </div>
+          </motion.button>
         </motion.div>
 
         <motion.div
