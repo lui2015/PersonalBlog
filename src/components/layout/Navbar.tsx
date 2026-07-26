@@ -11,7 +11,7 @@ const navItems = [
 
 const worksChildren = [
   { href: "/blog", label: "我的文章", icon: "📝" },
-  { href: null, label: "摄影作品", icon: "📷", disabled: true },
+  { href: "/gallery", label: "摄影作品", icon: "📷" },
   { href: "/videos", label: "视频作品", icon: "🎬" },
   { href: "https://www.luliming.xyz/tools/", label: "软件作品", icon: "⚙", external: true },
 ];
