@@ -6,19 +6,18 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { href: "/", label: "首页", icon: "⌂" },
-  { href: "/about", label: "关于我", icon: "◈" },
 ];
 
 const worksChildren = [
   { href: "/blog", label: "我的文章", icon: "📝" },
   { href: "/gallery", label: "摄影作品", icon: "📷" },
   { href: "/videos", label: "视频作品", icon: "🎬" },
+  { href: "/skills", label: "技能作品", icon: "◆" },
   { href: "https://www.luliming.xyz/tools/", label: "软件作品", icon: "⚙", external: true },
 ];
 
-const otherNavItems = [
-  { href: "/gallery", label: "相册", icon: "◫" },
-  { href: "/skills", label: "我的技能", icon: "◆" },
+const afterWorksItems = [
+  { href: "/about", label: "关于我", icon: "◈" },
 ];
 
 export default function Navbar() {
@@ -132,7 +131,7 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            {otherNavItems.map((item) => (
+            {afterWorksItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -200,7 +199,7 @@ export default function Navbar() {
               {/* 我的作品 - 移动端子菜单 */}
               <WorksMobileSection onClose={() => setIsOpen(false)} />
 
-              {otherNavItems.map((item, i) => (
+              {afterWorksItems.map((item, i) => (
                 <motion.div
                   key={item.href}
                   initial={{ opacity: 0, x: -50 }}
