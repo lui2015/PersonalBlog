@@ -3,19 +3,19 @@
 import { motion } from "framer-motion";
 
 const timeline = [
-  { year: "2020", title: "开始编程之旅", desc: "接触 Web 前端开发" },
-  { year: "2021", title: "全栈开发", desc: "学习 Node.js、数据库、云服务" },
-  { year: "2022", title: "深入前端", desc: "React 生态系统，TypeScript" },
-  { year: "2023", title: "开源贡献", desc: "参与多个开源项目" },
-  { year: "2024", title: "技术分享", desc: "开始分享作品和录制技术视频" },
-  { year: "2025", title: "全栈创作者", desc: "融合技术与创意，持续输出" },
+  { year: "2015", title: "计算机本科毕业", desc: "桂林电子科技大学 · 计算机科学与技术" },
+  { year: "2016", title: "安卓开发工程师", desc: "亚信科技，开启研发生涯（4 年技术沉淀）" },
+  { year: "2019", title: "转型项目管理", desc: "飞笛科技 · 软件组长 / 项目经理" },
+  { year: "2020", title: "MBA 深造", desc: "深圳大学 · 工商管理硕士" },
+  { year: "2022", title: "高级互联网项目经理", desc: "OPPO · 主导应用生态持续交付体系" },
+  { year: "2025", title: "高级项目经理", desc: "腾讯科技 · CSIG 研发效能提升" },
 ];
 
 const socialLinks = [
   { name: "GitHub", url: "https://github.com", icon: "⟨/⟩" },
   { name: "Bilibili", url: "https://space.bilibili.com/675642138?spm_id_from=333.337.0.0", icon: "▶" },
   { name: "微博", url: "https://weibo.com", icon: "W" },
-  { name: "Email", url: "mailto:hello@example.com", icon: "✉" },
+  { name: "Email", url: "mailto:635003514@qq.com", icon: "✉" },
 ];
 
 export default function AboutPage() {
@@ -61,15 +61,16 @@ export default function AboutPage() {
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
               <h2 className="font-[family-name:var(--font-orbitron)] text-2xl text-cyber-blue mb-2">
-                CYBER_USER
+                鲁力铭
               </h2>
               <p className="text-cyber-purple text-sm mb-4 font-[family-name:var(--font-mono)]">
-                鲁力铭 互联网项目经理
+                互联网项目经理 / 高级项目经理
               </p>
               <p className="text-gray-300 leading-relaxed mb-6">
-                热爱编程与创意设计，专注于 Web 全栈开发。喜欢探索技术与艺术的交汇点，
-                用代码构建独特的数字体验。相信技术可以让世界更美好，也让生活更有趣。
-                在这里，我分享技术心得、创意项目和生活感悟。
+                本人拥有 11 年工作经验（4 年研发 + 7 年项目管理），工作积极主动、责任心强，
+                善于学习与反思，享受团队共同奋斗的感觉。一个热爱科技、拥抱变化的人，
+                专注于用项目管理的专业能力驱动团队高效交付价值。在这里，我分享项目管理心得、
+                效能提升实践与一些生活感悟。
               </p>
 
               {/* Social Links */}
@@ -103,9 +104,9 @@ export default function AboutPage() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
-              "React", "Next.js", "TypeScript", "Node.js",
-              "Python", "TailwindCSS", "Three.js", "Docker",
-              "PostgreSQL", "Redis", "GraphQL", "Figma",
+              "PMP", "ACP", "NPDP", "PBA",
+              "敏捷管理", "OKR", "持续交付", "需求管理",
+              "跨团队协作", "效能度量", "数据分析", "产品原型",
             ].map((skill, i) => (
               <motion.div
                 key={skill}
