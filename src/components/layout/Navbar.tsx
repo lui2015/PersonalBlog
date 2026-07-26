@@ -111,17 +111,6 @@ export default function Navbar() {
                     className="absolute top-full left-0 mt-1 w-48 bg-cyber-black/95 backdrop-blur-xl border border-cyber-border rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,200,255,0.1)] z-50"
                   >
                     {worksChildren.map((sub) => {
-                      if (sub.disabled) {
-                        return (
-                          <div
-                            key={sub.label}
-                            className="px-4 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed flex items-center gap-2 border-b border-cyber-border/30 last:border-0"
-                          >
-                            <span className="opacity-40">{sub.icon}</span>
-                            {sub.label}
-                          </div>
-                        );
-                      }
                       const isExternal = !!sub.external;
                       const Tag = isExternal ? "a" : Link;
                       const extraProps = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
@@ -275,13 +264,6 @@ function WorksMobileSection({ onClose }: { onClose: () => void }) {
             className="overflow-hidden pl-6 pt-3 space-y-4"
           >
             {worksChildren.map((sub) => {
-              if (sub.disabled) {
-                return (
-                  <div key={sub.label} className="text-lg text-gray-600 cursor-not-allowed flex items-center gap-2">
-                    <span>{sub.icon}</span> {sub.label}
-                  </div>
-                );
-              }
               const isExternal = !!sub.external;
               const Tag = isExternal ? "a" : Link;
               const extraProps = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
