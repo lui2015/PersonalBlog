@@ -49,8 +49,8 @@ export default function AboutPage() {
             <div className="relative">
               <div className="hexagon w-40 h-40 overflow-hidden hologram">
                 <img
-                  src="https://picsum.photos/seed/avatar/400/400"
-                  alt="Avatar"
+                  src="/images/avatar.jpg"
+                  alt="鲁力铭"
                   className="w-full h-full object-cover"
                 />
               </div>
