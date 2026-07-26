@@ -173,6 +173,8 @@ export default function AboutPage() {
               ))}
             </div>
           </div>
+        </motion.div>
+
         {/* App Download */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
