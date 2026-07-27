@@ -48,18 +48,23 @@ function Lightbox({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
     >
-      {/* 关闭按钮 */}
+      {/* 关闭按钮 - 增强可见性 */}
       <button
         type="button"
         onClick={onClose}
         aria-label="关闭"
-        className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
+        className="absolute top-4 right-4 z-30 w-11 h-11 rounded-full bg-white/20 hover:bg-white/35 border border-white/30 flex items-center justify-center text-white hover:text-white transition-all cursor-pointer shadow-lg"
       >
-        ✕
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
       </button>
 
-      {/* 图片区域 */}
-      <div className="relative w-full max-w-5xl max-h-[85vh] mx-4 flex items-center">
+      {/* 点击背景也可关闭 */}
+      <div className="absolute inset-0 z-[25] cursor-pointer" onClick={onClose} />
+
+      {/* 图片区域 - 在背景关闭层之上 */}
+      <div className="relative w-full max-w-5xl max-h-[85vh] mx-4 flex items-center z-[28]" onClick={(e) => e.stopPropagation()}>
         <AnimatePresence mode="wait">
           <motion.div
             key={photo.id}
@@ -90,9 +95,9 @@ function Lightbox({
       {/* 左箭头 */}
       <button
         type="button"
-        onClick={() => go(-1)}
+        onClick={(e) => { e.stopPropagation(); go(-1); }}
         aria-label="上一张"
-        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-[30] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M15 18l-6-6 6-6" />
@@ -102,9 +107,9 @@ function Lightbox({
       {/* 右箭头 */}
       <button
         type="button"
-        onClick={() => go(1)}
+        onClick={(e) => { e.stopPropagation(); go(1); }}
         aria-label="下一张"
-        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-[30] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 18l6-6-6-6" />
@@ -112,7 +117,7 @@ function Lightbox({
       </button>
 
       {/* 底部缩略图条 */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[80vw] overflow-x-auto px-4 py-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[80vw] overflow-x-auto px-4 py-2 z-[30]" onClick={(e) => e.stopPropagation()}>
         {photos.map((p, i) => (
           <button
             key={p.id}
