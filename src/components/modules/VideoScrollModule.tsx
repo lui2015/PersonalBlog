@@ -79,7 +79,7 @@ function ThumbCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative shrink-0 w-[140px] sm:w-[180px] lg:w-[200px] rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer text-left ${
+      className={`group relative shrink-0 w-[120px] sm:w-[160px] lg:w-[180px] rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer text-left ${
         isActive
           ? "border-cyber-pink shadow-[0_0_20px_rgba(255,0,128,0.35)] scale-[1.02]"
           : "border-white/10 hover:border-cyber-pink/40"
@@ -172,13 +172,13 @@ export default function VideoScrollModule() {
           </AnimatePresence>
         </div>
 
-        {/* 缩略图列表 */}
-        <div className="lg:flex-1 min-w-0">
-          <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory lg:flex-col lg:overflow-y-auto lg:max-h-[380px] lg:snap-none lg:snap-y"
+        {/* 缩略图列表：桌面端纵向排列，高度跟随主卡 */}
+        <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+          <div
+            className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:flex-col lg:overflow-y-auto lg:snap-none lg:snap-y lg:flex-1"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
-              WebkitMaskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
             }}
           >
             {videos.map((v, i) => (
