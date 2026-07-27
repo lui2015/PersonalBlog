@@ -12,16 +12,16 @@ function FeaturedCard({ video }: { video: Video }) {
       href={video.src || "#"}
       target={video.src ? "_blank" : undefined}
       rel={video.src ? "noopener noreferrer" : undefined}
-      className="group relative block w-full h-full rounded-xl overflow-hidden border border-cyber-pink/25 bg-cyber-dark/80 hover:border-cyber-pink hover:shadow-[0_0_32px_rgba(255,0,128,0.3)] transition-all duration-400"
+      className="group relative block w-full rounded-xl overflow-hidden border border-cyber-pink/25 bg-cyber-dark/80 hover:border-cyber-pink hover:shadow-[0_0_32px_rgba(255,0,128,0.3)] transition-all duration-400"
     >
-      {/* 封面 */}
+      {/* 封面 + 信息叠加 */}
       <div className="relative aspect-video bg-cyber-black overflow-hidden">
         <img
           src={video.cover || "/placeholder.jpg"}
           alt={video.title}
           className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
         {/* 播放按钮 */}
         <motion.div
@@ -38,25 +38,29 @@ function FeaturedCard({ video }: { video: Video }) {
           </motion.div>
         </motion.div>
 
-        {/* 时长 */}
-        <span className="absolute bottom-3 right-3 text-xs font-mono text-white bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
-          {video.duration || "--:--"}
-        </span>
+        {/* 时长 — 移到信息区右上角避免截断 */}
         <span className="absolute top-3 left-3 text-xs font-mono text-cyber-pink bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded border border-cyber-pink/30">
           🎬 {video.category}
         </span>
-      </div>
 
-      {/* 信息区 */}
-      <div className="p-4 sm:p-5">
-        <h3 className="text-base sm:text-lg text-cyber-pink font-semibold group-hover:text-white transition-colors line-clamp-2 leading-snug">
-          {video.title}
-        </h3>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1.5 flex items-center gap-2 font-mono">
-          <span>{video.category}</span>
-          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
-          <span>{video.views || ""} 次观看</span>
-        </p>
+        {/* 底部信息区（叠加在视频上） */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 bg-black/60 backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base sm:text-lg text-cyber-pink font-semibold group-hover:text-white transition-colors line-clamp-2 leading-snug">
+                {video.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1.5 flex items-center gap-2 font-mono">
+                <span>{video.category}</span>
+                <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
+                <span>{video.views || ""} 次观看</span>
+              </p>
+            </div>
+            <span className="shrink-0 text-xs font-mono text-white bg-black/70 backdrop-blur-sm px-2 py-1 rounded border border-white/10 mt-0.5">
+              {video.duration || "--:--"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* 底部发光条 */}
@@ -65,7 +69,7 @@ function FeaturedCard({ video }: { video: Video }) {
   );
 }
 
-/* ---- 缩略图卡片（小） ---- */
+/* ---- 缩略图卡片：移动端竖排小卡 / 桌面端横排条目（铺满右侧消除空白） ---- */
 function ThumbCard({
   video,
   isActive,
@@ -81,19 +85,20 @@ function ThumbCard({
       onClick={onClick}
       className={`group relative shrink-0 w-[120px] sm:w-[160px] lg:w-full rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer text-left ${
         isActive
-          ? "border-cyber-pink shadow-[0_0_20px_rgba(255,0,128,0.35)] scale-[1.02]"
+          ? "border-cyber-pink shadow-[0_0_20px_rgba(255,0,128,0.35)]"
           : "border-white/10 hover:border-cyber-pink/40"
       }`}
     >
-      {/* 封面 */}
-      <div className="relative aspect-video bg-cyber-black overflow-hidden">
-        <img
-          src={video.cover || "/placeholder.jpg"}
-          alt={video.title}
-          className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? "scale-105" : "group-hover:scale-105"}`}
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+      <div className="lg:flex lg:items-stretch">
+        {/* 封面 */}
+        <div className="relative aspect-video w-full lg:w-36 lg:shrink-0 bg-cyber-black overflow-hidden">
+          <img
+            src={video.cover || "/placeholder.jpg"}
+            alt={video.title}
+            className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? "scale-105" : "group-hover:scale-105"}`}
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-black/70 lg:via-transparent lg:to-transparent" />
 
         {/* 播放图标 */}
         <div className="absolute inset-0 flex items-center justify-center">
@@ -106,6 +111,11 @@ function ThumbCard({
           >
             <span className="text-white text-[9px] ml-0.5">▶</span>
           </div>
+
+          {/* 时长 */}
+          <span className="absolute bottom-1.5 right-1.5 text-[10px] font-mono text-white bg-black/70 px-1.5 py-0.5 rounded">
+            {video.duration || "--:--"}
+          </span>
         </div>
 
         {/* 时长 */}
@@ -253,9 +263,9 @@ export default function VideoScrollModule() {
       </div>
 
       {/* 布局：左大右小（桌面） / 上大下小（移动端） */}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5">
+      <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:items-stretch">
         {/* 精选主卡 */}
-        <div className="lg:w-[58%] shrink-0 min-w-0">
+        <div className="lg:w-[76%] shrink-0 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeVideo.id}

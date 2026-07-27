@@ -150,7 +150,7 @@ export default function PhotoFrameModule() {
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-purple">
-          ◈ PHOTO FRAME
+          ◈ 文章作品
         </h3>
         <Link
           href="/gallery"
