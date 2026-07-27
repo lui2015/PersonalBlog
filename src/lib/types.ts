@@ -59,6 +59,15 @@ export interface Video {
   src: string; // Bilibili 嵌入地址（留空则展示占位播放器）
 }
 
+// 软件作品：卡片展示（名称/图片/简介），点击跳转对应网页
+export interface SoftwareWork {
+  id: string;
+  name: string; // 作品名称
+  image: string; // 封面/截图地址
+  description: string; // 简介
+  url: string; // 点击后跳转的网页地址
+}
+
 export interface GalleryPhoto {
   id: string;
   src: string;
@@ -95,4 +104,5 @@ export interface SiteContent {
   works: Work[];
   videos: Video[];
   albums: GalleryAlbum[];
+  softwares: SoftwareWork[];
 }

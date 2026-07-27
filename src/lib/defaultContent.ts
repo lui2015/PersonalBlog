@@ -339,4 +339,37 @@ T extends U ? X : Y 是类型系统的开关。
       })),
     },
   ],
+  softwares: [
+    {
+      id: "sw1",
+      name: "股票市场预测",
+      image: "https://picsum.photos/seed/stock/800/500",
+      description:
+        "基于实时行情的 A 股预测工具，提供涨跌概率、理由解读与每日复盘，辅助投资决策。",
+      url: "https://www.luliming.xyz/stockMarketForecast/",
+    },
+    {
+      id: "sw2",
+      name: "投资名言",
+      image: "https://picsum.photos/seed/quotes/800/500",
+      description:
+        "每日精选投资大师名言，支持收藏与分享，在投资路上给你一点清醒与力量。",
+      url: "https://www.luliming.xyz/investmentQuotes",
+    },
+    {
+      id: "sw3",
+      name: "个人博客（本站）",
+      image: "https://picsum.photos/seed/blog/800/500",
+      description:
+        "你正在浏览的赛博朋克风格个人站点，汇集文章、视频、摄影与软件作品。",
+      url: "https://www.luliming.xyz/",
+    },
+    {
+      id: "sw4",
+      name: "开源项目合集",
+      image: "https://picsum.photos/seed/github/800/500",
+      description: "我在 GitHub 上维护的各类实验性与实用型项目，欢迎 Star 与交流。",
+      url: "https://github.com/lui2015",
+    },
+  ],
 };

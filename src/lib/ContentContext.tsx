@@ -64,6 +64,7 @@ function mergeWithDefault(p: Partial<SiteContent>): SiteContent {
     works: p.works ?? DEFAULT_CONTENT.works,
     videos: p.videos ?? DEFAULT_CONTENT.videos,
     albums: p.albums ?? DEFAULT_CONTENT.albums,
+    softwares: p.softwares ?? DEFAULT_CONTENT.softwares,
   };
 }
 

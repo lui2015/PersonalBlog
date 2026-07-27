@@ -13,7 +13,7 @@ const worksChildren = [
   { href: "/gallery", label: "摄影作品", icon: "📷" },
   { href: "/videos", label: "视频作品", icon: "🎬" },
   { href: "/skills", label: "技能作品", icon: "◆" },
-  { href: "https://www.luliming.xyz/tools/", label: "软件作品", icon: "⚙", external: true },
+  { href: "/software", label: "软件作品", icon: "⚙" },
 ];
 
 const afterWorksItems = [
@@ -110,7 +110,7 @@ export default function Navbar() {
                     className="absolute top-full left-0 mt-1 w-48 bg-cyber-black/95 backdrop-blur-xl border border-cyber-border rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,200,255,0.1)] z-50"
                   >
                     {worksChildren.map((sub) => {
-                      const isExternal = !!sub.external;
+                      const isExternal = sub.href.startsWith("http");
                       const Tag = isExternal ? "a" : Link;
                       const extraProps = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
                       return (
@@ -263,7 +263,7 @@ function WorksMobileSection({ onClose }: { onClose: () => void }) {
             className="overflow-hidden pl-6 pt-3 space-y-4"
           >
             {worksChildren.map((sub) => {
-              const isExternal = !!sub.external;
+              const isExternal = sub.href.startsWith("http");
               const Tag = isExternal ? "a" : Link;
               const extraProps = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
               return (
