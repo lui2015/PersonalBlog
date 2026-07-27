@@ -48,6 +48,31 @@ export interface Work {
   content: string; // markdown
 }
 
+export interface Video {
+  id: string;
+  title: string;
+  category: string;
+  duration: string;
+  cover: string;
+  views: string;
+  date: string; // YYYY-MM-DD
+  src: string; // Bilibili 嵌入地址（留空则展示占位播放器）
+}
+
+export interface GalleryPhoto {
+  id: string;
+  src: string;
+  title: string;
+}
+
+export interface GalleryAlbum {
+  id: string;
+  name: string;
+  cover: string;
+  count: number;
+  photos: GalleryPhoto[];
+}
+
 export interface MySkill {
   id: string;
   name: string;
@@ -68,4 +93,6 @@ export interface SiteContent {
   myskills: MySkill[]; // 我的技能（名称 + 地址）
   quotes: Quote[];
   works: Work[];
+  videos: Video[];
+  albums: GalleryAlbum[];
 }

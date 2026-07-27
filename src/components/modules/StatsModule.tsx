@@ -64,7 +64,13 @@ export default function StatsModule() {
     const l = stat.label.trim();
     if (/文章|博客|作品|blog|article|post/i.test(l))
       return content.works.length;
-    if (/相册|图库|gallery|photo/i.test(l)) return content.photos.length;
+    if (/相册|图库|gallery|photo/i.test(l)) {
+      const albumPhotos = (content.albums ?? []).reduce(
+        (n, a) => n + (a.photos?.length ?? 0),
+        0
+      );
+      return albumPhotos > 0 ? albumPhotos : content.photos.length;
+    }
     if (/诗集|诗词|poem/i.test(l)) return content.poems.length;
     return stat.value;
   };

@@ -50,6 +50,8 @@ function isSiteContent(v: unknown): v is SiteContent {
     Array.isArray(o.skills) &&
     Array.isArray(o.myskills) &&
     Array.isArray(o.quotes) &&
-    Array.isArray(o.works)
+    Array.isArray(o.works) &&
+    Array.isArray(o.videos) &&
+    Array.isArray(o.albums)
   );
 }

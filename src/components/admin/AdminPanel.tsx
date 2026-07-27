@@ -66,3 +66,8 @@ export const btnGhost =
 
 export const btnDanger =
   "px-3 py-1.5 text-xs font-[family-name:var(--font-mono)] border border-cyber-pink/60 text-cyber-pink hover:bg-cyber-pink/10 hover:shadow-[0_0_10px_var(--color-cyber-pink)] transition-all";
+
+export const labelClass =
+  "block text-[11px] uppercase tracking-widest text-gray-500 mb-1.5 font-[family-name:var(--font-mono)]";
+
+export const selectClass = inputClass;

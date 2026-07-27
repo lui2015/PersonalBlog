@@ -1,213 +1,197 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useContent } from "@/lib/ContentContext";
+import { useAuth } from "@/lib/AuthContext";
+import type { Video } from "@/lib/types";
+import CyberButton from "@/components/ui/CyberButton";
+import VideoEditorModal from "@/components/admin/VideoEditorModal";
+import { btnPrimary } from "@/components/admin/AdminPanel";
 
-const categories = ["全部", "Vlog", "教程", "创意"];
-
-const videos = [
-  {
-    id: "1",
-    title: "赛博朋克 UI 动画教程",
-    category: "教程",
-    duration: "12:34",
-    cover: "https://picsum.photos/seed/vid1/640/360",
-    views: 2340,
-    date: "2026-04-28",
-  },
-  {
-    id: "2",
-    title: "我的开发工作台 Setup Tour",
-    category: "Vlog",
-    duration: "8:21",
-    cover: "https://picsum.photos/seed/vid2/640/360",
-    views: 5620,
-    date: "2026-04-20",
-  },
-  {
-    id: "3",
-    title: "Three.js 3D 粒子效果实战",
-    category: "教程",
-    duration: "18:45",
-    cover: "https://picsum.photos/seed/vid3/640/360",
-    views: 3100,
-    date: "2026-04-15",
-  },
-  {
-    id: "4",
-    title: "代码生成艺术 - 流体模拟",
-    category: "创意",
-    duration: "5:10",
-    cover: "https://picsum.photos/seed/vid4/640/360",
-    views: 8900,
-    date: "2026-04-08",
-  },
-  {
-    id: "5",
-    title: "一周的远程工作日常",
-    category: "Vlog",
-    duration: "15:22",
-    cover: "https://picsum.photos/seed/vid5/640/360",
-    views: 4200,
-    date: "2026-03-30",
-  },
-  {
-    id: "6",
-    title: "从零搭建个人作品站全流程",
-    category: "教程",
-    duration: "25:11",
-    cover: "https://picsum.photos/seed/vid6/640/360",
-    views: 7600,
-    date: "2026-03-22",
-  },
-];
+function getEmbed(v: Video): string | null {
+  const src = (v.src ?? "").trim();
+  if (!src) return null;
+  if (src.includes("player.bilibili.com")) return src;
+  const bv = src.match(/BV[\w]+/)?.[0];
+  if (bv) return `https://player.bilibili.com/player.html?bvid=${bv}&autoplay=1&high_quality=1`;
+  return src;
+}
 
 export default function VideosPage() {
-  const [activeCategory, setActiveCategory] = useState("全部");
-  const [playingId, setPlayingId] = useState<string | null>(null);
+  const { content, ready, updateSection } = useContent();
+  const { authed } = useAuth();
+  const videos = content.videos;
 
-  const filteredVideos = videos.filter(
-    (v) => activeCategory === "全部" || v.category === activeCategory
-  );
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+
+  const handleSaveVideo = (video: Video) => {
+    const exists = videos.some((v) => v.id === video.id);
+    const next = exists
+      ? videos.map((v) => (v.id === video.id ? video : v))
+      : [video, ...videos];
+    updateSection("videos", next);
+    setVideoModalOpen(false);
+  };
+
+  const handleDeleteVideo = (id: string) => {
+    if (!confirm("确定删除该视频吗？此操作不可撤销。")) return;
+    updateSection(
+      "videos",
+      videos.filter((v) => v.id !== id)
+    );
+  };
 
   return (
-    <div className="relative z-10 pt-24 pb-16">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1
-            className="font-[family-name:var(--font-orbitron)] text-4xl md:text-5xl text-cyber-blue glitch mb-4"
-            data-text="VIDEOS"
-          >
+    <main className="relative min-h-screen overflow-hidden">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 py-16">
+        <header className="mb-10 text-center">
+          <p className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.3em] text-cyber-pink">
             VIDEOS
+          </p>
+          <h1 className="mt-2 font-[family-name:var(--font-orbitron)] text-4xl text-cyber-blue sm:text-5xl">
+            视频作品
           </h1>
-          <p className="text-gray-500">// 视频创作与教程分享</p>
-        </motion.div>
+          <p className="mt-3 text-gray-400">用影像记录世界</p>
+        </header>
 
-        {/* Categories */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center justify-center gap-2 mb-8"
-        >
-          {categories.map((cat) => (
+        {authed && (
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <span className="text-xs text-gray-500">管理员模式：可直接添加 / 编辑 / 删除视频</span>
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1 text-xs border transition-all duration-300 ${
-                activeCategory === cat
-                  ? "border-cyber-blue text-cyber-blue shadow-[0_0_5px_var(--color-cyber-blue)]"
-                  : "border-cyber-border text-gray-500 hover:border-gray-400"
-              }`}
+              className={btnPrimary}
+              onClick={() => {
+                setEditingVideo(null);
+                setVideoModalOpen(true);
+              }}
             >
-              {cat}
+              + 新增视频
             </button>
-          ))}
-        </motion.div>
+          </div>
+        )}
 
-        {/* Video Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVideos.map((video, i) => (
-            <motion.div
-              key={video.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className="cyber-card overflow-hidden group cursor-pointer"
-              onClick={() => setPlayingId(video.id)}
-            >
-              {/* Thumbnail */}
-              <div className="relative aspect-video overflow-hidden">
-                <img
-                  src={video.cover}
-                  alt={video.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 scanlines opacity-30" />
-                <div className="absolute inset-0 bg-cyber-black/30 group-hover:bg-cyber-black/10 transition-colors" />
+        {!ready ? (
+          <div className="py-20 text-center text-gray-500">加载中…</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {videos.map((video) => {
+              const embed = getEmbed(video);
+              return (
+                <motion.div
+                  key={video.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="group"
+                >
+                  <div className="relative aspect-video overflow-hidden rounded-lg border border-cyber-border bg-cyber-black/50 transition-all group-hover:border-cyber-blue group-hover:shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={video.cover}
+                      alt={video.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40" />
+                    <button
+                      onClick={() => {
+                        if (!embed) {
+                          alert("该视频尚未配置播放地址，点击编辑填写 Bilibili 嵌入地址。");
+                          return;
+                        }
+                        setLightbox(embed);
+                      }}
+                      className="absolute inset-0 flex items-center justify-center"
+                      aria-label="播放"
+                    >
+                      <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-cyber-blue bg-cyber-black/60 text-cyber-blue shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-transform group-hover:scale-110">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </span>
+                    </button>
+                    <span className="absolute left-3 top-3 rounded bg-cyber-pink/90 px-2 py-0.5 text-xs font-semibold text-cyber-black">
+                      {video.category}
+                    </span>
 
-                {/* Play Button */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full border-2 border-cyber-blue/80 flex items-center justify-center bg-cyber-black/50 group-hover:scale-110 group-hover:shadow-[0_0_20px_var(--color-cyber-blue)] transition-all">
-                    <span className="text-cyber-blue text-xl ml-1">▶</span>
+                    {authed && (
+                      <div className="absolute right-2 top-2 z-20 flex gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingVideo(video);
+                            setVideoModalOpen(true);
+                          }}
+                          className="rounded bg-cyber-black/80 px-2 py-1 text-xs text-cyber-blue transition-colors hover:bg-cyber-blue hover:text-cyber-black"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVideo(video.id)}
+                          className="rounded bg-cyber-black/80 px-2 py-1 text-xs text-cyber-pink transition-colors hover:bg-cyber-pink hover:text-cyber-black"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
+                  <div className="mt-3">
+                    <h3 className="font-[family-name:var(--font-orbitron)] text-lg text-cyber-blue line-clamp-1">
+                      {video.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {video.duration} · {video.views} 播放 · {video.date}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-                {/* Duration */}
-                <span className="absolute bottom-2 right-2 text-[10px] bg-cyber-black/80 px-1.5 py-0.5 text-gray-300 font-[family-name:var(--font-mono)]">
-                  {video.duration}
-                </span>
-
-                {/* Category Badge */}
-                <span className="absolute top-2 left-2 text-[10px] px-2 py-0.5 bg-cyber-purple/80 text-white">
-                  {video.category}
-                </span>
-              </div>
-
-              {/* Info */}
-              <div className="p-4">
-                <h3 className="text-sm font-medium text-gray-200 group-hover:text-cyber-blue transition-colors line-clamp-2 mb-2">
-                  {video.title}
-                </h3>
-                <div className="flex items-center justify-between text-[10px] text-gray-600 font-[family-name:var(--font-mono)]">
-                  <span>{video.views.toLocaleString()} 次观看</span>
-                  <span>{video.date}</span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+        <div className="mt-12 text-center">
+          <CyberButton href="/">返回首页</CyberButton>
         </div>
+      </div>
 
-        {/* Video Player Modal */}
-        {playingId && (
+      <AnimatePresence>
+        {lightbox && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-cyber-black/95 backdrop-blur-sm"
-            onClick={() => setPlayingId(null)}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setLightbox(null)}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative w-full max-w-4xl mx-4 aspect-video cyber-card overflow-hidden"
+            <div
+              className="relative w-full max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* HUD Frame */}
-              <div className="absolute inset-0 border-2 border-cyber-blue/30 z-10 pointer-events-none">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyber-blue" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyber-blue" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyber-blue" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyber-blue" />
-              </div>
-
-              <div className="w-full h-full flex items-center justify-center bg-cyber-dark">
-                <div className="text-center">
-                  <p className="text-cyber-blue font-[family-name:var(--font-orbitron)] text-lg mb-2">
-                    {videos.find((v) => v.id === playingId)?.title}
-                  </p>
-                  <p className="text-gray-500 text-sm font-[family-name:var(--font-mono)]">
-                    // 视频播放器占位 - 可嵌入 B站/YouTube iframe
-                  </p>
-                </div>
-              </div>
-
-              {/* Close Button */}
               <button
-                onClick={() => setPlayingId(null)}
-                className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center border border-cyber-border text-gray-400 hover:text-cyber-pink hover:border-cyber-pink transition-all"
+                onClick={() => setLightbox(null)}
+                className="absolute -top-10 right-0 text-gray-400 transition-colors hover:text-cyber-pink"
               >
-                ✕
+                ✕ 关闭
               </button>
-            </motion.div>
+              <div className="aspect-video w-full overflow-hidden rounded-lg border border-cyber-border bg-black">
+                <iframe
+                  src={lightbox}
+                  className="h-full w-full"
+                  allowFullScreen
+                  allow="autoplay; encrypted-media"
+                />
+              </div>
+            </div>
           </motion.div>
         )}
-      </div>
-    </div>
+      </AnimatePresence>
+
+      <VideoEditorModal
+        open={videoModalOpen}
+        initial={editingVideo}
+        onClose={() => setVideoModalOpen(false)}
+        onSave={handleSaveVideo}
+      />
+    </main>
   );
 }
