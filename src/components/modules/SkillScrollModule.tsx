@@ -69,13 +69,13 @@ export default function SkillScrollModule() {
               {/* 图标 */}
               <span className="text-sm shrink-0 w-6 text-center">◆</span>
 
-              {/* 名称 + 描述 */}
-              <div className="min-w-0 flex-1">
-                <span className="text-sm text-white font-medium truncate block group-hover:text-cyber-purple transition-colors">
+              {/* 名称 + 描述（同行） */}
+              <div className="min-w-0 flex-1 flex items-center gap-2">
+                <span className="text-sm text-white font-medium truncate shrink-0 group-hover:text-cyber-purple transition-colors">
                   {skill.name}
                 </span>
                 {skill.description && (
-                  <span className="text-xs text-gray-500 truncate block mt-0.5 group-hover:text-gray-400 transition-colors">
+                  <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
                     {skill.description}
                   </span>
                 )}
