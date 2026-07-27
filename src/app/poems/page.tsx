@@ -3,22 +3,54 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/AuthContext";
 import { useContent } from "@/lib/ContentContext";
+import { btnPrimary, btnGhost, btnDanger } from "@/components/admin/AdminPanel";
+import PoemEditorModal from "@/components/admin/PoemEditorModal";
 import type { Poem } from "@/lib/types";
 
 export default function PoemsPage() {
-  const { content } = useContent();
+  const { authed } = useAuth();
+  const { content, updateSection } = useContent();
   const poems = content.poems;
 
   const [keyword, setKeyword] = useState("");
   const [selected, setSelected] = useState<Poem | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<Poem | null>(null);
 
-  // 简易搜索：标题 / 作者 / 朝代 / 正文 任意命中
+  const openNew = () => {
+    setEditing(null);
+    setEditorOpen(true);
+  };
+  const openEdit = (poem: Poem) => {
+    setEditing(poem);
+    setEditorOpen(true);
+  };
+  const handleSave = (poem: Poem) => {
+    const exists = poems.some((p) => p.id === poem.id);
+    const next = exists
+      ? poems.map((p) => (p.id === poem.id ? poem : p))
+      : [...poems, poem];
+    updateSection("poems", next);
+    setEditorOpen(false);
+  };
+  const handleDelete = (id: string) => {
+    if (!confirm("确定删除该诗词？")) return;
+    updateSection(
+      "poems",
+      poems.filter((p) => p.id !== id)
+    );
+    setEditorOpen(false);
+    setSelected((prev) => (prev?.id === id ? null : prev));
+  };
+
+  // 简易搜索：标题 / 作者 / 时间 / 正文 任意命中
   const filtered = useMemo(() => {
     const k = keyword.trim().toLowerCase();
     if (!k) return poems;
     return poems.filter((p) =>
-      [p.title, p.author, p.dynasty, p.content]
+      [p.title, p.author, p.date, p.content]
         .filter(Boolean)
         .some((s) => s.toLowerCase().includes(k))
     );
@@ -44,12 +76,19 @@ export default function PoemsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <h1
-            className="font-[family-name:var(--font-orbitron)] text-4xl md:text-5xl text-cyber-blue glitch mb-4"
-            data-text="POETRY"
-          >
-            POETRY
-          </h1>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <h1
+              className="font-[family-name:var(--font-orbitron)] text-4xl md:text-5xl text-cyber-blue glitch mb-4"
+              data-text="POETRY"
+            >
+              POETRY
+            </h1>
+            {authed && (
+              <button onClick={openNew} className={btnPrimary + " mb-4"}>
+                + 新增诗词
+              </button>
+            )}
+          </div>
           <p className="text-gray-500">// 收录的诗词全集</p>
         </motion.div>
 
@@ -66,7 +105,7 @@ export default function PoemsPage() {
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="搜索 标题 / 作者 / 朝代 / 正文"
+              placeholder="搜索 标题 / 作者 / 时间 / 正文"
               className="w-full bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600 font-[family-name:var(--font-mono)]">
@@ -91,8 +130,32 @@ export default function PoemsPage() {
                 transition={{ delay: Math.min(i * 0.04, 0.4) }}
                 whileHover={{ y: -4 }}
                 onClick={() => setSelected(poem)}
-                className="cyber-card hud-corner p-5 text-left group flex flex-col h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyber-blue"
+                className="cyber-card hud-corner p-5 text-left group relative flex flex-col h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyber-blue"
               >
+                {authed && (
+                  <div className="absolute top-2 right-2 z-20 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(poem);
+                      }}
+                      className={btnGhost + " !py-1 !px-2"}
+                    >
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(poem.id);
+                      }}
+                      className={btnDanger + " !py-1 !px-2"}
+                    >
+                      删除
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-baseline justify-between mb-2">
                   <h3 className="text-lg text-cyber-purple font-medium group-hover:text-cyber-blue transition-colors">
                     {poem.title}
@@ -102,7 +165,7 @@ export default function PoemsPage() {
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
-                  [{poem.dynasty}] {poem.author}
+                  {poem.date} {poem.author}
                 </p>
                 <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line line-clamp-4 flex-1">
                   {poem.content}
@@ -147,7 +210,7 @@ export default function PoemsPage() {
                     {selected.title}
                   </h3>
                   <p className="text-xs text-gray-500 mb-6">
-                    [{selected.dynasty}] {selected.author}
+                    {selected.date} {selected.author}
                   </p>
                   <div className="text-base sm:text-lg leading-loose text-gray-200 whitespace-pre-line">
                     {selected.content}
@@ -192,6 +255,14 @@ export default function PoemsPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <PoemEditorModal
+          open={editorOpen}
+          initial={editing}
+          onClose={() => setEditorOpen(false)}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );

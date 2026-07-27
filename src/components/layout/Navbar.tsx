@@ -9,11 +9,12 @@ const navItems = [
 ];
 
 const worksChildren = [
-  { href: "/blog", label: "我的文章", icon: "📝" },
+  { href: "/software", label: "软件作品", icon: "⚙" },
+  { href: "/skills", label: "技能作品", icon: "◆" },
   { href: "/gallery", label: "摄影作品", icon: "📷" },
   { href: "/videos", label: "视频作品", icon: "🎬" },
-  { href: "/skills", label: "技能作品", icon: "◆" },
-  { href: "/software", label: "软件作品", icon: "⚙" },
+  { href: "/blog", label: "文章作品", icon: "📝" },
+  { href: "/poems", label: "诗词作品", icon: "📜" },
 ];
 
 const afterWorksItems = [

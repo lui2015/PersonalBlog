@@ -8,7 +8,7 @@ import type { Poem } from "@/lib/types";
 const fields: FieldDef<Poem>[] = [
   { key: "title", label: "题目", placeholder: "静夜思" },
   { key: "author", label: "作者", placeholder: "李白" },
-  { key: "dynasty", label: "朝代", placeholder: "唐" },
+  { key: "date", label: "时间", placeholder: "" },
   {
     key: "content",
     label: "正文",
@@ -33,7 +33,7 @@ export default function PoemsAdminPage() {
         createDefault={() => ({
           title: "未命名",
           author: "",
-          dynasty: "",
+          date: "",
           content: "",
         })}
         titleKey="title"

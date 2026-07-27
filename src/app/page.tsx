@@ -5,11 +5,21 @@ import LatestBlogModule from "@/components/modules/LatestBlogModule";
 import StatsModule from "@/components/modules/StatsModule";
 import QuoteModule from "@/components/modules/QuoteModule";
 import SkillRadarModule from "@/components/modules/SkillRadarModule";
+import SoftwareScrollModule from "@/components/modules/SoftwareScrollModule";
+import SkillScrollModule from "@/components/modules/SkillScrollModule";
+import VideoScrollModule from "@/components/modules/VideoScrollModule";
 
 export default function Home() {
   return (
     <div className="relative z-10">
       <HeroSection />
+
+      {/* 滚动展示：软件作品 + 视频作品 */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-4">
+        <SoftwareScrollModule />
+        <SkillScrollModule />
+        <VideoScrollModule />
+      </section>
 
       {/* 自定义模块区域 */}
       <section className="max-w-7xl mx-auto px-3 sm:px-4 py-8 sm:py-16 space-y-8 sm:space-y-16">

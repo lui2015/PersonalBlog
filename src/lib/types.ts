@@ -4,7 +4,7 @@ export interface Poem {
   id: string;
   title: string;
   author: string;
-  dynasty: string;
+  date: string; // 创作时间，YYYY-MM-DD 或任意文本
   content: string;
 }
 
@@ -86,6 +86,7 @@ export interface MySkill {
   id: string;
   name: string;
   url: string; // 技能地址 / 链接
+  description?: string; // 技能描述（可选）
 }
 
 export interface SiteContent {

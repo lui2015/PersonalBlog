@@ -86,7 +86,7 @@ export default function PoemModule() {
             {poem.title}
           </h4>
           <p className="text-xs text-gray-500 mb-3 sm:mb-4">
-            [{poem.dynasty}] {poem.author}
+            {poem.date} {poem.author}
           </p>
           <div className="text-base sm:text-lg leading-relaxed text-gray-200 whitespace-pre-line min-h-[60px] sm:min-h-[80px]">
             {displayedText}

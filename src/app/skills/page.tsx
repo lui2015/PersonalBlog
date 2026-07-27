@@ -54,18 +54,21 @@ function SkillModal({
   open: boolean;
   skill: MySkill | null; // null = 新增
   onClose: () => void;
-  onSave: (data: Pick<MySkill, "name" | "url">) => void;
+  onSave: (data: Pick<MySkill, "name" | "url" | "description">) => void;
 }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [desc, setDesc] = useState("");
 
   useEffect(() => {
     if (skill) {
       setName(skill.name);
       setUrl(skill.url);
+      setDesc(skill.description ?? "");
     } else {
       setName("");
       setUrl("");
+      setDesc("");
     }
   }, [skill]);
 
@@ -118,6 +121,19 @@ function SkillModal({
                 className="w-full bg-cyber-black/60 border border-cyber-border rounded px-4 py-2.5 text-white placeholder-gray-600 focus:border-cyber-blue focus:outline-none transition-colors font-[family-name:var(--font-mono)] text-sm"
               />
             </div>
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5 font-[family-name:var(--font-mono)]">
+                技能描述
+              </label>
+              <textarea
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                placeholder="简要描述该技能的用途或特点（可选）"
+                rows={3}
+                className="w-full bg-cyber-black/60 border border-cyber-border rounded px-4 py-2.5 text-white placeholder-gray-600 focus:border-cyber-blue focus:outline-none transition-colors resize-none text-sm"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 mt-8">
@@ -130,7 +146,7 @@ function SkillModal({
             <button
               onClick={() => {
                 if (!name.trim() || !url.trim()) return;
-                onSave({ name: name.trim(), url: url.trim() });
+                onSave({ name: name.trim(), url: url.trim(), description: desc.trim() || undefined });
               }}
               disabled={!name.trim() || !url.trim()}
               className="px-5 py-2 bg-cyber-purple/20 text-cyber-purple border border-cyber-purple/50 rounded hover:bg-cyber-purple hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium"
@@ -194,9 +210,16 @@ function SkillCard({
 
         {/* Info */}
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-white mb-1 truncate">
-            {skill.name}
-          </h3>
+          <div className="flex items-center gap-3 min-w-0">
+            <h3 className="text-lg font-semibold text-white truncate shrink-0">
+              {skill.name}
+            </h3>
+            {skill.description && (
+              <span className="text-sm text-gray-400 truncate">
+                {skill.description}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2 min-w-0">
             <a
               href={skill.url}
@@ -312,12 +335,12 @@ export default function SkillsPage() {
     []
   );
 
-  const handleAdd = async (data: Pick<MySkill, "name" | "url">) => {
+  const handleAdd = async (data: Pick<MySkill, "name" | "url" | "description">) => {
     await save([...skills, { id: uid(), ...data }]);
     setModalOpen(false);
   };
 
-  const handleEdit = async (data: Pick<MySkill, "name" | "url">) => {
+  const handleEdit = async (data: Pick<MySkill, "name" | "url" | "description">) => {
     if (!editing) return;
     await save(skills.map((s) => (s.id === editing.id ? { ...s, ...data } : s)));
     setEditing(null);
