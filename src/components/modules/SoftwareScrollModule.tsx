@@ -26,7 +26,7 @@ function MarqueeRow({
       style={{ maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)" }}
     >
       <motion.div
-        className="flex gap-5 shrink-0 will-change-transform"
+        className="flex gap-3 sm:gap-5 shrink-0 will-change-transform"
         animate={{ x: direction === "left" ? [0, "-50%"] : ["-50%", 0] }}
         transition={{
           x: {
@@ -44,10 +44,10 @@ function MarqueeRow({
             href={s.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative shrink-0 w-[260px] sm:w-[300px] rounded-xl overflow-hidden border border-cyber-blue/25 bg-cyber-dark/80 hover:border-cyber-blue hover:shadow-[0_0_24px_rgba(0,240,255,0.3)] transition-all duration-300"
+            className="group relative shrink-0 w-[200px] sm:w-[300px] rounded-xl overflow-hidden border border-cyber-blue/25 bg-cyber-dark/80 hover:border-cyber-blue hover:shadow-[0_0_24px_rgba(0,240,255,0.3)] transition-all duration-300"
           >
             {/* 封面 */}
-            <div className="relative h-[140px] sm:h-[160px] bg-cyber-black overflow-hidden">
+            <div className="relative h-[100px] sm:h-[160px] bg-cyber-black overflow-hidden">
               <img
                 src={s.image || "/placeholder.jpg"}
                 alt={s.name}
@@ -61,14 +61,14 @@ function MarqueeRow({
               </div>
             </div>
             {/* 信息 */}
-            <div className="p-4">
-              <h3 className="text-sm text-cyber-blue font-medium truncate">
+            <div className="p-3 sm:p-4">
+              <h3 className="text-xs sm:text-sm text-cyber-blue font-medium truncate">
                 {s.name}
               </h3>
-              <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 line-clamp-2 leading-relaxed">
                 {s.description}
               </p>
-              <span className="inline-block mt-2 text-[11px] text-gray-600 group-hover:text-cyber-pink transition-colors">
+              <span className="inline-block mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-gray-600 group-hover:text-cyber-pink transition-colors">
                 点击访问 ↗
               </span>
             </div>
@@ -86,12 +86,12 @@ export default function SoftwareScrollModule() {
   if (!softwares.length) return null;
 
   return (
-    <section className="py-10 sm:py-14 select-none">
+    <section className="py-6 sm:py-14 select-none">
       {/* 标题栏 */}
-      <div className="flex items-center justify-between mb-6 px-1">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 px-1">
         <div>
           <h2
-            className="font-[family-name:var(--font-orbitron)] text-xl sm:text-2xl text-cyber-blue glitch inline-block"
+            className="font-[family-name:var(--font-orbitron)] text-lg sm:text-2xl text-cyber-blue glitch inline-block"
             data-text="SOFTWARE"
           >
             SOFTWARE
@@ -111,11 +111,13 @@ export default function SoftwareScrollModule() {
 
       {/* 第二行反向滚动（如果内容多） */}
       {softwares.length >= 3 && (
-        <MarqueeRow
-          items={[...softwares].reverse()}
-          direction="right"
-          speed={44}
-        />
+        <div className="mt-3 sm:mt-5">
+          <MarqueeRow
+            items={[...softwares].reverse()}
+            direction="right"
+            speed={44}
+          />
+        </div>
       )}
     </section>
   );
