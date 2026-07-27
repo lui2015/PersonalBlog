@@ -8,6 +8,7 @@ import SkillRadarModule from "@/components/modules/SkillRadarModule";
 import SoftwareScrollModule from "@/components/modules/SoftwareScrollModule";
 import SkillScrollModule from "@/components/modules/SkillScrollModule";
 import VideoScrollModule from "@/components/modules/VideoScrollModule";
+import GalleryCarouselModule from "@/components/modules/GalleryCarouselModule";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-3 sm:px-4">
         <SoftwareScrollModule />
         <SkillScrollModule />
+        <GalleryCarouselModule />
         <VideoScrollModule />
       </section>
 
