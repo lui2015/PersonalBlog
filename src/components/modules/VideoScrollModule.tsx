@@ -114,10 +114,19 @@ function ThumbCard({
         </span>
       </div>
 
-      {/* 标题 */}
-      <div className="p-1 lg:p-1.5">
-        <p className={`text-[11px] truncate leading-snug transition-colors ${isActive ? "text-cyber-pink" : "text-gray-400 group-hover:text-gray-200"}`}>
+      {/* 标题 + 描述 */}
+      <div className="p-1.5">
+        <p className={`text-xs font-medium truncate leading-tight transition-colors ${isActive ? "text-cyber-pink" : "text-gray-300 group-hover:text-white"}`}>
           {video.title}
+        </p>
+        <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1 font-mono">
+          <span>{video.category}</span>
+          {video.views && (
+            <>
+              <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
+              <span>{video.views}次</span>
+            </>
+          )}
         </p>
       </div>
     </button>
