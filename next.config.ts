@@ -12,17 +12,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // 静态资源：每次都校验，不使用旧缓存
-        source: "/_next/static/:path*",
+        // 所有 Next.js 静态产物（JS/CSS/JSON）一律不缓存，杜绝浏览器复用旧 bundle
+        source: "/_next/static/(.*)",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" },
         ],
       },
       {
-        // HTML 文档绝对不缓存，确保始终拿到最新引用（杜绝浏览器复用旧页面）
+        // HTML 文档绝对不缓存
         source: "/:path((?!_next/).*)",
         headers: [
-          { key: "Cache-Control", value: "no-store" },
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" },
         ],
       },
     ];
