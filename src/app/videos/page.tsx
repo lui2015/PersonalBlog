@@ -45,8 +45,8 @@ export default function VideosPage() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-16">
+    <main className="relative min-h-screen">
+      <div className="relative z-10 mx-auto max-w-5xl px-4 py-16">
         <header className="mb-10 text-center">
           <p className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.3em] text-cyber-pink">
             VIDEOS
@@ -75,7 +75,7 @@ export default function VideosPage() {
         {!ready ? (
           <div className="py-20 text-center text-gray-500">加载中…</div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {videos.map((video) => {
               const embed = getEmbed(video);
               return (
