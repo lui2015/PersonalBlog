@@ -166,15 +166,17 @@ export default function AgentModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-cyber-blue/30 bg-gradient-to-r from-cyber-blue/10 to-cyber-purple/10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyber-blue via-cyber-purple to-cyber-pink flex items-center justify-center font-[family-name:var(--font-orbitron)] text-white text-sm shadow-[0_0_15px_var(--color-cyber-purple)]">
-              AI
-            </div>
+            <img
+              src="/images/avatar.jpg"
+              alt="鲁力铭"
+              className="w-9 h-9 rounded-full object-cover shadow-[0_0_15px_var(--color-cyber-purple)]"
+            />
             <div>
               <h3 className="font-[family-name:var(--font-orbitron)] text-white text-sm">
                 鲁力铭
               </h3>
               <p className="text-[11px] text-gray-500">
-                高级互联网项目经理 · 腾讯混元驱动
+                高级互联网项目经理
               </p>
             </div>
           </div>
