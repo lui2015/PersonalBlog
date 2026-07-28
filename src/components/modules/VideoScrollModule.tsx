@@ -98,25 +98,25 @@ function ThumbCard({
         {/* 播放图标 */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 ${
               isActive
                 ? "bg-cyber-pink/40 border-cyber-pink"
                 : "bg-black/40 border-white/20 group-hover:bg-cyber-pink/30 group-hover:border-cyber-pink/50"
             }`}
           >
-            <span className="text-white text-xs ml-0.5">▶</span>
+            <span className="text-white text-[10px] ml-0.5">▶</span>
           </div>
         </div>
 
         {/* 时长 */}
-        <span className="absolute bottom-1.5 right-1.5 text-[10px] font-mono text-white bg-black/70 px-1.5 py-0.5 rounded">
+        <span className="absolute bottom-1 right-1 text-[9px] font-mono text-white bg-black/70 px-1 py-0.5 rounded">
           {video.duration || "--:--"}
         </span>
       </div>
 
       {/* 标题 */}
-      <div className="p-2">
-        <p className={`text-[11px] sm:text-xs truncate transition-colors ${isActive ? "text-cyber-pink" : "text-gray-400 group-hover:text-gray-200"}`}>
+      <div className="p-1.5">
+        <p className={`text-[10px] sm:text-[11px] truncate leading-tight transition-colors ${isActive ? "text-cyber-pink" : "text-gray-400 group-hover:text-gray-200"}`}>
           {video.title}
         </p>
       </div>
@@ -156,9 +156,9 @@ export default function VideoScrollModule() {
       </div>
 
       {/* 布局：左大右小（桌面） / 上大下小（移动端） */}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 lg:h-[420px]">
         {/* 精选主卡 */}
-        <div className="lg:w-[58%] shrink-0 min-w-0">
+        <div className="lg:w-[58%] shrink-0 min-w-0 lg:overflow-y-auto lg:max-h-full">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeVideo.id}
@@ -173,12 +173,12 @@ export default function VideoScrollModule() {
         </div>
 
         {/* 缩略图列表：桌面端两列纵向可滚动 */}
-        <div className="lg:flex-1 lg:min-h-[420px]">
+        <div className="lg:flex-1 lg:min-h-0 lg:h-[calc(100%-0px)] lg:flex lg:flex-col">
           <div
-            className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-2.5 lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none lg:max-h-[420px] lg:p-0"
+            className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-2 lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none lg:flex-1 lg:min-h-0"
             style={{
               scrollbarWidth: "thin",
-              msOverflowStyle: "none",
+              scrollbarColor: "rgba(255,0,128,0.3) transparent",
             }}
           >
             {videos.map((v, i) => (
