@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: { messages?: { role: string; content: string }[] };
+  let body: { messages?: { role: string; content: string | { type: string; text?: string; image_url?: { url: string } }[] }[] };
   try {
     body = await req.json();
   } catch {
@@ -45,7 +45,12 @@ export async function POST(req: NextRequest) {
       { role: "system", content: SYSTEM_PROMPT },
       ...userMessages.map((m) => ({
         role: m.role === "assistant" ? "assistant" : "user",
-        content: String(m.content || ""),
+        content:
+          typeof m.content === "string"
+            ? m.content
+            : Array.isArray(m.content)
+              ? m.content
+              : String(m.content || ""),
       })),
     ],
   };
