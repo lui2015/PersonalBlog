@@ -43,10 +43,12 @@ function AnimatedNumber({
  */
 function inferHref(label: string): string | null {
   const l = label.trim();
-  if (/文章|博客|作品|blog|article|post/i.test(l)) return "/blog";
+  if (/文章|博客|blog|article|post/i.test(l)) return "/blog";
   if (/视频|video/i.test(l)) return "/videos";
   if (/相册|图库|gallery|photo/i.test(l)) return "/gallery";
   if (/诗集|诗词|poem/i.test(l)) return "/poems";
+  if (/软件|software/i.test(l)) return "/software";
+  if (/技能|skill/i.test(l)) return "/skills";
   return null;
 }
 
@@ -57,13 +59,13 @@ export default function StatsModule() {
   if (stats.length === 0) return null;
 
   // 计算每张卡片实际展示的数值：
-  // - 文章 / 相册 / 诗集 取真实数据长度，避免后台手填与现实不符
-  // - 视频暂无统一数据源，沿用后台手填值
+  // - 文章 / 相册 / 诗集 / 软件 / 技能 取真实数据长度，避免后台手填与现实不符
   // - 其他保持后台数值
   const resolveValue = (stat: Stat): number => {
     const l = stat.label.trim();
-    if (/文章|博客|作品|blog|article|post/i.test(l))
+    if (/文章|博客|blog|article|post/i.test(l))
       return content.works.length;
+    if (/视频|video/i.test(l)) return content.videos.length;
     if (/相册|图库|gallery|photo/i.test(l)) {
       const albumPhotos = (content.albums ?? []).reduce(
         (n, a) => n + (a.photos?.length ?? 0),
@@ -72,8 +74,29 @@ export default function StatsModule() {
       return albumPhotos > 0 ? albumPhotos : content.photos.length;
     }
     if (/诗集|诗词|poem/i.test(l)) return content.poems.length;
+    if (/软件|software/i.test(l)) return content.softwares.length;
+    if (/技能|skill/i.test(l)) return content.myskills.length;
     return stat.value;
   };
+
+  // 追加软件和技能的动态统计（不在 site-content.json 中配置，由数据自动计算）
+  const extraStats: Stat[] = [
+    {
+      id: "auto-software",
+      label: "软件作品",
+      value: content.softwares.length,
+      suffix: "个",
+      color: "cyber-blue",
+    },
+    {
+      id: "auto-skill",
+      label: "技能",
+      value: content.myskills.length,
+      suffix: "项",
+      color: "cyber-cyan",
+    },
+  ];
+  const allStats = [...stats, ...extraStats];
 
   return (
     <motion.div
@@ -87,10 +110,10 @@ export default function StatsModule() {
 
       <div
         className={`grid grid-cols-2 ${
-          stats.length >= 4 ? "md:grid-cols-4" : `md:grid-cols-${stats.length}`
+          allStats.length >= 4 ? "md:grid-cols-3 lg:grid-cols-6" : `md:grid-cols-${allStats.length}`
         } gap-3 sm:gap-4`}
       >
-        {stats.map((stat, i) => {
+        {allStats.map((stat, i) => {
           const href = inferHref(stat.label);
           const displayValue = resolveValue(stat);
 
