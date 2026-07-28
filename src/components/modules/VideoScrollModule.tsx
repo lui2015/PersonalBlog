@@ -98,25 +98,25 @@ function ThumbCard({
         {/* 播放图标 */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div
-            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 ${
+            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 ${
               isActive
                 ? "bg-cyber-pink/40 border-cyber-pink"
                 : "bg-black/40 border-white/20 group-hover:bg-cyber-pink/30 group-hover:border-cyber-pink/50"
             }`}
           >
-            <span className="text-white text-[10px] ml-0.5">▶</span>
+            <span className="text-white text-[9px] ml-0.5">▶</span>
           </div>
         </div>
 
         {/* 时长 */}
-        <span className="absolute bottom-1 right-1 text-[9px] font-mono text-white bg-black/70 px-1 py-0.5 rounded">
+        <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono text-white bg-black/70 px-1 py-px rounded">
           {video.duration || "--:--"}
         </span>
       </div>
 
       {/* 标题 */}
-      <div className="p-1.5">
-        <p className={`text-[10px] sm:text-[11px] truncate leading-tight transition-colors ${isActive ? "text-cyber-pink" : "text-gray-400 group-hover:text-gray-200"}`}>
+      <div className="p-1 lg:p-1.5">
+        <p className={`text-[11px] truncate leading-snug transition-colors ${isActive ? "text-cyber-pink" : "text-gray-400 group-hover:text-gray-200"}`}>
           {video.title}
         </p>
       </div>
@@ -156,9 +156,9 @@ export default function VideoScrollModule() {
       </div>
 
       {/* 布局：左大右小（桌面） / 上大下小（移动端） */}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 lg:h-[420px]">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5">
         {/* 精选主卡 */}
-        <div className="lg:w-[58%] shrink-0 min-w-0 lg:overflow-y-auto lg:max-h-full">
+        <div className="lg:w-[58%] shrink-0 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeVideo.id}
@@ -173,12 +173,13 @@ export default function VideoScrollModule() {
         </div>
 
         {/* 缩略图列表：桌面端两列纵向可滚动 */}
-        <div className="lg:flex-1 lg:min-h-0 lg:h-[calc(100%-0px)] lg:flex lg:flex-col">
+        <div className="hidden lg:block lg:w-[42%]">
           <div
-            className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-2 lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none lg:flex-1 lg:min-h-0"
+            className="grid grid-cols-2 gap-1.5 overflow-y-auto pr-1"
             style={{
+              height: "380px",
               scrollbarWidth: "thin",
-              scrollbarColor: "rgba(255,0,128,0.3) transparent",
+              scrollbarColor: "rgba(255,0,128,0.4) transparent",
             }}
           >
             {videos.map((v, i) => (
@@ -190,6 +191,20 @@ export default function VideoScrollModule() {
               />
             ))}
           </div>
+        </div>
+
+        {/* 移动端：横向滑动 */}
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {videos.map((v, i) => (
+            <ThumbCard
+              key={v.id}
+              video={v}
+              isActive={i === activeIndex}
+              onClick={() => setActiveIndex(i)}
+            />
+          ))}
         </div>
       </div>
 
