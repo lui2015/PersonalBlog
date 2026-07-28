@@ -79,7 +79,7 @@ function ThumbCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative shrink-0 w-[120px] sm:w-[160px] lg:w-[180px] rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer text-left ${
+      className={`group relative shrink-0 w-[120px] sm:w-[160px] lg:w-full rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer text-left ${
         isActive
           ? "border-cyber-pink shadow-[0_0_20px_rgba(255,0,128,0.35)] scale-[1.02]"
           : "border-white/10 hover:border-cyber-pink/40"
@@ -172,12 +172,12 @@ export default function VideoScrollModule() {
           </AnimatePresence>
         </div>
 
-        {/* 缩略图列表：桌面端纵向排列，高度跟随主卡 */}
-        <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+        {/* 缩略图列表：桌面端两列纵向可滚动 */}
+        <div className="lg:flex-1 lg:min-h-[420px]">
           <div
-            className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:flex-col lg:overflow-y-auto lg:snap-none lg:snap-y lg:flex-1"
+            className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-2.5 lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none lg:max-h-[420px] lg:p-0"
             style={{
-              scrollbarWidth: "none",
+              scrollbarWidth: "thin",
               msOverflowStyle: "none",
             }}
           >
