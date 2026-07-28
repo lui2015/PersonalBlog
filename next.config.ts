@@ -19,10 +19,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // HTML 文档不缓存，确保始终拿到最新引用
+        // HTML 文档绝对不缓存，确保始终拿到最新引用（杜绝浏览器复用旧页面）
         source: "/:path((?!_next/).*)",
         headers: [
-          { key: "Cache-Control", value: "no-cache, must-revalidate" },
+          { key: "Cache-Control", value: "no-store" },
         ],
       },
     ];
