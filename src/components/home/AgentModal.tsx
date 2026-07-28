@@ -39,14 +39,8 @@ export default function AgentModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState("");
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, typed]);
-
-  if (!open) return null;
-
+  // 注意：useCallback 等 Hook 必须在条件返回之前声明，否则 open 切换时
+  // 两次渲染的 Hook 数量不一致会导致 React 直接崩溃（整页白屏）。
   const imageToBase64 = useCallback((file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -55,6 +49,14 @@ export default function AgentModal({
       reader.readAsDataURL(file);
     });
   }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, typed]);
+
+  if (!open) return null;
 
   const send = async () => {
     const text = input.trim();
