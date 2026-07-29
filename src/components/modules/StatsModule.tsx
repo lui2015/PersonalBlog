@@ -90,13 +90,28 @@ export default function StatsModule() {
     },
     {
       id: "auto-skill",
-      label: "技能",
+      label: "爱好",
       value: content.myskills.length,
       suffix: "项",
       color: "cyber-cyan",
     },
   ];
   const allStats = [...stats, ...extraStats];
+
+  // 按固定顺序排列：软件 → 相册 → 视频 → 文章 → 诗集 → 爱好
+  const orderMap: Record<string, number> = {
+    软件作品: 0, 软件: 0,
+    相册: 1, 图库: 1, 摄影: 1,
+    视频: 2,
+    文章: 3, 博客: 3,
+    诗集: 4, 诗词: 4,
+    爱好: 5, 技能: 5,
+  };
+  const sortedStats = [...allStats].sort((a, b) => {
+    const ka = orderMap[a.label] ?? 99;
+    const kb = orderMap[b.label] ?? 99;
+    return ka - kb;
+  });
 
   return (
     <motion.div
@@ -110,10 +125,10 @@ export default function StatsModule() {
 
       <div
         className={`grid grid-cols-2 ${
-          allStats.length >= 4 ? "md:grid-cols-3 lg:grid-cols-6" : `md:grid-cols-${allStats.length}`
+          sortedStats.length >= 4 ? "md:grid-cols-3 lg:grid-cols-6" : `md:grid-cols-${sortedStats.length}`
         } gap-3 sm:gap-4`}
       >
-        {allStats.map((stat, i) => {
+        {sortedStats.map((stat, i) => {
           const href = inferHref(stat.label);
           const displayValue = resolveValue(stat);
 

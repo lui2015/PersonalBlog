@@ -2,18 +2,22 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { useContent } from "@/lib/ContentContext";
+
+const hobbies = [
+  { id: "finance", name: "金融", level: 30 },
+  { id: "coding", name: "编程", level: 30 },
+  { id: "reading", name: "阅读", level: 20 },
+  { id: "shortvideo", name: "短视频", level: 10 },
+  { id: "pet", name: "养宠", level: 10 },
+];
 
 export default function SkillRadarModule() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { content } = useContent();
-  const skills = content.skills;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    if (skills.length < 3) {
-      // 雷达图至少 3 项才有意义
+    if (hobbies.length < 3) {
       const ctx = canvas.getContext("2d");
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
       return;
@@ -39,7 +43,7 @@ export default function SkillRadarModule() {
       ctx.stroke();
     }
 
-    const sides = skills.length;
+    const sides = hobbies.length;
     const angleStep = (Math.PI * 2) / sides;
 
     // 轴线
@@ -56,9 +60,9 @@ export default function SkillRadarModule() {
 
     // 数据多边形
     ctx.beginPath();
-    skills.forEach((skill, i) => {
+    hobbies.forEach((item, i) => {
       const angle = angleStep * i - Math.PI / 2;
-      const r = (Math.max(0, Math.min(100, skill.level)) / 100) * maxRadius;
+      const r = (Math.max(0, Math.min(100, item.level)) / 100) * maxRadius;
       const x = center + Math.cos(angle) * r;
       const y = center + Math.sin(angle) * r;
       if (i === 0) ctx.moveTo(x, y);
@@ -72,9 +76,9 @@ export default function SkillRadarModule() {
     ctx.stroke();
 
     // 数据点
-    skills.forEach((skill, i) => {
+    hobbies.forEach((item, i) => {
       const angle = angleStep * i - Math.PI / 2;
-      const r = (Math.max(0, Math.min(100, skill.level)) / 100) * maxRadius;
+      const r = (Math.max(0, Math.min(100, item.level)) / 100) * maxRadius;
       const x = center + Math.cos(angle) * r;
       const y = center + Math.sin(angle) * r;
       ctx.beginPath();
@@ -85,7 +89,7 @@ export default function SkillRadarModule() {
       ctx.fill();
       ctx.shadowBlur = 0;
     });
-  }, [skills]);
+  }, []);
 
   return (
     <motion.div
@@ -95,25 +99,25 @@ export default function SkillRadarModule() {
       className="cyber-card p-4 sm:p-6 hud-corner"
     >
       <h3 className="font-[family-name:var(--font-orbitron)] text-xs sm:text-sm text-cyber-blue mb-4 sm:mb-6">
-        ◈ SKILL RADAR
+        ◈ HOBBY
       </h3>
 
       <div className="flex flex-col items-center gap-4 sm:gap-6">
         <canvas ref={canvasRef} className="w-[160px] h-[160px] sm:w-[200px] sm:h-[200px]" />
 
         <div className="w-full space-y-2.5 sm:space-y-3">
-          {skills.map((skill, i) => (
+          {hobbies.map((item, i) => (
             <motion.div
-              key={skill.id}
+              key={item.id}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
             >
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-300">{skill.name}</span>
+                <span className="text-gray-300">{item.name}</span>
                 <span className="text-cyber-blue font-[family-name:var(--font-mono)]">
-                  {skill.level}%
+                  {item.level}%
                 </span>
               </div>
               <div className="h-1.5 bg-cyber-dark rounded overflow-hidden">
@@ -124,7 +128,7 @@ export default function SkillRadarModule() {
                   }}
                   initial={{ width: 0 }}
                   whileInView={{
-                    width: `${Math.max(0, Math.min(100, skill.level))}%`,
+                    width: `${Math.max(0, Math.min(100, item.level))}%`,
                   }}
                   viewport={{ once: true }}
                   transition={{ duration: 1, delay: i * 0.1 }}
