@@ -133,6 +133,119 @@ function ThumbCard({
   );
 }
 
+/* ---- 纵向无限滚动 marquee（两列并排，各自向上/向下循环，hover 暂停） ---- */
+function VerticalMarquee({
+  videos,
+  activeIndex,
+  onSelect,
+}: {
+  videos: Video[];
+  activeIndex: number;
+  onSelect: (i: number) => void;
+}) {
+  const HEIGHT = 480; // 与左侧主卡高度大致对齐，消除底部留白
+
+  // 按奇偶拆成左右两列，保持原始顺序
+  const leftVideos = videos.filter((_, i) => i % 2 === 0);
+  const rightVideos = videos.filter((_, i) => i % 2 === 1);
+
+  return (
+    <div
+      className="grid grid-cols-2 gap-1.5 group/marquee"
+      style={{
+        height: HEIGHT,
+        maskImage:
+          "linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)",
+      }}
+    >
+      <MarqueeColumn
+        videos={leftVideos}
+        offset={0}
+        activeIndex={activeIndex}
+        onSelect={onSelect}
+        direction="up"
+        speed={24}
+      />
+      <MarqueeColumn
+        videos={rightVideos}
+        offset={1}
+        activeIndex={activeIndex}
+        onSelect={onSelect}
+        direction="down"
+        speed={28}
+      />
+
+      {/* 纵向 marquee 关键帧 + hover 暂停 */}
+      <style jsx global>{`
+        @keyframes vmarquee-up {
+          from {
+            transform: translateY(0);
+          }
+          to {
+            transform: translateY(-50%);
+          }
+        }
+        @keyframes vmarquee-down {
+          from {
+            transform: translateY(-50%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+        .group\\/marquee:hover .vmarquee-track {
+          animation-play-state: paused;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* 单列纵向无限滚动（纯 CSS 动画，hover 整个 marquee 时暂停） */
+function MarqueeColumn({
+  videos,
+  offset,
+  activeIndex,
+  onSelect,
+  direction = "up",
+  speed = 24,
+}: {
+  videos: Video[];
+  offset: number; // 该列视频在原数组中的下标偏移（0=左列偶数, 1=右列奇数）
+  activeIndex: number;
+  onSelect: (i: number) => void;
+  direction?: "up" | "down";
+  speed?: number;
+}) {
+  if (!videos.length) return null;
+  const animName = direction === "up" ? "vmarquee-up" : "vmarquee-down";
+  return (
+    <div className="relative overflow-hidden h-full">
+      <div
+        className="vmarquee-track flex flex-col gap-1.5 will-change-transform"
+        style={{
+          animation: `${animName} ${speed}s linear infinite`,
+        }}
+      >
+        {[...videos, ...videos].map((v, i) => {
+          const realIdx = offset + (i % videos.length) * 2;
+          return (
+            <div key={`${v.id}-${i}`} className="shrink-0">
+              <ThumbCard
+                video={v}
+                isActive={realIdx === activeIndex}
+                onClick={() => onSelect(realIdx)}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ---- 主模块：精选 + 横向缩略图条 ---- */
 export default function VideoScrollModule() {
   const { content } = useContent();
@@ -181,25 +294,13 @@ export default function VideoScrollModule() {
           </AnimatePresence>
         </div>
 
-        {/* 缩略图列表：桌面端两列纵向可滚动 */}
+        {/* 缩略图列表：桌面端两列纵向自动无限滚动（hover 暂停） */}
         <div className="hidden lg:block lg:w-[42%]">
-          <div
-            className="grid grid-cols-2 gap-1.5 overflow-y-auto pr-1"
-            style={{
-              height: "380px",
-              scrollbarWidth: "thin",
-              scrollbarColor: "rgba(255,0,128,0.4) transparent",
-            }}
-          >
-            {videos.map((v, i) => (
-              <ThumbCard
-                key={v.id}
-                video={v}
-                isActive={i === activeIndex}
-                onClick={() => setActiveIndex(i)}
-              />
-            ))}
-          </div>
+          <VerticalMarquee
+            videos={videos}
+            activeIndex={activeIndex}
+            onSelect={setActiveIndex}
+          />
         </div>
 
         {/* 移动端：横向滑动 */}
