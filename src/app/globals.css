@@ -257,6 +257,28 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+/* ========== 视频纵向无限滚动 marquee ========== */
+@keyframes vmarquee-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+@keyframes vmarquee-down {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+.vmarquee-track {
+  will-change: transform;
+}
+.vmarquee-up {
+  animation: vmarquee-up var(--vmarquee-duration, 24s) linear infinite;
+}
+.vmarquee-down {
+  animation: vmarquee-down var(--vmarquee-duration, 28s) linear infinite;
+}
+.vmarquee-group:hover .vmarquee-track {
+  animation-play-state: paused;
+}
+
 /* ========== 六边形头像 ========== */
 .hexagon {
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);

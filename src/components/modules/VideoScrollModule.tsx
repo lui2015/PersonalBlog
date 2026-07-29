@@ -151,7 +151,7 @@ function VerticalMarquee({
 
   return (
     <div
-      className="grid grid-cols-2 gap-1.5 group/marquee"
+      className="grid grid-cols-2 gap-1.5 vmarquee-group"
       style={{
         height: HEIGHT,
         maskImage:
@@ -176,29 +176,6 @@ function VerticalMarquee({
         direction="down"
         speed={28}
       />
-
-      {/* 纵向 marquee 关键帧 + hover 暂停 */}
-      <style jsx global>{`
-        @keyframes vmarquee-up {
-          from {
-            transform: translateY(0);
-          }
-          to {
-            transform: translateY(-50%);
-          }
-        }
-        @keyframes vmarquee-down {
-          from {
-            transform: translateY(-50%);
-          }
-          to {
-            transform: translateY(0);
-          }
-        }
-        .group\\/marquee:hover .vmarquee-track {
-          animation-play-state: paused;
-        }
-      `}</style>
     </div>
   );
 }
@@ -220,14 +197,12 @@ function MarqueeColumn({
   speed?: number;
 }) {
   if (!videos.length) return null;
-  const animName = direction === "up" ? "vmarquee-up" : "vmarquee-down";
+  const dirClass = direction === "up" ? "vmarquee-up" : "vmarquee-down";
   return (
     <div className="relative overflow-hidden h-full">
       <div
-        className="vmarquee-track flex flex-col gap-1.5 will-change-transform"
-        style={{
-          animation: `${animName} ${speed}s linear infinite`,
-        }}
+        className={`vmarquee-track ${dirClass} flex flex-col gap-1.5`}
+        style={{ "--vmarquee-duration": `${speed}s` } as React.CSSProperties}
       >
         {[...videos, ...videos].map((v, i) => {
           const realIdx = offset + (i % videos.length) * 2;
