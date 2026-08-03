@@ -8,12 +8,12 @@ import { useAuth } from "@/lib/AuthContext";
 const navItems = [
   { href: "/admin", label: "总览", icon: "◈" },
   { href: "/admin/hero", label: "首页 · 主屏", icon: "◇" },
+  { href: "/admin/works", label: "我的作品", icon: "✎" },
   { href: "/admin/poems", label: "首页 · 诗词", icon: "✦" },
-  { href: "/admin/photos", label: "首页 · 相框", icon: "◫" },
+  { href: "/admin/quotes", label: "首页 · 思考", icon: "❝" },
   { href: "/admin/stats", label: "首页 · 数据", icon: "▤" },
   { href: "/admin/skills", label: "首页 · 技能", icon: "▲" },
-  { href: "/admin/quotes", label: "首页 · 语录", icon: "❝" },
-  { href: "/admin/works", label: "我的作品", icon: "✎" },
+  { href: "/admin/photos", label: "首页 · 相框", icon: "◫" },
 ];
 
 export default function AdminLayout({

@@ -32,9 +32,9 @@ export default function BootAnimation() {
         setTimeout(() => {
           setIsBooting(false);
           sessionStorage.setItem("hasBooted", "true");
-        }, 500);
+        }, 300);
       }
-    }, 400);
+    }, 250);
 
     return () => clearInterval(timer);
   }, []);

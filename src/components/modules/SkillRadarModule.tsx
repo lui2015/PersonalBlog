@@ -25,11 +25,11 @@ export default function SkillRadarModule() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const size = 200;
+    const size = 280;
     canvas.width = size;
     canvas.height = size;
     const center = size / 2;
-    const maxRadius = size / 2 - 20;
+    const maxRadius = size / 2 - 24;
 
     ctx.clearRect(0, 0, size, size);
 
@@ -69,25 +69,53 @@ export default function SkillRadarModule() {
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.fillStyle = "rgba(0, 240, 255, 0.15)";
+
+    // 外发光层
+    ctx.save();
+    ctx.shadowColor = "#00f0ff";
+    ctx.shadowBlur = 24;
+    ctx.fillStyle = "rgba(0, 240, 255, 0.08)";
     ctx.fill();
+    ctx.restore();
+
+    // 填充
+    ctx.fillStyle = "rgba(0, 240, 255, 0.22)";
+    ctx.fill();
+    // 描边
     ctx.strokeStyle = "#00f0ff";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    // 数据点
+    // 数据点 + 标签
     hobbies.forEach((item, i) => {
       const angle = angleStep * i - Math.PI / 2;
       const r = (Math.max(0, Math.min(100, item.level)) / 100) * maxRadius;
       const x = center + Math.cos(angle) * r;
       const y = center + Math.sin(angle) * r;
+
+      // 数据点
       ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
       ctx.fillStyle = "#00f0ff";
       ctx.shadowColor = "#00f0ff";
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 20;
       ctx.fill();
+      // 内核白点
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
       ctx.shadowBlur = 0;
+      ctx.fill();
+
+      // 标签（在轴线上方）
+      const labelR = maxRadius + 16;
+      const lx = center + Math.cos(angle) * labelR;
+      const ly = center + Math.sin(angle) * labelR;
+      ctx.font = "12px system-ui";
+      ctx.fillStyle = "rgba(200,220,255,0.7)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(item.name, lx, ly);
     });
   }, []);
 
@@ -103,7 +131,7 @@ export default function SkillRadarModule() {
       </h3>
 
       <div className="flex flex-col items-center gap-4 sm:gap-6">
-        <canvas ref={canvasRef} className="w-[160px] h-[160px] sm:w-[200px] sm:h-[200px]" />
+        <canvas ref={canvasRef} className="w-[220px] h-[220px] sm:w-[280px] sm:h-[280px]" />
 
         <div className="w-full space-y-2.5 sm:space-y-3">
           {hobbies.map((item, i) => (

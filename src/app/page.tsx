@@ -4,6 +4,7 @@ import LatestBlogModule from "@/components/modules/LatestBlogModule";
 import StatsModule from "@/components/modules/StatsModule";
 import QuoteModule from "@/components/modules/QuoteModule";
 import SkillRadarModule from "@/components/modules/SkillRadarModule";
+import PhotoFrameModule from "@/components/modules/PhotoFrameModule";
 import SoftwareScrollModule from "@/components/modules/SoftwareScrollModule";
 import SkillScrollModule from "@/components/modules/SkillScrollModule";
 import VideoScrollModule from "@/components/modules/VideoScrollModule";
@@ -37,8 +38,11 @@ export default function Home() {
         {/* 数据面板 */}
         <StatsModule />
 
-        {/* 技能雷达 */}
-        <SkillRadarModule />
+        {/* 双栏：技能雷达 + 图片画框 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+          <SkillRadarModule />
+          <PhotoFrameModule />
+        </div>
       </section>
     </div>
   );

@@ -27,16 +27,22 @@ export default function AdminHomePage() {
       count: 1,
     },
     {
+      href: "/admin/works",
+      label: "我的作品",
+      desc: "软件 / 技能 / 摄影 / 视频 / 文章",
+      count: content.works.length,
+    },
+    {
       href: "/admin/poems",
       label: "诗词模块",
-      desc: "首页诗词列表",
+      desc: "首页诗词轮播（与思考并列）",
       count: content.poems.length,
     },
     {
-      href: "/admin/photos",
-      label: "相框模块",
-      desc: "首页相册轮播",
-      count: content.photos.length,
+      href: "/admin/quotes",
+      label: "我的思考",
+      desc: `共 ${content.quotes.length} 条 · 首页 RANDOM QUOTE`,
+      count: content.quotes.length,
     },
     {
       href: "/admin/stats",
@@ -47,20 +53,14 @@ export default function AdminHomePage() {
     {
       href: "/admin/skills",
       label: "技能雷达",
-      desc: "技能项及熟练度",
+      desc: "技能项及熟练度（与相框并列）",
       count: content.skills.length,
     },
     {
-      href: "/admin/quotes",
-      label: "随机语录",
-      desc: "首页右侧滚动语录",
-      count: content.quotes.length,
-    },
-    {
-      href: "/admin/works",
-      label: "我的作品",
-      desc: "新增 / 编辑 / 删除",
-      count: content.works.length,
+      href: "/admin/photos",
+      label: "相框模块",
+      desc: "AboutMe 相册（首页画框）",
+      count: content.photos.length,
     },
   ];
 

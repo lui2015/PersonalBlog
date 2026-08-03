@@ -1,16 +1,44 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useContent } from "@/lib/ContentContext";
 import WorksCategoryModal from "@/components/home/WorksCategoryModal";
-import FireworksCanvas from "@/components/home/FireworksCanvas";
-import StarfieldCanvas from "@/components/home/StarfieldCanvas";
-import BubblesCanvas from "@/components/home/BubblesCanvas";
-import MatrixRainCanvas from "@/components/home/MatrixRainCanvas";
-import EnergyRingsCanvas from "@/components/home/EnergyRingsCanvas";
+import { lazy, Suspense } from "react";
+
+const FireworksCanvas = lazy(() => import("@/components/home/FireworksCanvas"));
+const StarfieldCanvas = lazy(() => import("@/components/home/StarfieldCanvas"));
+const BubblesCanvas = lazy(() => import("@/components/home/BubblesCanvas"));
+const MatrixRainCanvas = lazy(() => import("@/components/home/MatrixRainCanvas"));
+const EnergyRingsCanvas = lazy(() => import("@/components/home/EnergyRingsCanvas"));
+
+function BgCanvas({ mode }: { mode: string }) {
+  return (
+    <Suspense fallback={null}>
+      {mode === "fireworks" ? (
+        <FireworksCanvas />
+      ) : mode === "stars" ? (
+        <StarfieldCanvas />
+      ) : mode === "bubbles" ? (
+        <BubblesCanvas />
+      ) : mode === "matrix" ? (
+        <MatrixRainCanvas />
+      ) : (
+        <EnergyRingsCanvas />
+      )}
+    </Suspense>
+  );
+}
 import AgentModal from "@/components/home/AgentModal";
 import AgentSummonOverlay from "@/components/home/AgentSummonOverlay";
+
+/** 静态兜底：首屏立即显示，不等 API */
+const FALLBACK_HERO = {
+  title: "鲁力铭",
+  subtitle: "全栈开发者 / 投资爱好者 / 终身学习者",
+  avatarText: "鲁",
+  avatarUrl: "",
+};
 
 const PARTICLES = Array.from({ length: 16 }, (_, i) => {
   const angle = (i * (360 / 16) * Math.PI) / 180;
@@ -19,8 +47,18 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => {
 });
 
 export default function HeroSection() {
-  const { content } = useContent();
-  const { title, subtitle, avatarText, avatarUrl } = content.hero;
+  const { content, ready } = useContent();
+  const serverHero = content.hero;
+
+  // 首次渲染用静态兜底立即显示；API 就绪后切换到真实数据（含头像）
+  const [displayedHero, setDisplayedHero] = useState(FALLBACK_HERO);
+  useEffect(() => {
+    if (ready && serverHero) {
+      setDisplayedHero(serverHero);
+    }
+  }, [ready, serverHero]);
+
+  const { title, subtitle, avatarText, avatarUrl } = displayedHero;
   const [burstKey, setBurstKey] = useState(0);
   const [pulse, setPulse] = useState(false);
   const [worksOpen, setWorksOpen] = useState(false);
@@ -90,17 +128,7 @@ export default function HeroSection() {
         }}
       />
 
-      {bgMode === "fireworks" ? (
-        <FireworksCanvas />
-      ) : bgMode === "stars" ? (
-        <StarfieldCanvas />
-      ) : bgMode === "bubbles" ? (
-        <BubblesCanvas />
-      ) : bgMode === "matrix" ? (
-        <MatrixRainCanvas />
-      ) : (
-        <EnergyRingsCanvas />
-      )}
+      <BgCanvas mode={bgMode} />
 
       <div className="relative z-10 text-center px-4">
         <motion.div
