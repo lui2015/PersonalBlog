@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { readContent, writeContent } from "@/lib/server/content";
-import { SESSION_COOKIE, verifySession } from "@/lib/server/auth";
+import { checkApiAuth } from "@/lib/server/auth";
 import type { SiteContent } from "@/lib/types";
-import { cookies } from "next/headers";
 
 // 这条路由必须在 Node runtime（用到 fs / crypto）
 export const runtime = "nodejs";
@@ -19,9 +18,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const cookieStore = await cookies();
-  const session = verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-  if (!session) {
+  if (!(await checkApiAuth(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

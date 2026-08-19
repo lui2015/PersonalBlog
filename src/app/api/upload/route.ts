@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { SESSION_COOKIE, verifySession } from "@/lib/server/auth";
+import { checkApiAuth } from "@/lib/server/auth";
 import { storage } from "@/lib/server/storage";
 
 export const runtime = "nodejs";
@@ -16,9 +15,7 @@ const ALLOWED = new Map<string, string>([
 ]);
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies();
-  const session = verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-  if (!session) {
+  if (!(await checkApiAuth(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

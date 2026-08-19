@@ -45,7 +45,7 @@ curl -s ${BASE_URL}/api/content | python3 -m json.tool
   {
     method: "PUT",
     path: "/api/content",
-    description: "更新站点内容（需管理员登录）",
+    description: "更新站点内容（请求头携带管理员账号密码）",
     auth: true,
     bodyExample: `{
   "hero": { "title": "鲁力铭", "subtitle": "...", "avatarText": "鲁", "avatarUrl": "" },
@@ -70,38 +70,29 @@ curl -s ${BASE_URL}/api/content > site.json && cat site.json | python3 -m json.t
 
 **第2步：修改 JSON 文件中对应字段（如 softwares 新增软件）**
 
-**第3步：提交更新（需要先登录获取 cookie）**
+**第3步：提交更新（在请求头携带管理员账号密码，无需登录）**
 \`\`\`bash
-# 先登录获取 session cookie
-COOKIE=$(curl -s -c - -X POST ${BASE_URL}/api/login \\
-  -H 'Content-Type: application/json' \\
-  -d '{"username":"luli","password":"luli116574"}' | grep -v '#' | awk '{print $6"="$7}' | tr '\\n' ';')
-
-# 用 cookie 提交更新
 curl -s -X PUT ${BASE_URL}/api/content \\
   -H 'Content-Type: application/json' \\
-  -b "$COOKIE" \\
+  -H 'X-Admin-User: luli' \\
+  -H 'X-Admin-Pass: luli116574' \\
   -d @site.json
 \`\`\``,
   },
   {
     method: "POST",
     path: "/api/upload",
-    description: "上传图片文件（需管理员登录），返回图片 URL",
+    description: "上传图片文件（请求头携带管理员账号密码），返回图片 URL",
     auth: true,
     responseExample: `{ "ok": true, "url": "/uploads/xxx.jpg" }`,
     prompt: `请帮我上传一张图片到站点：
 
 \`\`\`bash
-# 先登录获取 session cookie
-COOKIE=$(curl -s -c - -X POST ${BASE_URL}/api/login \\
-  -H 'Content-Type: application/json' \\
-  -d '{"username":"luli","password":"luli116574"}' | grep -v '#' | awk '{print $6"="$7}' | tr '\\n' ';')
-
-# 上传图片（支持 jpg/png/webp/gif/svg，最大 8MB）
+# 上传图片（支持 jpg/png/webp/gif/svg，最大 8MB；请求头携带管理员账号密码）
 curl -s -X POST ${BASE_URL}/api/upload \\
-  -F "file=@/path/to/your/image.jpg" \\
-  -b "$COOKIE"
+  -H 'X-Admin-User: luli' \\
+  -H 'X-Admin-Pass: luli116574' \\
+  -F "file=@/path/to/your/image.jpg"
 \`\`\`
 
 返回的 \`url\` 字段就是图片地址，可用于 softwares 的 image 字段或 works 的 cover 字段。`,
@@ -118,10 +109,8 @@ const scenarios = [
 ## 1. 上传软件封面图
 用 curl 调用上传接口：
 \`\`\`bash
-# 登录并上传封面
-SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
-
-curl -X POST "${BASE_URL}/api/upload" -F "file=@/path/to/cover.png" -b "$SESSION_COOKIE"
+# 上传软件封面图（请求头携带管理员账号密码）
+curl -X POST "${BASE_URL}/api/upload" -F "file=@/path/to/cover.png" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574"
 \`\`\`
 记下返回的 url。
 
@@ -134,7 +123,7 @@ curl -s "${BASE_URL}/api/content" > data.json
 # { "id": "sw_唯一ID", "name": "软件名称", "image": "上面返回的url", "description": "简介", "url": "跳转链接" }
 
 # 提交更新
-curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
 \`\`\`
 
 站点地址：${BASE_URL}`,
@@ -146,12 +135,9 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$S
 
 ## 1. 上传照片
 \`\`\`bash
-# 登录
-SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
-
-# 批量上传（每张图调一次）
+# 批量上传（每张图调一次，请求头携带管理员账号密码）
 for f in /path/to/photos/*.jpg; do
-  curl -X POST "${BASE_URL}/api/upload" -F "file=@$f" -b "$SESSION_COOKIE"
+  curl -X POST "${BASE_URL}/api/upload" -F "file=@$f" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574"
 done
 \`\`\`
 
@@ -160,7 +146,7 @@ done
 curl -s "${BASE_URL}/api/content" > data.json
 # 编辑 data.json → albums → 找 name 为 "AboutMe" 的相册 → photos 数组添加新条目
 # 每张: { "id": "photo_唯一ID", "src": "上传返回的url", "title": "照片标题" }
-curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
 \`\`\`
 
 站点地址：${BASE_URL}`,
@@ -172,17 +158,14 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$S
 
 ## 直接调用 API 更新 myskills 数组
 \`\`\`bash
-# 登录
-SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
-
-# 获取当前数据
+# 获取当前数据（请求头携带管理员账号密码）
 curl -s "${BASE_URL}/api/content" > data.json
 
 # 编辑 data.json → myskills 数组末尾追加：
 # { "id": "skill_唯一ID", "name": "技能名称", "level": 熟练度(0-100整数) }
 
 # 提交更新
-curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
 \`\`\`
 
 **数据模型说明**：
@@ -199,17 +182,14 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$S
 
 ## 直接调用 API 更新 poems 数组
 \`\`\`bash
-# 登录
-SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
-
-# 获取当前数据
+# 获取当前数据（请求头携带管理员账号密码）
 curl -s "${BASE_URL}/api/content" > data.json
 
 # 编辑 data.json → poems 数组末尾追加：
 # { "id": "poem_时间戳", "title": "诗词标题", "author": "作者", "date": "日期(如2026年)", "content": "正文内容" }
 
 # 提交更新
-curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
 \`\`\`
 
 **数据模型说明**：
@@ -228,11 +208,8 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$S
 
 ## 1. （可选）上传封面图
 \`\`\`bash
-# 登录
-SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
-
-# 上传封面（如有）
-curl -X POST "${BASE_URL}/api/upload" -F "file=@/path/to/cover.jpg" -b "$SESSION_COOKIE"
+# 上传封面（如有，请求头携带管理员账号密码）
+curl -X POST "${BASE_URL}/api/upload" -F "file=@/path/to/cover.jpg" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574"
 \`\`\`
 记下返回的 url。
 
@@ -245,7 +222,7 @@ curl -s "${BASE_URL}/api/content" > data.json
 # { "id": "article_唯一ID", "slug": "url友好名", "title": "文章标题", "excerpt": "摘要", "date": "2026-08-19", "category": "分类", "tags": ["标签1","标签2"], "readTime": "5分钟", "cover": "封面url(可选)", "content": "正文HTML或Markdown" }
 
 # 提交更新
-curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
 \`\`\`
 
 **数据模型说明**：
@@ -267,17 +244,14 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$S
 
 ## 直接调用 API 更新 quotes 数组
 \`\`\`bash
-# 登录
-SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
-
-# 获取当前数据
+# 获取当前数据（请求头携带管理员账号密码）
 curl -s "${BASE_URL}/api/content" > data.json
 
 # 编辑 data.json → quotes 数组末尾追加：
 # { "id": "t_时间戳", "text": "你的思考内容", "author": "2026年" }
 
 # 提交
-curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
 \`\`\`
 
 **数据模型说明**：
@@ -368,20 +342,20 @@ export default function OpenPlatformPage() {
               ⚠ 认证说明
             </h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              需要认证的接口（PUT/POST）必须携带有效的 session cookie。
-              通过 <code className="text-cyber-green bg-cyber-black/60 px-1">POST /api/login</code> 登录获取。
-              Cookie 名：<code className="text-cyber-green bg-cyber-black/60 px-1">session_id</code>
+              需要认证的接口（PUT /api/content、POST /api/upload）不再要求先登录获取 cookie。
+              直接在请求头携带管理员账号密码即可（也可用查询参数 <code className="text-cyber-green bg-cyber-black/60 px-1">?user=luli&amp;pass=luli116574</code> 替代）：
             </p>
             <CodeBlock
-              code={`# 登录获取 session
-curl -s -c cookies.txt -X POST ${BASE_URL}/api/login \\
-  -H 'Content-Type: application/json' \\
-  -d '{"username":"luli","password":"<密码>"}'
-
-# 后续请求带上 cookie
+              code={`# 更新内容（请求头携带管理员账号密码）
 curl -s -X PUT ${BASE_URL}/api/content \\
   -H 'Content-Type: application/json' \\
-  -b cookies.txt \\
+  -H 'X-Admin-User: luli' \\
+  -H 'X-Admin-Pass: luli116574' \\
+  -d @data.json
+
+# 或等价地用查询参数
+curl -s -X PUT "${BASE_URL}/api/content?user=luli&pass=luli116574" \\
+  -H 'Content-Type: application/json' \\
   -d @data.json`}
             />
           </div>
