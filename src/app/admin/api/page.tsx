@@ -166,11 +166,106 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$S
 站点地址：${BASE_URL}`,
   },
   {
-    title: "新增文章/思考",
-    icon: "📝",
-    prompt: `我想在个人博客「鲁力铭」上新增一条思考记录。请帮我操作：
+    title: "新增技能作品",
+    icon: "🛠️",
+    prompt: `我想在个人博客「鲁力铭」上新增一项技能作品（myskills）。请帮我操作：
 
-## 直接调用 API
+## 直接调用 API 更新 myskills 数组
+\`\`\`bash
+# 登录
+SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
+
+# 获取当前数据
+curl -s "${BASE_URL}/api/content" > data.json
+
+# 编辑 data.json → myskills 数组末尾追加：
+# { "id": "skill_唯一ID", "name": "技能名称", "level": 熟练度(0-100整数) }
+
+# 提交更新
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+\`\`\`
+
+**数据模型说明**：
+- id: 唯一标识，如 "skill_rust"
+- name: 技能名称，如 "Rust"
+- level: 熟练度 0-100 的整数，如 85
+
+站点地址：${BASE_URL}`,
+  },
+  {
+    title: "新增诗词作品",
+    icon: "📜",
+    prompt: `我想在个人博客「鲁力铭」上新增一首诗词作品。请帮我操作：
+
+## 直接调用 API 更新 poems 数组
+\`\`\`bash
+# 登录
+SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
+
+# 获取当前数据
+curl -s "${BASE_URL}/api/content" > data.json
+
+# 编辑 data.json → poems 数组末尾追加：
+# { "id": "poem_时间戳", "title": "诗词标题", "author": "作者", "date": "日期(如2026年)", "content": "正文内容" }
+
+# 提交更新
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+\`\`\`
+
+**数据模型说明**：
+- id: 唯一标识，如 "poem_20260819"
+- title: 诗词标题
+- author: 作者名
+- date: 创作日期，格式如 "2026年8月"
+- content: 诗词正文内容
+
+站点地址：${BASE_URL}`,
+  },
+  {
+    title: "新增文章作品",
+    icon: "📄",
+    prompt: `我想在个人博客「鲁力铭」上新增一篇文章作品。请帮我操作：
+
+## 1. （可选）上传封面图
+\`\`\`bash
+# 登录
+SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
+
+# 上传封面（如有）
+curl -X POST "${BASE_URL}/api/upload" -F "file=@/path/to/cover.jpg" -b "$SESSION_COOKIE"
+\`\`\`
+记下返回的 url。
+
+## 2. 更新 works 数组
+\`\`\`bash
+# 获取当前数据
+curl -s "${BASE_URL}/api/content" > data.json
+
+# 编辑 data.json → works 数组末尾追加：
+# { "id": "article_唯一ID", "slug": "url友好名", "title": "文章标题", "excerpt": "摘要", "date": "2026-08-19", "category": "分类", "tags": ["标签1","标签2"], "readTime": "5分钟", "cover": "封面url(可选)", "content": "正文HTML或Markdown" }
+
+# 提交更新
+curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
+\`\`\`
+
+**数据模型说明**：
+- id / slug: 唯一标识
+- title / excerpt: 标题与摘要
+- date: 发布日期 YYYY-MM-DD 格式
+- category: 文章分类
+- tags: 标签数组
+- readTime: 阅读时长，如 "5分钟"
+- cover: 封面图片 URL（可选）
+- content: 文章正文内容
+
+站点地址：${BASE_URL}`,
+  },
+  {
+    title: "新增我的思考",
+    icon: "💭",
+    prompt: `我想在个人博客「鲁力铭」上新增一条思考记录（quotes）。请帮我操作：
+
+## 直接调用 API 更新 quotes 数组
 \`\`\`bash
 # 登录
 SESSION_COOKIE=$(curl -si -X POST "${BASE_URL}/api/login" -H "Content-Type: application/json" -d '{"username":"luli","password":"luli116574"}' | grep -i "set-cookie:" | sed 's/set-cookie: //i' | cut -d';' -f1)
@@ -184,6 +279,11 @@ curl -s "${BASE_URL}/api/content" > data.json
 # 提交
 curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -b "$SESSION_COOKIE" -d @data.json
 \`\`\`
+
+**数据模型说明**：
+- id: 唯一标识，如 "t_20260819"
+- text: 思考的文字内容
+- author: 时间标注，如 "2026年8月"
 
 站点地址：${BASE_URL}`,
   },
