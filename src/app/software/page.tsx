@@ -16,6 +16,11 @@ export default function SoftwarePage() {
 
   const softwares = content.softwares ?? [];
 
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const sorted = [...softwares].sort((a, b) =>
+    sortOrder === "desc" ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id)
+  );
+
   const openNew = () => {
     setEditing(null);
     setEditorOpen(true);
@@ -53,20 +58,29 @@ export default function SoftwarePage() {
               点击卡片即可前往对应项目 / 网页
             </p>
           </div>
-          {authed && (
-            <button onClick={openNew} className={btnPrimary}>
-              + 新增软件作品
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+              className="text-xs px-3 py-2 border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)] whitespace-nowrap"
+              title={sortOrder === "desc" ? "时间倒序（最新在前）" : "时间正序（最早在前）"}
+            >
+              {sortOrder === "desc" ? "↓ 最新" : "↑ 最早"}
             </button>
-          )}
+            {authed && (
+              <button onClick={openNew} className={btnPrimary}>
+                + 新增软件作品
+              </button>
+            )}
+          </div>
         </div>
 
-        {softwares.length === 0 ? (
+        {sorted.length === 0 ? (
           <div className="text-center text-gray-600 py-24 font-[family-name:var(--font-mono)]">
             暂无软件作品
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {softwares.map((sw, i) => (
+            {sorted.map((sw, i) => (
               <motion.div
                 key={sw.id}
                 initial={{ opacity: 0, y: 20 }}

@@ -27,6 +27,12 @@ export default function VideosPage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
 
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const sortedVideos = [...videos].sort((a, b) => {
+    const cmp = (b.date || "").localeCompare(a.date || "") || b.id.localeCompare(a.id);
+    return sortOrder === "desc" ? cmp : -cmp;
+  });
+
   const handleSaveVideo = (video: Video) => {
     const exists = videos.some((v) => v.id === video.id);
     const next = exists
@@ -57,26 +63,35 @@ export default function VideosPage() {
           <p className="mt-3 text-gray-400">用影像记录世界</p>
         </header>
 
-        {authed && (
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-500">管理员模式：可直接添加 / 编辑 / 删除视频</span>
-            <button
-              className={btnPrimary}
-              onClick={() => {
-                setEditingVideo(null);
-                setVideoModalOpen(true);
-              }}
-            >
-              + 新增视频
-            </button>
-          </div>
-        )}
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <button
+            onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+            className="text-xs px-3 py-2 border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)] whitespace-nowrap"
+            title={sortOrder === "desc" ? "时间倒序（最新在前）" : "时间正序（最早在前）"}
+          >
+            {sortOrder === "desc" ? "↓ 最新" : "↑ 最早"}
+          </button>
+          {authed && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500 hidden sm:inline">管理员模式：可直接添加 / 编辑 / 删除视频</span>
+              <button
+                className={btnPrimary}
+                onClick={() => {
+                  setEditingVideo(null);
+                  setVideoModalOpen(true);
+                }}
+              >
+                + 新增视频
+              </button>
+            </div>
+          )}
+        </div>
 
         {!ready ? (
           <div className="py-20 text-center text-gray-500">加载中…</div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {videos.map((video) => {
+            {sortedVideos.map((video) => {
               const embed = getEmbed(video);
               return (
                 <motion.div

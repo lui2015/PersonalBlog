@@ -17,6 +17,12 @@ export default function BlogPage() {
   const [workModalOpen, setWorkModalOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<Work | null>(null);
 
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const sortedWorks = [...content.works].sort((a, b) => {
+    const cmp = (b.date || "").localeCompare(a.date || "") || b.id.localeCompare(a.id);
+    return sortOrder === "desc" ? cmp : -cmp;
+  });
+
   const handleSaveWork = (work: Work) => {
     const exists = content.works.some((w) => w.id === work.id);
     const next = exists
@@ -47,26 +53,35 @@ export default function BlogPage() {
           <p className="mt-3 text-gray-400">思考、记录与分享</p>
         </header>
 
-        {authed && (
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-500">管理员模式：可直接添加 / 编辑 / 删除文章</span>
-            <button
-              className={btnPrimary}
-              onClick={() => {
-                setEditingWork(null);
-                setWorkModalOpen(true);
-              }}
-            >
-              + 新增文章
-            </button>
-          </div>
-        )}
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <button
+            onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+            className="text-xs px-3 py-2 border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)] whitespace-nowrap"
+            title={sortOrder === "desc" ? "时间倒序（最新在前）" : "时间正序（最早在前）"}
+          >
+            {sortOrder === "desc" ? "↓ 最新" : "↑ 最早"}
+          </button>
+          {authed && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500 hidden sm:inline">管理员模式：可直接添加 / 编辑 / 删除文章</span>
+              <button
+                className={btnPrimary}
+                onClick={() => {
+                  setEditingWork(null);
+                  setWorkModalOpen(true);
+                }}
+              >
+                + 新增文章
+              </button>
+            </div>
+          )}
+        </div>
 
         {!ready ? (
           <div className="py-20 text-center text-gray-500">加载中…</div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {content.works.map((work) => (
+            {sortedWorks.map((work) => (
               <motion.div
                 key={work.id}
                 initial={{ opacity: 0, y: 20 }}

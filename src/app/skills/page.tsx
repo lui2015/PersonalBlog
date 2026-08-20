@@ -295,6 +295,11 @@ export default function SkillsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<MySkill | null>(null);
 
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const sortedSkills = [...skills].sort((a, b) =>
+    sortOrder === "desc" ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id)
+  );
+
   // Load
   const load = useCallback(async () => {
     try {
@@ -365,26 +370,34 @@ export default function SkillsPage() {
           <p className="text-gray-500">// 我的技能 · 查看与管理</p>
         </motion.div>
 
-        {/* Admin toolbar */}
-        {authed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex justify-end mb-6"
+        {/* Toolbar: 排序 + 新增 */}
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <button
+            onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+            className="text-xs px-3 py-2 border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)] whitespace-nowrap"
+            title={sortOrder === "desc" ? "时间倒序（最新在前）" : "时间正序（最早在前）"}
           >
-            <button
-              onClick={() => {
-                setEditing(null);
-                setModalOpen(true);
-              }}
-              disabled={saving}
-              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-cyber-green text-cyber-green text-sm font-[family-name:var(--font-mono)] rounded hover:bg-cyber-green/10 transition-all active:scale-95 disabled:opacity-50"
+            {sortOrder === "desc" ? "↓ 最新" : "↑ 最早"}
+          </button>
+          {authed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
             >
-              <span className="text-base leading-none">+</span>
-              新增技能
-            </button>
-          </motion.div>
-        )}
+              <button
+                onClick={() => {
+                  setEditing(null);
+                  setModalOpen(true);
+                }}
+                disabled={saving}
+                className="group inline-flex items-center gap-2 px-5 py-2.5 bg-transparent border-2 border-cyber-green text-cyber-green text-sm font-[family-name:var(--font-mono)] rounded hover:bg-cyber-green/10 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <span className="text-base leading-none">+</span>
+                新增技能
+              </button>
+            </motion.div>
+          )}
+        </div>
 
         {/* List */}
         {loading ? (
@@ -405,7 +418,7 @@ export default function SkillsPage() {
         ) : (
           <div className="space-y-4">
             <AnimatePresence mode="popLayout">
-              {skills.map((s, i) => (
+              {sortedSkills.map((s, i) => (
                 <SkillCard
                   key={s.id}
                   skill={s}

@@ -15,6 +15,7 @@ export default function PoemsPage() {
   const poems = content.poems;
 
   const [keyword, setKeyword] = useState("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [selected, setSelected] = useState<Poem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Poem | null>(null);
@@ -45,16 +46,23 @@ export default function PoemsPage() {
     setSelected((prev) => (prev?.id === id ? null : prev));
   };
 
-  // 简易搜索：标题 / 作者 / 时间 / 正文 任意命中
+  // 简易搜索 + 排序：标题 / 作者 / 时间 / 正文 任意命中，默认按时间倒序
   const filtered = useMemo(() => {
     const k = keyword.trim().toLowerCase();
-    if (!k) return poems;
-    return poems.filter((p) =>
-      [p.title, p.author, p.date, p.content]
-        .filter(Boolean)
-        .some((s) => s.toLowerCase().includes(k))
-    );
-  }, [poems, keyword]);
+    let result = poems;
+    if (k) {
+      result = result.filter((p) =>
+        [p.title, p.author, p.date, p.content]
+          .filter(Boolean)
+          .some((s) => s.toLowerCase().includes(k))
+      );
+    }
+    result = [...result].sort((a, b) => {
+      const cmp = (b.date || "").localeCompare(a.date || "") || b.id.localeCompare(a.id);
+      return sortOrder === "desc" ? cmp : -cmp;
+    });
+    return result;
+  }, [poems, keyword, sortOrder]);
 
   // 选中诗词的前后导航（基于过滤后的列表）
   const selectedIndex = selected
@@ -100,17 +108,26 @@ export default function PoemsPage() {
           >
             ← 返回首页
           </Link>
-          <div className="relative w-full sm:w-72">
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="搜索 标题 / 作者 / 时间 / 正文"
-              className="w-full bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600 font-[family-name:var(--font-mono)]">
-              {filtered.length}/{poems.length}
-            </span>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+              className="text-xs px-3 py-2 border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)] whitespace-nowrap shrink-0"
+              title={sortOrder === "desc" ? "时间倒序（最新在前）" : "时间正序（最早在前）"}
+            >
+              {sortOrder === "desc" ? "↓ 最新" : "↑ 最早"}
+            </button>
+            <div className="relative w-full sm:w-72">
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="搜索 标题 / 作者 / 时间 / 正文"
+                className="w-full bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600 font-[family-name:var(--font-mono)]">
+                {filtered.length}/{poems.length}
+              </span>
+            </div>
           </div>
         </div>
 
