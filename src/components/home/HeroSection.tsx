@@ -31,6 +31,7 @@ function BgCanvas({ mode }: { mode: string }) {
 }
 import AgentModal from "@/components/home/AgentModal";
 import AgentSummonOverlay from "@/components/home/AgentSummonOverlay";
+import SocialMediaModal from "@/components/home/SocialMediaModal";
 
 /** 静态兜底：首屏立即显示，不等 API */
 const FALLBACK_HERO = {
@@ -63,6 +64,7 @@ export default function HeroSection() {
   const [pulse, setPulse] = useState(false);
   const [worksOpen, setWorksOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(false);
   const [summoning, setSummoning] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [hint, setHint] = useState(false);
@@ -259,6 +261,14 @@ export default function HeroSection() {
           >
             探索我的作品
           </button>
+          <button
+            type="button"
+            onClick={() => setSocialOpen(true)}
+            className="px-4 sm:px-6 py-2.5 sm:py-3 border text-white font-[family-name:var(--font-orbitron)] text-xs sm:text-sm hover:shadow-[0_0_20px_rgba(255,100,50,0.4)] transition-all duration-300"
+            style={{ borderColor: "#ff6432", color: "#ff6432" }}
+          >
+            📱 我的自媒体
+          </button>
           <a
             href="/about"
             className="px-4 sm:px-6 py-2.5 sm:py-3 border border-cyber-purple text-cyber-purple font-[family-name:var(--font-orbitron)] text-xs sm:text-sm hover:bg-cyber-purple/10 hover:shadow-[0_0_20px_var(--color-cyber-purple)] transition-all duration-300"
@@ -279,6 +289,7 @@ export default function HeroSection() {
       </div>
 
       <WorksCategoryModal open={worksOpen} onClose={() => setWorksOpen(false)} />
+      <SocialMediaModal open={socialOpen} onClose={() => setSocialOpen(false)} />
       <AgentModal open={agentOpen} onClose={() => setAgentOpen(false)} />
       <AgentSummonOverlay open={summoning} />
     </section>
