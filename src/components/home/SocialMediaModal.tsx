@@ -33,6 +33,20 @@ const PLATFORMS: Platform[] = [
     qr: "/images/qrcode-channels.png",
     color: "#07c160",
   },
+  {
+    name: "小红书",
+    icon: "📕",
+    desc: "生活 / 技能分享",
+    qr: "/images/qrcode-xiaohongshu.png",
+    color: "#ff2442",
+  },
+  {
+    name: "快手",
+    icon: "⚡",
+    desc: "短视频 / 直播",
+    qr: "/images/qrcode-kuaishou.png",
+    color: "#ff4906",
+  },
 ];
 
 export default function SocialMediaModal({
@@ -71,7 +85,7 @@ export default function SocialMediaModal({
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-2xl bg-cyber-dark border border-cyber-border rounded-lg p-6 sm:p-8 shadow-[0_0_40px_rgba(0,240,255,0.15)]"
+            className="relative w-full max-w-4xl bg-cyber-dark border border-cyber-border rounded-lg p-6 sm:p-8 shadow-[0_0_40px_rgba(0,240,255,0.15)]"
           >
             {/* 标题 */}
             <div className="flex items-center justify-between mb-6">
@@ -88,7 +102,7 @@ export default function SocialMediaModal({
             </div>
 
             {/* 平台卡片网格 */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
               {PLATFORMS.map((p) => (
                 <div
                   key={p.name}
@@ -105,7 +119,7 @@ export default function SocialMediaModal({
                   </h3>
 
                   {/* 二维码 */}
-                  <div className="relative w-36 h-36 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="relative w-28 h-28 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={p.qr}
