@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useContent } from "@/lib/ContentContext";
 import type { SocialPlatform } from "@/lib/types";
@@ -27,8 +27,14 @@ export default function SocialMediaModal({
   const [form, setForm] = useState<Omit<SocialPlatform, "id">>(EMPTY_PLATFORM);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [uploadingQr, setUploadingQr] = useState(false);
 
-  // 检查是否管理员（有保存权限即可判断）
+  // 隐藏的文件 input refs
+  const iconInputRef = useRef<HTMLInputElement>(null);
+  const qrInputRef = useRef<HTMLInputElement>(null);
+
+  // 检查是否管理员
   const isAdmin =
     saveStatus !== "unauthorized" && typeof window !== "undefined";
 
@@ -54,7 +60,54 @@ export default function SocialMediaModal({
     setShowForm(true);
   };
 
-  // 保存（新增或编辑）
+  // 上传图片到服务器
+  const uploadFile = async (
+    file: File,
+    type: "icon" | "qr"
+  ): Promise<string | null> => {
+    if (!file) return null;
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.ok) return data.url;
+      alert(`上传失败：${data.error || "未知错误"}`);
+      return null;
+    } catch (err) {
+      alert(`上传出错：${err instanceof Error ? err.message : String(err)}`);
+      return null;
+    }
+  };
+
+  // 处理图标上传（图片 → URL 填入 icon 字段）
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingIcon(true);
+    const url = await uploadFile(file, "icon");
+    if (url) setForm((f) => ({ ...f, icon: url }));
+    setUploadingIcon(false);
+    // 重置 input 以便重复选择同一文件
+    if (iconInputRef.current) iconInputRef.current.value = "";
+  };
+
+  // 处理二维码上传
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingQr(true);
+    const url = await uploadFile(file, "qr");
+    if (url) setForm((f) => ({ ...f, qr: url }));
+    setUploadingQr(false);
+    if (qrInputRef.current) qrInputRef.current.value = "";
+  };
+
+  // 判断 icon 是否为图片 URL（非 emoji）
+  const isImageUrl = (val: string): boolean =>
+    val.startsWith("/") || val.startsWith("http");
+
+  // 保存
   const handleSave = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
@@ -164,6 +217,7 @@ export default function SocialMediaModal({
                   {editing ? `编辑：${editing.name}` : "新增平台"}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* 平台名称 */}
                   <input
                     value={form.name}
                     onChange={(e) =>
@@ -172,14 +226,7 @@ export default function SocialMediaModal({
                     placeholder="平台名称（如：微信公众号）"
                     className="bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
                   />
-                  <input
-                    value={form.icon}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, icon: e.target.value }))
-                    }
-                    placeholder="图标 emoji（如：💬）"
-                    className="bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
-                  />
+                  {/* 描述文字 */}
                   <input
                     value={form.desc}
                     onChange={(e) =>
@@ -188,37 +235,132 @@ export default function SocialMediaModal({
                     placeholder="描述文字"
                     className="bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
                   />
-                  <input
-                    value={form.qr}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, qr: e.target.value }))
-                    }
-                    placeholder="二维码路径（如：/images/qrcode-wechat.png）"
-                    className="bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
-                  />
-                  <input
-                    value={form.color}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, color: e.target.value }))
-                    }
-                    placeholder="品牌色（如：#07c160）"
-                    className="bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      disabled={saving || !form.name.trim()}
-                      className="flex-1 px-4 py-2 bg-cyber-green/20 border border-cyber-green text-cyber-green text-sm hover:bg-cyber-green/30 transition-all disabled:opacity-50 font-[family-name:var(--font-mono)]"
-                    >
-                      {saving ? "保存中..." : "保存"}
-                    </button>
+
+                  {/* 图标：emoji 输入 + 图片上传 */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-gray-500 mb-1 font-[family-name:var(--font-mono)]">
+                      图标（emoji 或上传图片）
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={form.icon}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, icon: e.target.value }))
+                        }
+                        placeholder="输入 emoji（如 💬）或下方上传图片"
+                        className="flex-1 bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => iconInputRef.current?.click()}
+                        disabled={uploadingIcon}
+                        className="shrink-0 px-3 py-2 text-xs border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)] disabled:opacity-50"
+                      >
+                        {uploadingIcon ? "上传中..." : "📷 上传"}
+                      </button>
+                      {/* 图标预览 */}
+                      {isImageUrl(form.icon) && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={form.icon}
+                          alt="icon preview"
+                          className="w-8 h-8 object-contain rounded"
+                        />
+                      )}
+                      {!isImageUrl(form.icon) && form.icon && (
+                        <span className="text-xl">{form.icon}</span>
+                      )}
+                    </div>
+                    <input
+                      ref={iconInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                      onChange={handleIconUpload}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* 二维码：上传 + 路径显示 */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-gray-500 mb-1 font-[family-name:var(--font-mono)]">
+                      二维码图片
+                    </label>
+                    <div className="flex items-start gap-3">
+                      <button
+                        type="button"
+                        onClick={() => qrInputRef.current?.click()}
+                        disabled={uploadingQr}
+                        className="shrink-0 px-4 py-3 border-2 border-dashed border-cyber-border hover:border-cyber-blue text-gray-400 hover:text-cyber-blue text-xs transition-all font-[family-name:var(--font-mono)] disabled:opacity-50 min-w-[100px]"
+                      >
+                        {uploadingQr ? "上传中..." : form.qr ? "重新上传" : "点击上传二维码"}
+                      </button>
+                      <input
+                        ref={qrInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                        onChange={handleQrUpload}
+                        className="hidden"
+                      />
+                      {/* 二维码预览 */}
+                      {form.qr && (
+                        <div className="w-20 h-20 bg-white rounded overflow-hidden shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={form.qr}
+                            alt="QR preview"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                      {!form.qr && (
+                        <span className="text-xs text-gray-600 pt-2 font-[family-name:var(--font-mono)]">
+                          未上传二维码
+                        </span>
+                      )}
+                    </div>
+                    {form.qr && (
+                      <p className="mt-1 text-[11px] text-gray-600 truncate font-[family-name:var(--font-mono)]">
+                        路径：{form.qr}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 品牌色 */}
+                  <div className="sm:col-span-2 flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={form.color}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, color: e.target.value }))
+                      }
+                      className="w-8 h-8 cursor-pointer rounded border border-cyber-border bg-transparent"
+                    />
+                    <input
+                      value={form.color}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, color: e.target.value }))
+                      }
+                      placeholder="品牌色（如 #07c160）"
+                      className="flex-1 bg-cyber-black/60 border border-cyber-border focus:border-cyber-blue outline-none px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 transition-colors font-[family-name:var(--font-mono)]"
+                    />
+                  </div>
+
+                  {/* 操作按钮 */}
+                  <div className="sm:col-span-2 flex gap-2 justify-end">
                     <button
                       type="button"
                       onClick={cancelEdit}
                       className="px-4 py-2 border border-gray-600 text-gray-400 text-sm hover:bg-white/5 transition-all font-[family-name:var(--font-mono)]"
                     >
                       取消
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={saving || !form.name.trim()}
+                      className="px-4 py-2 bg-cyber-green/20 border border-cyber-green text-cyber-green text-sm hover:bg-cyber-green/30 transition-all disabled:opacity-50 font-[family-name:var(--font-mono)]"
+                    >
+                      {saving ? "保存中..." : "保存"}
                     </button>
                   </div>
                 </div>
@@ -255,8 +397,18 @@ export default function SocialMediaModal({
                     </div>
                   )}
 
-                  {/* 图标 + 名称 */}
-                  <span className="text-3xl">{p.icon}</span>
+                  {/* 图标 */}
+                  {isImageUrl(p.icon) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={p.icon}
+                      alt={`${p.name} 图标`}
+                      className="w-10 h-10 object-contain rounded"
+                    />
+                  ) : (
+                    <span className="text-3xl">{p.icon}</span>
+                  )}
+
                   <h3
                     className="font-[family-name:var(--font-mono)] text-sm font-bold"
                     style={{ color: p.color }}
