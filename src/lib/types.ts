@@ -89,6 +89,16 @@ export interface MySkill {
   description?: string; // 技能描述（可选）
 }
 
+// 自媒体平台
+export interface SocialPlatform {
+  id: string;
+  name: string;
+  icon: string; // emoji 图标
+  desc: string;
+  qr: string; // public/ 下的相对路径
+  color: string; // 品牌色 hex
+}
+
 export interface SiteContent {
   hero: {
     title: string;
@@ -106,4 +116,5 @@ export interface SiteContent {
   videos: Video[];
   albums: GalleryAlbum[];
   softwares: SoftwareWork[];
+  socialMedia: SocialPlatform[]; // 自媒体平台（管理员可编辑）
 }
