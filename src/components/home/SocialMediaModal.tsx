@@ -26,6 +26,7 @@ export default function SocialMediaModal({
   const [editing, setEditing] = useState<SocialPlatform | null>(null);
   const [form, setForm] = useState<Omit<SocialPlatform, "id">>(EMPTY_PLATFORM);
   const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   // 检查是否管理员（有保存权限即可判断）
   const isAdmin =
@@ -43,12 +44,14 @@ export default function SocialMediaModal({
   const openNew = () => {
     setEditing(null);
     setForm(EMPTY_PLATFORM);
+    setShowForm(true);
   };
 
   // 打开编辑
   const openEdit = (p: SocialPlatform) => {
     setEditing(p);
     setForm({ name: p.name, icon: p.icon, desc: p.desc, qr: p.qr, color: p.color });
+    setShowForm(true);
   };
 
   // 保存（新增或编辑）
@@ -73,6 +76,7 @@ export default function SocialMediaModal({
     setSaving(false);
     setEditing(null);
     setForm(EMPTY_PLATFORM);
+    setShowForm(false);
   };
 
   // 删除
@@ -87,6 +91,7 @@ export default function SocialMediaModal({
   const cancelEdit = () => {
     setEditing(null);
     setForm(EMPTY_PLATFORM);
+    setShowForm(false);
   };
 
   return (
@@ -120,7 +125,7 @@ export default function SocialMediaModal({
               <div className="flex items-center gap-3">
                 {isAdmin && (
                   <>
-                    {!editing && (
+                    {!showForm && (
                       <button
                         type="button"
                         onClick={openNew}
@@ -148,7 +153,7 @@ export default function SocialMediaModal({
             </div>
 
             {/* 编辑表单 */}
-            {editing !== null || form.name ? (
+            {showForm ? (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
