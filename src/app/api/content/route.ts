@@ -51,5 +51,6 @@ function isSiteContent(v: unknown): v is SiteContent {
     Array.isArray(o.videos) &&
     Array.isArray(o.albums) &&
     Array.isArray(o.softwares)
+    // socialMedia 可选（向后兼容）
   );
 }
