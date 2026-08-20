@@ -13,6 +13,7 @@ export default function QuotesPage() {
   const quotes = content.quotes;
 
   const [keyword, setKeyword] = useState("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [selected, setSelected] = useState<Quote | null>(null);
   const [editing, setEditing] = useState<Quote | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -23,16 +24,23 @@ export default function QuotesPage() {
   const [addAuthor, setAddAuthor] = useState("");
   const nextIdRef = useRef(0);
 
-  // 搜索过滤
+  // 搜索过滤 + 排序
   const filtered = useMemo(() => {
+    let result = quotes;
     const k = keyword.trim().toLowerCase();
-    if (!k) return quotes;
-    return quotes.filter((q) =>
-      [q.text, q.author]
-        .filter(Boolean)
-        .some((s) => s.toLowerCase().includes(k))
+    if (k) {
+      result = result.filter((q) =>
+        [q.text, q.author]
+          .filter(Boolean)
+          .some((s) => s.toLowerCase().includes(k))
+      );
+    }
+    // 按 id 排序（id 越大越新）
+    result = [...result].sort((a, b) =>
+      sortOrder === "desc" ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id)
     );
-  }, [quotes, keyword]);
+    return result;
+  }, [quotes, keyword, sortOrder]);
 
   // 选中导航
   const selectedIndex = selected
@@ -147,6 +155,13 @@ export default function QuotesPage() {
                 {saveStatus === "saved" && (
                   <span className="text-[11px] text-cyber-green font-[family-name:var(--font-mono)]">✓ 已保存</span>
                 )}
+                <button
+                  onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}
+                  className="text-xs px-3 py-1.5 border border-cyber-blue/50 text-cyber-blue hover:bg-cyber-blue/10 transition-all font-[family-name:var(--font-mono)]"
+                  title={sortOrder === "desc" ? "时间倒序（最新在前）" : "时间正序（最早在前）"}
+                >
+                  {sortOrder === "desc" ? "↓ 最新" : "↑ 最早"}
+                </button>
               </>
             )}
           </div>
