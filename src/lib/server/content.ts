@@ -37,6 +37,25 @@ export async function writeContent(content: SiteContent): Promise<void> {
   await fs.rename(tmp, CONTENT_FILE);
 }
 
+/**
+ * 串行化的「读-改-写」：避免多个开放接口并发修改时互相覆盖。
+ * 返回 mutate 的结果；mutate 抛错时不写盘。
+ */
+let writeQueue: Promise<unknown> = Promise.resolve();
+export function mutateContent<T>(
+  mutate: (content: SiteContent) => T | Promise<T>
+): Promise<T> {
+  const run = writeQueue.then(async () => {
+    const content = await readContent();
+    const result = await mutate(content);
+    await writeContent(content);
+    return result;
+  });
+  // 无论成功失败都继续排空队列
+  writeQueue = run.catch(() => undefined);
+  return run;
+}
+
 /** 字段级合并默认值，防止旧文件缺字段导致前端崩 */
 function mergeWithDefault(p: Partial<SiteContent>): SiteContent {
   return {

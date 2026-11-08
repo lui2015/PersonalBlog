@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AdminPanel, { btnGhost } from "@/components/admin/AdminPanel";
+import MiniProgramApiDocs from "@/components/admin/MiniProgramApiDocs";
 
 const BASE_URL = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -302,7 +303,7 @@ function CodeBlock({ code, language = "bash" }: { code: string; language?: strin
 }
 
 export default function OpenPlatformPage() {
-  const [activeTab, setActiveTab] = useState<"endpoints" | "scenarios">("endpoints");
+  const [activeTab, setActiveTab] = useState<"endpoints" | "scenarios" | "miniprogram">("endpoints");
 
   return (
     <AdminPanel
@@ -318,7 +319,7 @@ export default function OpenPlatformPage() {
     >
       {/* Tab 切换 */}
       <div className="flex gap-1 mb-6 border-b border-cyber-border/30 pb-3">
-        {(["endpoints", "scenarios"] as const).map((tab) => (
+        {(["endpoints", "scenarios", "miniprogram"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -328,7 +329,7 @@ export default function OpenPlatformPage() {
                 : "border-transparent text-gray-500 hover:text-gray-300"
             }`}
           >
-            {tab === "endpoints" ? "◈ API 接口" : "⚡ 快捷场景"}
+            {tab === "endpoints" ? "◈ API 接口" : tab === "scenarios" ? "⚡ 快捷场景" : "📱 小程序 API"}
           </button>
         ))}
       </div>
@@ -473,6 +474,9 @@ curl -s -X PUT "${BASE_URL}/api/content?user=luli&pass=luli116574" \\
           ))}
         </div>
       )}
+
+      {/* === 小程序 API 文档 === */}
+      {activeTab === "miniprogram" && <MiniProgramApiDocs />}
     </AdminPanel>
   );
 }

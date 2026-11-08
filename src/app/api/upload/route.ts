@@ -14,6 +14,16 @@ const ALLOWED = new Map<string, string>([
   ["image/svg+xml", ".svg"],
 ]);
 
+/** 推断对外访问的绝对地址前缀（小程序需要完整 URL 才能显示图片） */
+function originOf(req: Request): string {
+  const env = (process.env.PUBLIC_BASE_URL || "").trim().replace(/\/$/, "");
+  if (env) return env;
+  const u = new URL(req.url);
+  const proto = req.headers.get("x-forwarded-proto") || u.protocol.replace(":", "");
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || u.host;
+  return `${proto}://${host}`;
+}
+
 export async function POST(req: Request) {
   if (!(await checkApiAuth(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -51,5 +61,11 @@ export async function POST(req: Request) {
 
   const buf = Buffer.from(await file.arrayBuffer());
   const url = await storage.save(buf, ext);
-  return NextResponse.json({ ok: true, url });
+  return NextResponse.json({
+    ok: true,
+    url,                              // 相对路径 /uploads/xxx.jpg（Web 用）
+    absoluteUrl: `${originOf(req)}${url}`, // 完整地址（小程序用）
+    size: buf.length,
+    type,
+  });
 }
