@@ -174,8 +174,64 @@ sudo certbot delete --cert-name luliming.xyz   # 可选
 ```
 deploy/
 ├── deploy.sh                    # 服务器端发版脚本（每次更新跑这个）
+├── release-cleanup.sh           # 旧 release 定时清理（配合 crontab）
 ├── server-setup.sh              # 一次性环境准备
 └── nginx/
     └── luliming.xyz.conf        # Nginx 站点配置
 ecosystem.config.js              # PM2 进程配置
+docs/OPEN_API.md                 # 小程序开放接口文档
 ```
+
+---
+
+## 运维防护（重要）
+
+### 旧 release 定时清理
+
+历史发版采用「新建 release + 软链切换」，旧版本会持续累积。曾达到 **91 个版本 / 58G**，磁盘占用 95%，导致 Next 构建 worker 卡在 D-state I/O、整机 load 飙到 40+，最终内存耗尽触发 OOM，**连带杀掉 PM2 下全部 12 个服务**。
+
+已部署定时清理（服务器 `/opt/luliming-blog-cleanup/release-cleanup.sh`，crontab 每日 04:30）：
+
+```bash
+# 预览（不删除）
+DRY_RUN=1 bash /opt/luliming-blog-cleanup/release-cleanup.sh
+# 强制执行（忽略磁盘阈值，按数量清理）
+TRIGGER_FREE_MB=0 bash /opt/luliming-blog-cleanup/release-cleanup.sh
+```
+
+脚本保证：
+- 永远保留 `current` 软链指向的版本
+- 只删 `releases/` 下的目录，**绝不触碰 `/opt/luliming-blog/data`**
+- 默认保留最近 5 个版本；仅当可用空间 < 6GB 时才动手
+
+### 部署脚本内置预检
+
+`deploy.sh` 在构建前会检查：磁盘可用 ≥ 3GB、可用内存 ≥ 700MB，不满足直接中止；构建使用 `NODE_OPTIONS=--max-old-space-size=1024` + `timeout 600` 限制；清理旧版本时跳过 `current`。
+
+### 大内存构建的正确姿势
+
+本机仅 3.6G 内存且同时运行 12 个 PM2 服务 + 多个 Docker 容器。**不要用长任务同步跑 `npm run build`**：长任务会占满云 API 命令通道，卡死时连 `kill` 都下发不进去。改为后台构建 + 短命令轮询日志：
+
+```bash
+cd /var/www/luliming-blog/releases/<新版本>
+rm -rf .next
+NODE_OPTIONS=--max-old-space-size=1024 \
+  nohup timeout 400 npm run build > /tmp/build.log 2>&1 &
+echo $! > /tmp/build.pid
+# 之后用短命令查看
+tail -n 12 /tmp/build.log; cat .next/BUILD_ID 2>/dev/null
+```
+
+### 故障恢复清单
+
+若构建把服务器拖垮（load 极高、公网超时、命令排队）：
+
+1. 等 OOM 回收或精准终止卡住的构建进程：`pkill -9 -f '<release目录名>'`
+2. 检查 PM2：`pm2 list`。若 daemon 被杀导致应用全部消失，用 **`pm2 resurrect`** 从 `/root/.pm2/dump.pm2` 恢复全部应用，再 `pm2 save`
+3. 逐个验证端口：3000 / 3100 / 3210 / 3220 / 3240 / 3250 / 3260
+4. 确认 `current` 未被改动、数据文件完好，再重新构建
+
+### 数据安全
+
+真实内容始终在 `/opt/luliming-blog/data`（`site-content.json` + `uploads/`），由 `.env` 的 `DATA_DIR` 指定。任何部署、清理、构建操作都不得触碰该目录。
+

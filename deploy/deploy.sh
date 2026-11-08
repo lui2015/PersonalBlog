@@ -58,6 +58,25 @@ if [ "${NODE_MAJOR}" -lt 20 ]; then
 fi
 green "[OK] Node 版本 $(node -v)"
 
+# ---------- 预检 4：磁盘空间 ----------
+# 历史事故：磁盘 95% 满时 Next 构建 worker 卡在 D-state I/O，拖垮整机
+FREE_MB="$(df -Pm / | awk 'NR==2 {print $4}')"
+if [ "${FREE_MB}" -lt 3072 ]; then
+  red "[ABORT] 磁盘可用空间仅 ${FREE_MB}MB（<3GB），拒绝构建以免触发 I/O 卡死。"
+  red "        先执行：bash deploy/release-cleanup.sh"
+  exit 1
+fi
+green "[OK] 磁盘可用 ${FREE_MB}MB"
+
+# ---------- 预检 5：可用内存 ----------
+# 历史事故：整机 3.6G 内存耗尽触发 OOM，连带杀掉 PM2 全部服务
+AVAIL_MB="$(free -m | awk 'NR==2 {print $7}')"
+if [ "${AVAIL_MB}" -lt 700 ]; then
+  red "[ABORT] 可用内存仅 ${AVAIL_MB}MB（<700MB），拒绝构建以免 OOM。"
+  exit 1
+fi
+green "[OK] 可用内存 ${AVAIL_MB}MB"
+
 # ---------- 准备目录 ----------
 sudo mkdir -p "${RELEASES_DIR}" /var/log/luliming-blog
 sudo chown -R "$USER":"$USER" "${APP_DIR}" /var/log/luliming-blog
@@ -88,8 +107,8 @@ cd "${RELEASE_DIR}"
 yellow "[INFO] 安装依赖..."
 npm ci --omit=dev=false --no-audit --no-fund
 
-yellow "[INFO] 构建中..."
-npm run build
+yellow "[INFO] 构建中（限制堆 1G + 超时 600s，避免 OOM 拖垮整机）..."
+NODE_OPTIONS="--max-old-space-size=1024" timeout 600 npm run build
 green "[OK] 构建完成"
 
 # ---------- 切换 current 软链 ----------
@@ -123,10 +142,17 @@ if ! curl -fsS -o /dev/null "http://127.0.0.1:${APP_PORT}/"; then
 fi
 green "[OK] 健康检查通过 http://127.0.0.1:${APP_PORT}/"
 
-# ---------- 清理旧版本 ----------
+# ---------- 清理旧版本（复用安全脚本，绝不误删 current） ----------
 cd "${RELEASES_DIR}"
-ls -1t | tail -n +$((KEEP_RELEASES + 1)) | xargs -r rm -rf
-green "[OK] 已保留最近 ${KEEP_RELEASES} 个版本"
+CURRENT_TARGET="$(readlink -f "${CURRENT_LINK}" 2>/dev/null || true)"
+for d in $(ls -1t); do
+  [ -d "$d" ] || continue
+  full="$(readlink -f "$d")"
+  # 保留 current 指向的版本
+  [ "$full" = "${CURRENT_TARGET}" ] && continue
+  echo "$d"
+done | tail -n +$((KEEP_RELEASES + 1)) | xargs -r rm -rf
+green "[OK] 已保留最近 ${KEEP_RELEASES} 个版本（current 始终保留）"
 
 echo "============================================================"
 green " 部署成功！外部访问：https://www.luliming.xyz"
