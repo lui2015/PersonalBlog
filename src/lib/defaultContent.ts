@@ -378,7 +378,7 @@ T extends U ? X : Y 是类型系统的开关。
       name: "微信公众号",
       icon: "💬",
       desc: "关注获取最新动态",
-      qr: "/images/qrcode-wechat.png",
+      qr: "/images/qrcode-wechat.jpg",
       color: "#07c160",
     },
     {
@@ -386,7 +386,7 @@ T extends U ? X : Y 是类型系统的开关。
       name: "抖音",
       icon: "🎵",
       desc: "短视频 / 生活记录",
-      qr: "/images/qrcode-douyin.png",
+      qr: "/images/qrcode-douyin.jpg",
       color: "#fe2c55",
     },
     {
@@ -394,7 +394,7 @@ T extends U ? X : Y 是类型系统的开关。
       name: "微信视频号",
       icon: "📹",
       desc: "视频内容分享",
-      qr: "/images/qrcode-channels.png",
+      qr: "/images/qrcode-channels.jpg",
       color: "#07c160",
     },
     {
@@ -402,7 +402,7 @@ T extends U ? X : Y 是类型系统的开关。
       name: "小红书",
       icon: "📕",
       desc: "生活 / 技能分享",
-      qr: "/images/qrcode-xiaohongshu.png",
+      qr: "/images/qrcode-xiaohongshu.jpg",
       color: "#ff2442",
     },
     {
@@ -410,7 +410,7 @@ T extends U ? X : Y 是类型系统的开关。
       name: "快手",
       icon: "⚡",
       desc: "短视频 / 直播",
-      qr: "/images/qrcode-kuaishou.png",
+      qr: "/images/qrcode-kuaishou.jpg",
       color: "#ff4906",
     },
   ],
