@@ -190,7 +190,7 @@ docs/OPEN_API.md                 # 小程序开放接口文档
 
 历史发版采用「新建 release + 软链切换」，旧版本会持续累积。曾达到 **91 个版本 / 58G**，磁盘占用 95%，导致 Next 构建 worker 卡在 D-state I/O、整机 load 飙到 40+，最终内存耗尽触发 OOM，**连带杀掉 PM2 下全部 12 个服务**。
 
-已部署定时清理（服务器 `/opt/luliming-blog-cleanup/release-cleanup.sh`，crontab 每日 04:30）：
+已部署定时清理（服务器 `/opt/luliming-blog-cleanup/release-cleanup.sh`，crontab 每日 04:50，日志 `/var/log/luliming-blog/cleanup.log`）：
 
 ```bash
 # 预览（不删除）
