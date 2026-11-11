@@ -3,24 +3,37 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-
-const timeline = [
-  { year: "2015", title: "计算机本科毕业", desc: "桂林电子科技大学 · 计算机科学与技术" },
-  { year: "2016", title: "安卓开发工程师", desc: "亚信科技，开启研发生涯（4 年技术沉淀）" },
-  { year: "2019", title: "转型项目管理", desc: "飞笛科技 · 软件组长 / 项目经理" },
-  { year: "2020", title: "MBA 深造", desc: "深圳大学 · 工商管理硕士" },
-  { year: "2022", title: "高级互联网项目经理", desc: "OPPO · 主导应用生态持续交付体系" },
-  { year: "2025", title: "高级项目经理", desc: "腾讯科技 · CSIG 研发效能提升" },
-];
-
-const socialLinks = [
-  { name: "GitHub", url: "https://github.com", icon: "⟨/⟩" },
-  { name: "Bilibili", url: "https://space.bilibili.com/675642138?spm_id_from=333.337.0.0", icon: "▶" },
-  { name: "微博", url: "https://weibo.com", icon: "W" },
-  { name: "Email", url: "mailto:635003514@qq.com", icon: "✉" },
-];
+import { useAuth } from "@/lib/AuthContext";
+import { useContent } from "@/lib/ContentContext";
+import { DEFAULT_CONTENT } from "@/lib/defaultContent";
+import AboutEditor from "@/components/about/AboutEditor";
+import EditorModal from "@/components/admin/EditorModal";
+import { btnPrimary, btnGhost } from "@/components/admin/AdminPanel";
+import type { AboutContent } from "@/lib/types";
 
 export default function AboutPage() {
+  const { authed } = useAuth();
+  const { content, updateSection, flush, saveStatus } = useContent();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [draft, setDraft] = useState<AboutContent | null>(null);
+
+  const about = content.about ?? DEFAULT_CONTENT.about;
+  const timeline = about.timeline ?? [];
+  const socialLinks = about.socialLinks ?? [];
+  const skillTree = about.skillTree ?? [];
+
+  const openEditor = () => {
+    setDraft(structuredClone(about));
+    setEditorOpen(true);
+  };
+  const handleSave = async () => {
+    if (!draft) return;
+    updateSection("about", draft);
+    await flush();
+    setEditorOpen(false);
+    setDraft(null);
+  };
+
   return (
     <div className="relative z-10 pt-24 pb-16">
       <div className="max-w-5xl mx-auto px-4">
@@ -39,6 +52,20 @@ export default function AboutPage() {
           <p className="text-gray-500">// 了解更多关于我的信息</p>
         </motion.div>
 
+        {/* 管理员编辑入口 */}
+        {authed && (
+          <div className="flex justify-end items-center gap-3 mb-4">
+            {saveStatus === "saved" && (
+              <span className="text-[11px] text-cyber-green font-[family-name:var(--font-mono)]">
+                ✓ 已保存
+              </span>
+            )}
+            <button onClick={openEditor} className={btnPrimary}>
+              ✏️ 编辑「关于我」
+            </button>
+          </div>
+        )}
+
         {/* Profile Card */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
@@ -50,9 +77,10 @@ export default function AboutPage() {
             {/* Avatar */}
             <div className="relative">
               <div className="hexagon w-40 h-40 overflow-hidden hologram">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/avatar.jpg"
-                  alt="鲁力铭"
+                  src={about?.avatar || "/images/avatar.jpg"}
+                  alt={about?.name || "头像"}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -63,23 +91,20 @@ export default function AboutPage() {
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
               <h2 className="font-[family-name:var(--font-orbitron)] text-2xl text-cyber-blue mb-2">
-                鲁力铭
+                {about?.name}
               </h2>
               <p className="text-cyber-purple text-sm mb-4 font-[family-name:var(--font-mono)]">
-                互联网高级项目经理
+                {about?.role}
               </p>
-              <p className="text-gray-300 leading-relaxed mb-6">
-                本人拥有 11 年工作经验（4 年研发 + 7 年项目管理），工作积极主动、责任心强，
-                善于学习与反思，享受团队共同奋斗的感觉。一个热爱科技、拥抱变化的人，
-                专注于用项目管理的专业能力驱动团队高效交付价值。在这里，我分享项目管理心得、
-                效能提升实践与一些生活感悟。
+              <p className="text-gray-300 leading-relaxed mb-6 whitespace-pre-wrap">
+                {about?.bio}
               </p>
 
               {/* Social Links */}
-              <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
                 {socialLinks.map((link) => (
                   <a
-                    key={link.name}
+                    key={link.id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -105,13 +130,9 @@ export default function AboutPage() {
             ◈ SKILL TREE
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[
-              "PMP", "ACP", "NPDP", "PBA",
-              "敏捷管理", "OKR", "持续交付", "需求管理",
-              "跨团队协作", "效能度量", "数据分析", "产品原型",
-            ].map((skill, i) => (
+            {skillTree.map((skill, i) => (
               <motion.div
-                key={skill}
+                key={`${skill}-${i}`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 + i * 0.05 }}
@@ -140,7 +161,7 @@ export default function AboutPage() {
             <div className="space-y-8">
               {timeline.map((item, i) => (
                 <motion.div
-                  key={item.year}
+                  key={item.id}
                   initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -261,6 +282,26 @@ export default function AboutPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* 编辑弹窗 */}
+      <EditorModal
+        open={editorOpen}
+        title="编辑「关于我」"
+        onClose={() => setEditorOpen(false)}
+        maxWidth="max-w-4xl"
+        footer={
+          <>
+            <button onClick={() => setEditorOpen(false)} className={btnGhost}>
+              取消
+            </button>
+            <button onClick={handleSave} className={btnPrimary}>
+              保存
+            </button>
+          </>
+        }
+      >
+        {draft && <AboutEditor value={draft} onChange={setDraft} />}
+      </EditorModal>
     </div>
   );
 }

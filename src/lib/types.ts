@@ -99,6 +99,31 @@ export interface SocialPlatform {
   color: string; // 品牌色 hex
 }
 
+// 「关于我」页面
+export interface AboutSocialLink {
+  id: string;
+  name: string;
+  url: string;
+  icon: string; // 按钮上显示的短文本/符号
+}
+
+export interface AboutTimelineItem {
+  id: string;
+  year: string;
+  title: string;
+  desc: string;
+}
+
+export interface AboutContent {
+  name: string; // 姓名
+  role: string; // 职位
+  bio: string; // 个人简介
+  avatar: string; // 头像图片 URL
+  socialLinks: AboutSocialLink[];
+  skillTree: string[]; // SKILL TREE 标签
+  timeline: AboutTimelineItem[]; // TIMELINE 履历
+}
+
 export interface SiteContent {
   hero: {
     title: string;
@@ -117,4 +142,5 @@ export interface SiteContent {
   albums: GalleryAlbum[];
   softwares: SoftwareWork[];
   socialMedia: SocialPlatform[]; // 自媒体平台（管理员可编辑）
+  about: AboutContent; // 「关于我」页面（管理员可编辑）
 }

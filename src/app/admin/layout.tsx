@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/AuthContext";
 const navItems = [
   { href: "/admin", label: "总览", icon: "◈" },
   { href: "/admin/hero", label: "首页 · 主屏", icon: "◇" },
+  { href: "/admin/about", label: "关于我", icon: "☻" },
   { href: "/admin/works", label: "我的作品", icon: "✎" },
   { href: "/admin/poems", label: "首页 · 诗词", icon: "✦" },
   { href: "/admin/quotes", label: "首页 · 思考", icon: "❝" },

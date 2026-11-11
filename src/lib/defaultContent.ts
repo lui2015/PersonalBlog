@@ -414,4 +414,34 @@ T extends U ? X : Y 是类型系统的开关。
       color: "#ff4906",
     },
   ],
+  about: {
+    name: "鲁力铭",
+    role: "互联网高级项目经理",
+    bio: "本人拥有 11 年工作经验（4 年研发 + 7 年项目管理），工作积极主动、责任心强，善于学习与反思，享受团队共同奋斗的感觉。一个热爱科技、拥抱变化的人，专注于用项目管理的专业能力驱动团队高效交付价值。在这里，我分享项目管理心得、效能提升实践与一些生活感悟。",
+    avatar: "/images/avatar.jpg",
+    socialLinks: [
+      { id: "as1", name: "GitHub", url: "https://github.com", icon: "⟨/⟩" },
+      {
+        id: "as2",
+        name: "Bilibili",
+        url: "https://space.bilibili.com/675642138?spm_id_from=333.337.0.0",
+        icon: "▶",
+      },
+      { id: "as3", name: "微博", url: "https://weibo.com", icon: "W" },
+      { id: "as4", name: "Email", url: "mailto:635003514@qq.com", icon: "✉" },
+    ],
+    skillTree: [
+      "PMP", "ACP", "NPDP", "PBA",
+      "敏捷管理", "OKR", "持续交付", "需求管理",
+      "跨团队协作", "效能度量", "数据分析", "产品原型",
+    ],
+    timeline: [
+      { id: "at1", year: "2015", title: "计算机本科毕业", desc: "桂林电子科技大学 · 计算机科学与技术" },
+      { id: "at2", year: "2016", title: "安卓开发工程师", desc: "亚信科技，开启研发生涯（4 年技术沉淀）" },
+      { id: "at3", year: "2019", title: "转型项目管理", desc: "飞笛科技 · 软件组长 / 项目经理" },
+      { id: "at4", year: "2020", title: "MBA 深造", desc: "深圳大学 · 工商管理硕士" },
+      { id: "at5", year: "2022", title: "高级互联网项目经理", desc: "OPPO · 主导应用生态持续交付体系" },
+      { id: "at6", year: "2025", title: "高级项目经理", desc: "腾讯科技 · CSIG 研发效能提升" },
+    ],
+  },
 };

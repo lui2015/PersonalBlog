@@ -283,13 +283,14 @@ curl -X POST https://www.luliming.xyz/api/upload \
 
 ### 4.9 GET `/api/content` — 全量数据（兼容旧接口）
 
-一次性返回完整站点 JSON，包含全部 12 个模块。适合首次全量同步，不适合频繁调用。
+一次性返回完整站点 JSON，包含全部 13 个模块。适合首次全量同步，不适合频繁调用。
 
 ```json
 {
   "hero": { "title": "鲁力铭", "subtitle": "...", "avatarText": "鲁", "avatarUrl": "/uploads/xxx.jpg" },
   "poems": [], "photos": [], "stats": [], "skills": [], "myskills": [],
-  "quotes": [], "works": [], "videos": [], "albums": [], "softwares": [], "socialMedia": []
+  "quotes": [], "works": [], "videos": [], "albums": [], "softwares": [], "socialMedia": [],
+  "about": { "name": "...", "role": "...", "bio": "...", "avatar": "...", "socialLinks": [], "skillTree": [], "timeline": [] }
 }
 ```
 
@@ -313,6 +314,7 @@ curl -X POST https://www.luliming.xyz/api/upload \
 | `albums` | 摄影相册 | 4 | `id` | 含 photos 子数组 |
 | `softwares` | 软件作品 | 12 | `id` | 软件/项目卡片 |
 | `socialMedia` | 自媒体平台 | 5 | `id` | 二维码平台 |
+| `about` | 关于我 | 1（对象） | — | 单例对象，只支持 GET/PUT；含社交链接/技能树/履历 |
 
 **字段明细**
 
@@ -330,6 +332,7 @@ curl -X POST https://www.luliming.xyz/api/upload \
 | `albums` | `id` `name` `cover` `count`(number) `photos`(`[{id,src,title}]`) |
 | `softwares` | `id` `name` `image` `description` `url` |
 | `socialMedia` | `id` `name` `icon` `desc` `qr` `color` |
+| `about` | `name` `role` `bio` `avatar` `socialLinks`(`[{id,name,url,icon}]`) `skillTree`(string[]) `timeline`(`[{id,year,title,desc}]`) |
 
 > `poems` 实际数据含 `dynasty`（朝代）字段，属于扩展字段；接口不限制额外字段，可透传存储。
 > 图片类字段（`src` / `image` / `cover` / `qr` / `avatarUrl` / `icon`）建议填 `absoluteUrl` 完整地址，小程序才能直接显示。

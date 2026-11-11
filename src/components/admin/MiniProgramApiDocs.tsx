@@ -204,6 +204,7 @@ const SECTIONS = [
   { key: "albums", label: "摄影相册", kind: "数组", required: "name", fields: "id, name, cover, count, photos[{id,src,title}]" },
   { key: "softwares", label: "软件作品", kind: "数组", required: "name", fields: "id, name, image, description, url" },
   { key: "socialMedia", label: "自媒体平台", kind: "数组", required: "name", fields: "id, name, icon, desc, qr, color" },
+  { key: "about", label: "关于我", kind: "对象", required: "—", fields: "name, role, bio, avatar, socialLinks[], skillTree[], timeline[]" },
 ];
 
 function CopyButton({ text, label = "复制" }: { text: string; label?: string }) {
@@ -369,7 +370,7 @@ ${BASE_URL}/api/open/quotes?user=luli&pass=luli116574`}
       {/* 数据模块字典 */}
       <div className="cyber-card p-5 space-y-3">
         <h3 className="text-sm text-cyber-blue font-[family-name:var(--font-orbitron)]">
-          📐 数据模块字典（12 个 section）
+          📐 数据模块字典（13 个 section）
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-[11px] font-[family-name:var(--font-mono)] border-collapse">

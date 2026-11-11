@@ -215,6 +215,24 @@ export const SECTION_META: Record<string, SectionMeta> = {
     orderField: "id",
     idPrefix: "sm",
   },
+  about: {
+    key: "about",
+    label: "关于我",
+    description: "关于我页面的个人资料、社交链接、技能树、履历时间线（单例对象）",
+    kind: "object",
+    required: [],
+    fields: {
+      name: "姓名",
+      role: "职位/头衔",
+      bio: "个人简介",
+      avatar: "头像图片 URL",
+      socialLinks: "社交链接数组 [{ id, name, url, icon }]",
+      skillTree: "SKILL TREE 标签数组 string[]",
+      timeline: "履历数组 [{ id, year, title, desc }]",
+    },
+    orderField: "id",
+    idPrefix: "",
+  },
 };
 
 export const SECTION_KEYS = Object.keys(SECTION_META);
