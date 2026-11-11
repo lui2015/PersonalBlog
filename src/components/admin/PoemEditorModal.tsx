@@ -106,10 +106,14 @@ export default function PoemEditorModal({
             <label className={labelClass}>创作时间</label>
             <input
               className={inputClass}
-              type="date"
-              value={form.date}
+              type="text"
+              value={form.date ?? ""}
               onChange={(e) => set("date", e.target.value)}
+              placeholder="例如：2026-08-19 或 2026年8月"
             />
+            <p className="text-[10px] text-gray-600 mt-1">
+              可自由填写任意文本；填 YYYY-MM-DD 格式排序更准确
+            </p>
           </div>
         </div>
 
