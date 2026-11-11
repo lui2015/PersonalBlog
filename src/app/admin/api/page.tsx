@@ -262,6 +262,42 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-
 
 站点地址：${BASE_URL}`,
   },
+  {
+    title: "更新关于我",
+    icon: "☻",
+    prompt: `我想更新个人博客「鲁力铭」的「关于我」页面信息。请调用开放接口 /api/open/about（单例对象，PUT 为字段合并，只传要改的字段即可，其余字段会保留）。
+
+## 1. 先读取当前数据（公开，无需认证）
+\`\`\`bash
+curl -s "${BASE_URL}/api/open/about"
+\`\`\`
+
+## 2. 更新部分字段（需认证）
+\`\`\`bash
+curl -X PUT "${BASE_URL}/api/open/about" \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \\
+  -d '{ "role": "高级项目经理 / 研发效能负责人", "bio": "更新后的个人简介" }'
+\`\`\`
+响应中的 mode 为 "merged"，data 为合并后的完整对象。
+
+## 3. 如需替换数组字段，必须传完整数组
+\`\`\`bash
+curl -X PUT "${BASE_URL}/api/open/about" \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \\
+  -d '{ "skillTree": ["PMP", "敏捷管理", "研发效能", "AI Coding"] }'
+\`\`\`
+
+**字段说明**：
+- name / role / bio: 姓名、职位、个人简介
+- avatar: 头像图片 URL（可先用 /api/upload 上传，用返回的 absoluteUrl）
+- socialLinks: [{ id, name, url, icon }] 社交链接数组
+- skillTree: string[] SKILL TREE 标签数组
+- timeline: [{ id, year, title, desc }] 履历时间线数组
+
+站点地址：${BASE_URL}`,
+  },
 ];
 
 function CopyButton({ text, label = "复制" }: { text: string; label?: string }) {

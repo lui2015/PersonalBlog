@@ -140,8 +140,9 @@ export async function POST(req: Request, ctx: Ctx) {
 
 /**
  * PUT /api/open/{section}
- * 整块替换某个模块的数据（慎用，会覆盖该模块全部内容）。需要认证。
- * body: 数组（列表模块）或对象（hero），也可用 { data: ... } 包裹。
+ * - 数组模块：整块替换整个数组（慎用，会覆盖全部条目）
+ * - 对象模块（hero / about）：字段合并，只更新传入的字段，其余保持不变
+ * 需要认证。body 可直接传数组/对象，也可用 { data: ... } 包裹。
  */
 export async function PUT(req: Request, ctx: Ctx) {
   const { section } = await ctx.params;
@@ -169,10 +170,31 @@ export async function PUT(req: Request, ctx: Ctx) {
     );
   }
 
-  await mutateContent((content) => {
-    (content as unknown as Record<string, unknown>)[meta.key as string] = payload;
+  const merged = await mutateContent((content) => {
+    const box = content as unknown as Record<string, unknown>;
+    if (meta.kind === "object") {
+      // 对象模块：字段合并，避免外部只传部分字段时抹掉其余数据
+      const current = box[meta.key as string];
+      const patch = payload as Record<string, unknown>;
+      const next = {
+        ...(current && typeof current === "object" && !Array.isArray(current)
+          ? (current as Record<string, unknown>)
+          : {}),
+        ...patch,
+      };
+      box[meta.key as string] = next;
+      return next;
+    }
+    box[meta.key as string] = payload;
+    return payload as unknown as Record<string, unknown>[];
   });
 
   const count = Array.isArray(payload) ? payload.length : 1;
-  return NextResponse.json({ ok: true, section, count });
+  return NextResponse.json({
+    ok: true,
+    section,
+    count,
+    mode: meta.kind === "object" ? "merged" : "replaced",
+    ...(meta.kind === "object" ? { data: merged } : {}),
+  });
 }

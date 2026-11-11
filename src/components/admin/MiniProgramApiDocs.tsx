@@ -49,7 +49,11 @@ const detail = await request('/api/open/works/w1');
 // 4) 首页信息（单例对象）
 const hero = await request('/api/open/hero');
 
-// 5) 数据字典（所有模块 + 字段说明 + 条目数）
+// 5) 关于我（单例对象，直接取 res.data）
+const aboutRes = await request('/api/open/about');
+const { name, role, bio, avatar, socialLinks, skillTree, timeline } = aboutRes.data;
+
+// 6) 数据字典（所有模块 + 字段说明 + 条目数）
 const dict = await request('/api/open');`;
 
 /** 写入示例 */
@@ -70,6 +74,18 @@ await request('/api/open/quotes/' + added.data.id, {
 // 删除（前端请二次确认）
 await request('/api/open/quotes/' + added.data.id, {
   method: 'DELETE', auth: true,
+});
+
+// 更新「关于我」（对象模块：PUT 直接合并字段，其余字段保持不变）
+await request('/api/open/about', {
+  method: 'PUT', auth: true,
+  data: { role: '高级项目经理 / 研发效能负责人' },
+});
+
+// 替换整个技能树（数组字段需传完整数组）
+await request('/api/open/about', {
+  method: 'PUT', auth: true,
+  data: { skillTree: ['PMP', '敏捷管理', '研发效能', 'AI Coding'] },
 });`;
 
 /** 上传示例 */
@@ -124,12 +140,14 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - POST /api/open/{section}           新增一条（需认证，id 可不传，服务端自动生成）
 - PUT  /api/open/{section}/{id}      局部更新一条（需认证，只传要改的字段）
 - DELETE /api/open/{section}/{id}    删除一条（需认证）
-- PUT  /api/open/{section}           整块替换该模块（需认证，慎用）
+- PUT  /api/open/{section}           数组模块=整块替换(慎用)；对象模块(hero/about)=字段合并，只更新传入字段，响应含 mode 与 data
 - GET  /api/content                  一次性获取全站数据
 - POST /api/upload                   上传图片(multipart, 字段名 file)，返回 { ok, url, absoluteUrl }；小程序请用 absoluteUrl
 
 ## 数据模块（section）
-hero(对象,只支持GET/PUT) / poems / photos / stats / skills / myskills / quotes / works / videos / albums / softwares / socialMedia
+对象模块：hero / about（单例，只支持 GET/PUT，PUT 为字段合并，无 {id} 路径）
+数组模块：poems / photos / stats / skills / myskills / quotes / works / videos / albums / softwares / socialMedia
+共 13 个模块，字段字典可通过 GET /api/open 动态获取。
 
 主要字段：
 - poems: id, title, author, dynasty, date, content（必填 title, content）
@@ -144,6 +162,7 @@ hero(对象,只支持GET/PUT) / poems / photos / stats / skills / myskills / quo
 - stats: id, label, value(number), suffix, color（必填 label, value）
 - photos: id, src, title, desc（必填 src）
 - hero: title, subtitle, avatarText, avatarUrl
+- about: name, role, bio, avatar, socialLinks[{id,name,url,icon}], skillTree[string], timeline[{id,year,title,desc}]（对象，PUT 合并字段；数组字段需传完整数组）
 
 ## 统一响应
 成功 { ok: true, ... }（POST 为 201）；失败 { ok: false, error: "..." }
@@ -186,7 +205,7 @@ const ENDPOINTS = [
   { method: "POST", path: "/api/open/{section}", desc: "新增一条（id 可自动生成）", auth: true },
   { method: "PUT", path: "/api/open/{section}/{id}", desc: "局部更新一条（合并字段）", auth: true },
   { method: "DELETE", path: "/api/open/{section}/{id}", desc: "删除一条", auth: true },
-  { method: "PUT", path: "/api/open/{section}", desc: "整块替换该模块（慎用）", auth: true },
+  { method: "PUT", path: "/api/open/{section}", desc: "数组模块=整块替换（慎用）；对象模块 hero/about=字段合并", auth: true },
   { method: "POST", path: "/api/upload", desc: "上传图片，返回 url 与 absoluteUrl", auth: true },
   { method: "GET", path: "/api/content", desc: "一次性获取全站数据（兼容旧接口）", auth: false },
 ];

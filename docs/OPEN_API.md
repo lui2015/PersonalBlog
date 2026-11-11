@@ -1,7 +1,7 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1 ｜ 更新日期：2026-11-08
-> 用途：供「个人版本小程序客户端」读取与维护站点全部数据。
+> 版本：v1.1 ｜ 更新日期：2026-11-11
+> 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
 ---
@@ -69,7 +69,7 @@ Cookie: admin_session=...
 | POST | `/api/open/{section}` | ✅ | 新增一条 |
 | PUT | `/api/open/{section}/{id}` | ✅ | 局部更新一条（合并字段） |
 | DELETE | `/api/open/{section}/{id}` | ✅ | 删除一条 |
-| PUT | `/api/open/{section}` | ✅ | 整块替换该模块（慎用） |
+| PUT | `/api/open/{section}` | ✅ | 数组模块＝整块替换（慎用）；对象模块（hero/about）＝字段合并 |
 
 ### 3.2 其他可用接口
 
@@ -159,7 +159,8 @@ GET https://www.luliming.xyz/api/open/quotes?page=1&pageSize=20&order=desc
 }
 ```
 
-> `hero` 是单例对象，返回 `{ ok, section, kind: "object", data: { title, subtitle, avatarText, avatarUrl } }`，不带分页字段。
+> **单例对象模块**（`hero`、`about`）不走分页，返回 `{ ok, section, kind: "object", data: {...} }`，没有 `total / page / items` 字段。
+> `about` 的完整响应示例见 [4.10](#410-get-about--关于我数据)。
 
 ---
 
@@ -219,7 +220,9 @@ POST /api/open/softwares
 
 ### 4.5 PUT `/api/open/{section}/{id}` — 局部更新
 
-只更新传入的字段，其余保持不变；`id` 不可修改（`patch` 中的 `id` 会被忽略）。`hero` 支持直接 `PUT /api/open/hero` 合并字段。
+只更新传入的字段，其余保持不变；`id` 不可修改（`patch` 中的 `id` 会被忽略）。
+
+> **对象模块（`hero` / `about`）不需要 `{id}`**：直接 `PUT /api/open/about` 传要修改的字段即可，效果同为合并。详见 [4.10](#410-get-about--关于我数据)。
 
 ```json
 PUT /api/open/softwares/sw_xxx
@@ -243,16 +246,41 @@ DELETE /api/open/quotes/t_001
 
 ---
 
-### 4.7 PUT `/api/open/{section}` — 整块替换（慎用）
+### 4.7 PUT `/api/open/{section}` — 整块替换 / 字段合并
 
-用完整数组替换整个模块，会覆盖原有全部条目。Body 可直接传数组，也可传 `{ "data": [...] }`。
+行为按模块类型区分：
+
+| 模块类型 | 适用 section | 行为 |
+|----------|--------------|------|
+| `array` 数组模块 | `poems` `photos` `stats` `skills` `myskills` `quotes` `works` `videos` `albums` `softwares` `socialMedia` | **整块替换**，会覆盖原有全部条目（慎用） |
+| `object` 单例模块 | `hero` `about` | **字段合并**，只更新传入的字段，其余保持不变（安全，推荐） |
+
+数组模块示例（Body 可直接传数组，也可传 `{ "data": [...] }`）：
 ```json
 PUT /api/open/stats
 [ { "id": "s1", "label": "文章", "value": 42, "suffix": "篇", "color": "cyber-blue" } ]
 ```
 ```json
-{ "ok": true, "section": "stats", "count": 1 }
+{ "ok": true, "section": "stats", "count": 1, "mode": "replaced" }
 ```
+
+对象模块示例（只改职位，姓名/简介/技能树等均保持不变）：
+```json
+PUT /api/open/about
+{ "role": "高级项目经理 / 研发效能负责人" }
+```
+```json
+{
+  "ok": true,
+  "section": "about",
+  "count": 1,
+  "mode": "merged",
+  "data": { "name": "鲁力铭", "role": "高级项目经理 / 研发效能负责人", "...": "其余字段原样保留" }
+}
+```
+
+> `mode` 字段标明本次是 `merged`（合并）还是 `replaced`（替换），对象模块还会在 `data` 中回传合并后的完整对象，便于客户端直接更新本地状态。
+> ⚠️ 更新数组类字段（`socialLinks` / `skillTree` / `timeline`）时需传**完整数组**，合并是按顶层字段覆盖，不会逐条追加。
 
 ---
 
@@ -295,6 +323,80 @@ curl -X POST https://www.luliming.xyz/api/upload \
 ```
 
 `PUT /api/content` 用完整 JSON 覆盖全站（需认证），**并发有覆盖风险，小程序不建议用**。
+
+---
+
+### 4.10 GET / PUT `about` — 关于我数据
+
+`/about` 页面的全部展示内容都可通过开放接口读写，包括个人资料、社交链接、技能树、履历时间线。
+
+**读取（公开）**
+```
+GET https://www.luliming.xyz/api/open/about
+```
+
+**响应示例**
+```json
+{
+  "ok": true,
+  "section": "about",
+  "label": "关于我",
+  "kind": "object",
+  "data": {
+    "name": "鲁力铭",
+    "role": "互联网高级项目经理",
+    "bio": "本人拥有 11 年工作经验（4 年研发 + 7 年项目管理）……",
+    "avatar": "/images/avatar.jpg",
+    "socialLinks": [
+      { "id": "as1", "name": "GitHub", "url": "https://github.com", "icon": "⟨/⟩" },
+      { "id": "as2", "name": "Bilibili", "url": "https://space.bilibili.com/675642138", "icon": "▶" },
+      { "id": "as3", "name": "微博", "url": "https://weibo.com", "icon": "W" },
+      { "id": "as4", "name": "Email", "url": "mailto:635003514@qq.com", "icon": "✉" }
+    ],
+    "skillTree": ["PMP", "ACP", "NPDP", "PBA", "敏捷管理", "OKR", "持续交付", "需求管理", "跨团队协作", "效能度量", "数据分析", "产品原型"],
+    "timeline": [
+      { "id": "at1", "year": "2015", "title": "计算机本科毕业", "desc": "桂林电子科技大学 · 计算机科学与技术" },
+      { "id": "at2", "year": "2025", "title": "高级项目经理", "desc": "腾讯科技 · CSIG 研发效能提升" }
+    ]
+  }
+}
+```
+
+**字段说明**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | 姓名 |
+| `role` | string | 职位 / 头衔 |
+| `bio` | string | 个人简介（支持换行） |
+| `avatar` | string | 头像图片 URL，建议用 `/api/upload` 返回的 `absoluteUrl` |
+| `socialLinks` | `{ id, name, url, icon }[]` | 资料卡下方的图标链接；`icon` 为按钮上显示的短文本/符号 |
+| `skillTree` | `string[]` | SKILL TREE 标签数组，按数组顺序展示 |
+| `timeline` | `{ id, year, title, desc }[]` | TIMELINE 履历，按数组顺序展示（左右交替布局） |
+
+**更新（需认证，字段合并）**
+```bash
+curl -X PUT https://www.luliming.xyz/api/open/about \
+  -H 'Content-Type: application/json' \
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \
+  -d '{ "bio": "更新后的个人简介" }'
+```
+```json
+{ "ok": true, "section": "about", "count": 1, "mode": "merged", "data": { "...": "完整对象" } }
+```
+
+**更新整个数组字段**（如替换技能树，需传完整数组）
+```bash
+curl -X PUT https://www.luliming.xyz/api/open/about \
+  -H 'Content-Type: application/json' \
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \
+  -d '{ "skillTree": ["PMP", "敏捷管理", "研发效能", "AI Coding"] }'
+```
+
+**约束**
+- `about` 是**单例对象**，不支持 `POST` 新增、`DELETE` 删除（均返回 `405`）。`/api/open/about/{id}` 形式会**忽略 id**、直接读写整个对象，不推荐使用；请统一用 `/api/open/about`。
+- 更新后 Web 端 `/about` 页面刷新即生效（接口 `no-store`，无需重新部署）。
+- 嵌套数组按整体覆盖，`id` 由客户端自行保证唯一；新增条目建议用 `as{时间戳}` / `at{时间戳}` 之类前缀。
 
 ---
 
@@ -383,6 +485,10 @@ const detail = await request('/api/open/works/w1');
 // 首页信息
 const hero = await request('/api/open/hero');
 
+// 关于我（单例对象，直接取 res.data）
+const aboutRes = await request('/api/open/about');
+const { name, role, bio, avatar, socialLinks, skillTree, timeline } = aboutRes.data;
+
 // 数据字典（所有模块和字段）
 const dict = await request('/api/open');
 ```
@@ -408,6 +514,20 @@ await request(`/api/open/quotes/${added.data.id}`, {
 await request(`/api/open/quotes/${added.data.id}`, {
   method: 'DELETE',
   auth: true,
+});
+
+// 更新「关于我」（对象模块：直接 PUT，字段合并，其余字段保持不变）
+await request('/api/open/about', {
+  method: 'PUT',
+  auth: true,
+  data: { role: '高级项目经理 / 研发效能负责人' },
+});
+
+// 替换整个技能树（数组字段需传完整数组）
+await request('/api/open/about', {
+  method: 'PUT',
+  auth: true,
+  data: { skillTree: ['PMP', '敏捷管理', '研发效能', 'AI Coding'] },
 });
 ```
 
@@ -473,3 +593,5 @@ wx.chooseMedia({
 4. **小程序审核**：个人主体小程序若含「用户发布内容」能力可能受限，建议仅做只读展示，写入能力留在管理员端。
 5. **图片域名**：站点数据中有 `images.unsplash.com` / `picsum.photos` 的示例占位图，若小程序要显示，需一并配置为合法域名。
 6. **HTTPS**：生产环境强制 HTTPS，请勿使用 `http://`。
+7. **对象模块 vs 数组模块**：`hero` / `about` 是单例对象，用 `PUT /api/open/{section}` 做**字段合并**（无 `{id}` 路径）；其余模块是数组，`PUT` 不带 id 时是**整块替换**，务必先 GET 再改。响应中的 `mode` 可用来区分 `merged` / `replaced`。
+8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
