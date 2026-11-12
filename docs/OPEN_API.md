@@ -1,6 +1,7 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1.1 ｜ 更新日期：2026-11-11
+> 版本：v1.2 ｜ 更新日期：2026-11-12
+> 本次更新：SKILL TREE 技能标签升级为 `{ id, name, certificate }[]`，支持逐项编辑与证书图片，示例同步为线上真实数据。
 > 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
@@ -354,9 +355,14 @@ GET https://www.luliming.xyz/api/open/about
       { "id": "as4", "name": "Email", "url": "mailto:635003514@qq.com", "icon": "✉" }
     ],
     "skillTree": [
-      { "id": "sk1", "name": "PMP", "certificate": "/uploads/pmp-cert.jpg" },
+      { "id": "sk1", "name": "PMP", "certificate": "" },
       { "id": "sk2", "name": "ACP", "certificate": "" },
-      { "id": "sk3", "name": "NPDP", "certificate": "" }
+      { "id": "sk3", "name": "NPDP", "certificate": "" },
+      { "id": "sk4", "name": "PBA", "certificate": "" },
+      { "id": "sk5", "name": "高级软件设计师", "certificate": "" },
+      { "id": "sk6", "name": "AI产品经理", "certificate": "" },
+      { "id": "sk7", "name": "证券从业", "certificate": "" },
+      { "id": "sk1794453514179544", "name": "基金从业", "certificate": "" }
     ],
     "timeline": [
       { "id": "at1", "year": "2015", "title": "计算机本科毕业", "desc": "桂林电子科技大学 · 计算机科学与技术" },
@@ -378,6 +384,19 @@ GET https://www.luliming.xyz/api/open/about
 | `skillTree` | `{ id, name, certificate }[]` | SKILL TREE 标签数组，按数组顺序展示；`certificate` 为证书图片 URL，非空时前台点击标签可查看大图。兼容历史 `string[]`，读取时自动升级为新结构 |
 | `timeline` | `{ id, year, title, desc }[]` | TIMELINE 履历，按数组顺序展示（左右交替布局） |
 
+**SKILL TREE 技能标签明细**
+
+线上当前 8 项，按数组顺序在 `/about` 展示（桌面 4 列 × 2 行，窄屏 2 列）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 标签唯一 ID；新增时由客户端生成，建议 `sk` + 时间戳，全数组内不得重复 |
+| `name` | string | 标签文字，如 `PMP` / `高级软件设计师` / `基金从业` |
+| `certificate` | string | 证书图片 URL；`""` 表示暂无证书。可填 `/api/upload` 返回的 `url`（`/uploads/...`）或 `absoluteUrl`（https 全路径） |
+
+> 上传证书三步：① `POST /api/upload` 取图片 URL → ② `GET /api/open/about` 取完整 `skillTree` → ③ 改好目标项的 `certificate` 后，把**完整数组** `PUT /api/open/about`（只传单条会覆盖掉其余标签）。Web 端 `/about` 点击带 📜 的标签即可查看证书大图。
+> 兼容历史 `string[]`：传 `["PMP", "ACP"]` 仍可写入，读取时自动升级为 `{ id, name, certificate }`。
+
 **更新（需认证，字段合并）**
 ```bash
 curl -X PUT https://www.luliming.xyz/api/open/about \
@@ -389,17 +408,23 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 { "ok": true, "section": "about", "count": 1, "mode": "merged", "data": { "...": "完整对象" } }
 ```
 
-**更新整个数组字段**（如替换技能树，需传完整数组）
+**更新技能标签 / 给 PMP 设置证书**（数组字段需传完整数组，先 GET 再改）
 ```bash
 curl -X PUT https://www.luliming.xyz/api/open/about \
   -H 'Content-Type: application/json' \
   -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \
   -d '{ "skillTree": [
     {"id":"sk1","name":"PMP","certificate":"/uploads/pmp-cert.jpg"},
-    {"id":"sk2","name":"敏捷管理","certificate":""}
+    {"id":"sk2","name":"ACP","certificate":""},
+    {"id":"sk3","name":"NPDP","certificate":""},
+    {"id":"sk4","name":"PBA","certificate":""},
+    {"id":"sk5","name":"高级软件设计师","certificate":""},
+    {"id":"sk6","name":"AI产品经理","certificate":""},
+    {"id":"sk7","name":"证券从业","certificate":""},
+    {"id":"sk1794453514179544","name":"基金从业","certificate":""}
   ] }'
 ```
-> 证书图片先用 `POST /api/upload` 上传，把返回的 `url`（站内路径）或 `absoluteUrl` 填入 `certificate`；留空表示无证书。仍兼容历史 `string[]`，读取时自动升级为 `{ id, name, certificate }`。
+> 示例把 PMP 的 `certificate` 设为已上传的证书，其余 7 项保持原值；**必须传完整数组**，只传单条会删掉其余标签。证书图片先用 `POST /api/upload` 上传，取返回的 `url`（站内路径）或 `absoluteUrl`。仍兼容历史 `string[]`，读取时自动升级为 `{ id, name, certificate }`。
 
 **约束**
 - `about` 是**单例对象**，不支持 `POST` 新增、`DELETE` 删除（均返回 `405`）。`/api/open/about/{id}` 形式会**忽略 id**、直接读写整个对象，不推荐使用；请统一用 `/api/open/about`。
@@ -497,6 +522,7 @@ const hero = await request('/api/open/hero');
 // 关于我（单例对象，直接取 res.data）
 const aboutRes = await request('/api/open/about');
 const { name, role, bio, avatar, socialLinks, skillTree, timeline } = aboutRes.data;
+// skillTree 每项为 { id, name, certificate }；certificate 非空时小程序可展示证书图片
 
 // 数据字典（所有模块和字段）
 const dict = await request('/api/open');
@@ -532,14 +558,14 @@ await request('/api/open/about', {
   data: { role: '高级项目经理 / 研发效能负责人' },
 });
 
-// 替换整个技能树（数组字段需传完整数组）
+// 给某个技能标签设置证书（先 GET 再改，传完整数组）
+const skillTree = aboutRes.data.skillTree.map(s =>
+  s.id === 'sk1' ? { ...s, certificate: '/uploads/pmp-cert.jpg' } : s
+);
 await request('/api/open/about', {
   method: 'PUT',
   auth: true,
-  data: { skillTree: [
-    { id: 'sk1', name: 'PMP', certificate: '' },
-    { id: 'sk2', name: '敏捷管理', certificate: '/uploads/agile-cert.jpg' },
-  ] },
+  data: { skillTree },
 });
 ```
 
@@ -607,3 +633,4 @@ wx.chooseMedia({
 6. **HTTPS**：生产环境强制 HTTPS，请勿使用 `http://`。
 7. **对象模块 vs 数组模块**：`hero` / `about` 是单例对象，用 `PUT /api/open/{section}` 做**字段合并**（无 `{id}` 路径）；其余模块是数组，`PUT` 不带 id 时是**整块替换**，务必先 GET 再改。响应中的 `mode` 可用来区分 `merged` / `replaced`。
 8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
+9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
