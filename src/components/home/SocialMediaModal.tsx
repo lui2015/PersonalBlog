@@ -368,11 +368,11 @@ export default function SocialMediaModal({
             ) : null}
 
             {/* 平台卡片网格 */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
               {platforms.map((p) => (
                 <div
                   key={p.id}
-                  className="relative flex flex-col items-center gap-3 p-4 rounded-lg border border-cyber-border/50 hover:border-opacity-100 transition-all group"
+                  className="relative flex flex-col items-center gap-4 p-5 rounded-lg border border-cyber-border/50 hover:border-opacity-100 transition-all group"
                   style={{ borderColor: `${p.color}40` }}
                 >
                   {/* 管理员操作按钮 */}
@@ -417,7 +417,7 @@ export default function SocialMediaModal({
                   </h3>
 
                   {/* 二维码 */}
-                  <div className="relative w-28 h-28 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="relative w-32 h-32 sm:w-36 sm:h-36 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={p.qr}
