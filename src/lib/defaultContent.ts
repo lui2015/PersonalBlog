@@ -413,6 +413,14 @@ T extends U ? X : Y 是类型系统的开关。
       qr: "/images/qrcode-kuaishou.jpg",
       color: "#ff4906",
     },
+    {
+      id: "sm6",
+      name: "微博",
+      icon: "📢",
+      desc: "日常 / 观点分享",
+      qr: "/images/qrcode-weibo.jpg",
+      color: "#e6162d",
+    },
   ],
   about: {
     name: "鲁力铭",
