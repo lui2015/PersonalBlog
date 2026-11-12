@@ -227,7 +227,7 @@ export const SECTION_META: Record<string, SectionMeta> = {
       bio: "个人简介",
       avatar: "头像图片 URL",
       socialLinks: "社交链接数组 [{ id, name, url, icon }]",
-      skillTree: "SKILL TREE 标签数组 string[]",
+      skillTree: "SKILL TREE 标签数组 [{ id, name, certificate }]，certificate 为证书图片 URL（空字符串表示未上传）",
       timeline: "履历数组 [{ id, year, title, desc }]",
     },
     orderField: "id",

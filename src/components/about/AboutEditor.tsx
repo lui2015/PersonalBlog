@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { AboutContent, AboutSocialLink, AboutTimelineItem } from "@/lib/types";
+import type { AboutContent, AboutSkill, AboutSocialLink, AboutTimelineItem } from "@/lib/types";
 import { Field, inputClass, textareaClass, btnGhost, btnDanger } from "@/components/admin/AdminPanel";
 
 const newId = (p: string) => `${p}${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -29,6 +29,7 @@ export default function AboutEditor({
   onChange: (v: AboutContent) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [uploadingSkillId, setUploadingSkillId] = useState<string | null>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
 
   const patch = (p: Partial<AboutContent>) => onChange({ ...value, ...p });
@@ -42,6 +43,32 @@ export default function AboutEditor({
     patch({
       timeline: value.timeline.map((x) => (x.id === id ? { ...x, ...p } : x)),
     });
+
+  const updateSkill = (id: string, p: Partial<AboutSkill>) =>
+    patch({
+      skillTree: value.skillTree.map((x) => (x.id === id ? { ...x, ...p } : x)),
+    });
+
+  const moveSkill = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= value.skillTree.length) return;
+    const next = [...value.skillTree];
+    [next[index], next[target]] = [next[target], next[index]];
+    patch({ skillTree: next });
+  };
+
+  const handleCertificate = async (
+    id: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || uploadingSkillId) return;
+    setUploadingSkillId(id);
+    const url = await uploadImage(file);
+    if (url) updateSkill(id, { certificate: url });
+    setUploadingSkillId(null);
+    e.target.value = "";
+  };
 
   const handleAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -181,23 +208,118 @@ export default function AboutEditor({
 
       {/* 技能树 */}
       <section>
-        <h4 className="text-xs text-cyber-purple mb-3 font-[family-name:var(--font-mono)] tracking-widest">
-          [SKILL TREE] 技能标签（{value.skillTree.length}）
-        </h4>
-        <p className="text-[11px] text-gray-600 mb-2">每行一个标签，空行会被忽略</p>
-        <textarea
-          value={value.skillTree.join("\n")}
-          onChange={(e) =>
-            patch({
-              skillTree: e.target.value
-                .split("\n")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            })
-          }
-          className={textareaClass}
-          rows={5}
-        />
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-xs text-cyber-purple font-[family-name:var(--font-mono)] tracking-widest">
+            [SKILL TREE] 技能标签（{value.skillTree.length}）
+          </h4>
+          <button
+            type="button"
+            className={btnGhost}
+            onClick={() =>
+              patch({
+                skillTree: [
+                  ...value.skillTree,
+                  { id: newId("sk"), name: "", certificate: "" },
+                ],
+              })
+            }
+          >
+            + 新增
+          </button>
+        </div>
+        <p className="text-[11px] text-gray-600 mb-2">
+          每项可单独编辑名称并上传证书图片；前台点击带证书的标签可查看大图
+        </p>
+        <div className="space-y-2">
+          {value.skillTree.map((skill, i) => (
+            <div
+              key={skill.id}
+              className="p-3 rounded border border-cyber-border/60 bg-cyber-black/30 space-y-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-gray-600 font-[family-name:var(--font-mono)] w-5 shrink-0">
+                  {i + 1}
+                </span>
+                <input
+                  value={skill.name}
+                  onChange={(e) => updateSkill(skill.id, { name: e.target.value })}
+                  className={`${inputClass} flex-1 min-w-[140px]`}
+                  placeholder="技能 / 证书名称"
+                />
+                {skill.certificate && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={skill.certificate}
+                      alt={`${skill.name} 证书预览`}
+                      title="证书预览"
+                      className="w-9 h-9 object-cover rounded border border-cyber-border shrink-0"
+                    />
+                  </>
+                )}
+                <label className={`${btnGhost} shrink-0 cursor-pointer`}>
+                  {uploadingSkillId === skill.id
+                    ? "上传中..."
+                    : skill.certificate
+                      ? "📷 更换证书"
+                      : "📷 上传证书"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => handleCertificate(skill.id, e)}
+                  />
+                </label>
+                {skill.certificate && (
+                  <button
+                    type="button"
+                    className={`${btnGhost} shrink-0`}
+                    onClick={() => updateSkill(skill.id, { certificate: "" })}
+                  >
+                    清除
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={`${btnGhost} shrink-0 disabled:opacity-40`}
+                  disabled={i === 0}
+                  onClick={() => moveSkill(i, -1)}
+                  title="上移"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className={`${btnGhost} shrink-0 disabled:opacity-40`}
+                  disabled={i === value.skillTree.length - 1}
+                  onClick={() => moveSkill(i, 1)}
+                  title="下移"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className={btnDanger}
+                  onClick={() =>
+                    patch({
+                      skillTree: value.skillTree.filter((x) => x.id !== skill.id),
+                    })
+                  }
+                >
+                  删除
+                </button>
+              </div>
+              <input
+                value={skill.certificate}
+                onChange={(e) =>
+                  updateSkill(skill.id, { certificate: e.target.value })
+                }
+                className={`${inputClass} text-[11px]`}
+                placeholder="证书图片 URL（上传后自动填入，也可直接粘贴）"
+              />
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* 履历时间线 */}

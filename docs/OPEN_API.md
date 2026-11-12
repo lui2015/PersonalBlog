@@ -353,7 +353,11 @@ GET https://www.luliming.xyz/api/open/about
       { "id": "as3", "name": "微博", "url": "https://weibo.com", "icon": "W" },
       { "id": "as4", "name": "Email", "url": "mailto:635003514@qq.com", "icon": "✉" }
     ],
-    "skillTree": ["PMP", "ACP", "NPDP", "PBA", "敏捷管理", "OKR", "持续交付", "需求管理", "跨团队协作", "效能度量", "数据分析", "产品原型"],
+    "skillTree": [
+      { "id": "sk1", "name": "PMP", "certificate": "/uploads/pmp-cert.jpg" },
+      { "id": "sk2", "name": "ACP", "certificate": "" },
+      { "id": "sk3", "name": "NPDP", "certificate": "" }
+    ],
     "timeline": [
       { "id": "at1", "year": "2015", "title": "计算机本科毕业", "desc": "桂林电子科技大学 · 计算机科学与技术" },
       { "id": "at2", "year": "2025", "title": "高级项目经理", "desc": "腾讯科技 · CSIG 研发效能提升" }
@@ -371,7 +375,7 @@ GET https://www.luliming.xyz/api/open/about
 | `bio` | string | 个人简介（支持换行） |
 | `avatar` | string | 头像图片 URL，建议用 `/api/upload` 返回的 `absoluteUrl` |
 | `socialLinks` | `{ id, name, url, icon }[]` | 资料卡下方的图标链接；`icon` 为按钮上显示的短文本/符号 |
-| `skillTree` | `string[]` | SKILL TREE 标签数组，按数组顺序展示 |
+| `skillTree` | `{ id, name, certificate }[]` | SKILL TREE 标签数组，按数组顺序展示；`certificate` 为证书图片 URL，非空时前台点击标签可查看大图。兼容历史 `string[]`，读取时自动升级为新结构 |
 | `timeline` | `{ id, year, title, desc }[]` | TIMELINE 履历，按数组顺序展示（左右交替布局） |
 
 **更新（需认证，字段合并）**
@@ -390,13 +394,18 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 curl -X PUT https://www.luliming.xyz/api/open/about \
   -H 'Content-Type: application/json' \
   -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \
-  -d '{ "skillTree": ["PMP", "敏捷管理", "研发效能", "AI Coding"] }'
+  -d '{ "skillTree": [
+    {"id":"sk1","name":"PMP","certificate":"/uploads/pmp-cert.jpg"},
+    {"id":"sk2","name":"敏捷管理","certificate":""}
+  ] }'
 ```
+> 证书图片先用 `POST /api/upload` 上传，把返回的 `url`（站内路径）或 `absoluteUrl` 填入 `certificate`；留空表示无证书。仍兼容历史 `string[]`，读取时自动升级为 `{ id, name, certificate }`。
 
 **约束**
 - `about` 是**单例对象**，不支持 `POST` 新增、`DELETE` 删除（均返回 `405`）。`/api/open/about/{id}` 形式会**忽略 id**、直接读写整个对象，不推荐使用；请统一用 `/api/open/about`。
 - 更新后 Web 端 `/about` 页面刷新即生效（接口 `no-store`，无需重新部署）。
-- 嵌套数组按整体覆盖，`id` 由客户端自行保证唯一；新增条目建议用 `as{时间戳}` / `at{时间戳}` 之类前缀。
+- 嵌套数组按整体覆盖，`id` 由客户端自行保证唯一；新增条目建议用 `as{时间戳}` / `at{时间戳}` / `sk{时间戳}` 之类前缀。
+- `skillTree` 每项可关联一张证书图片：Web 端 `/about` 点击带 📜 标记的标签可查看大图；小程序读取 `certificate` 字段自行展示。
 
 ---
 
@@ -434,7 +443,7 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `albums` | `id` `name` `cover` `count`(number) `photos`(`[{id,src,title}]`) |
 | `softwares` | `id` `name` `image` `description` `url` |
 | `socialMedia` | `id` `name` `icon` `desc` `qr` `color` |
-| `about` | `name` `role` `bio` `avatar` `socialLinks`(`[{id,name,url,icon}]`) `skillTree`(string[]) `timeline`(`[{id,year,title,desc}]`) |
+| `about` | `name` `role` `bio` `avatar` `socialLinks`(`[{id,name,url,icon}]`) `skillTree`(`[{id,name,certificate}]`，兼容 string[]) `timeline`(`[{id,year,title,desc}]`) |
 
 > `poems` 实际数据含 `dynasty`（朝代）字段，属于扩展字段；接口不限制额外字段，可透传存储。
 > 图片类字段（`src` / `image` / `cover` / `qr` / `avatarUrl` / `icon`）建议填 `absoluteUrl` 完整地址，小程序才能直接显示。
@@ -527,7 +536,10 @@ await request('/api/open/about', {
 await request('/api/open/about', {
   method: 'PUT',
   auth: true,
-  data: { skillTree: ['PMP', '敏捷管理', '研发效能', 'AI Coding'] },
+  data: { skillTree: [
+    { id: 'sk1', name: 'PMP', certificate: '' },
+    { id: 'sk2', name: '敏捷管理', certificate: '/uploads/agile-cert.jpg' },
+  ] },
 });
 ```
 

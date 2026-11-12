@@ -85,7 +85,10 @@ await request('/api/open/about', {
 // 替换整个技能树（数组字段需传完整数组）
 await request('/api/open/about', {
   method: 'PUT', auth: true,
-  data: { skillTree: ['PMP', '敏捷管理', '研发效能', 'AI Coding'] },
+  data: { skillTree: [
+    { id: 'sk1', name: 'PMP', certificate: '' },
+    { id: 'sk2', name: '敏捷管理', certificate: '/uploads/agile-cert.jpg' },
+  ] },
 });`;
 
 /** 上传示例 */
@@ -162,7 +165,7 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - stats: id, label, value(number), suffix, color（必填 label, value）
 - photos: id, src, title, desc（必填 src）
 - hero: title, subtitle, avatarText, avatarUrl
-- about: name, role, bio, avatar, socialLinks[{id,name,url,icon}], skillTree[string], timeline[{id,year,title,desc}]（对象，PUT 合并字段；数组字段需传完整数组）
+- about: name, role, bio, avatar, socialLinks[{id,name,url,icon}], skillTree[{id,name,certificate}]（certificate 为证书图片 URL，兼容历史 string[]）, timeline[{id,year,title,desc}]（对象，PUT 合并字段；数组字段需传完整数组）
 
 ## 统一响应
 成功 { ok: true, ... }（POST 为 201）；失败 { ok: false, error: "..." }
@@ -223,7 +226,7 @@ const SECTIONS = [
   { key: "albums", label: "摄影相册", kind: "数组", required: "name", fields: "id, name, cover, count, photos[{id,src,title}]" },
   { key: "softwares", label: "软件作品", kind: "数组", required: "name", fields: "id, name, image, description, url" },
   { key: "socialMedia", label: "自媒体平台", kind: "数组", required: "name", fields: "id, name, icon, desc, qr, color" },
-  { key: "about", label: "关于我", kind: "对象", required: "—", fields: "name, role, bio, avatar, socialLinks[], skillTree[], timeline[]" },
+  { key: "about", label: "关于我", kind: "对象", required: "—", fields: "name, role, bio, avatar, socialLinks[], skillTree[{id,name,certificate}], timeline[]" },
 ];
 
 function CopyButton({ text, label = "复制" }: { text: string; label?: string }) {

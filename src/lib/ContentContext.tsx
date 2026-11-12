@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { DEFAULT_CONTENT } from "./defaultContent";
+import { mergeAbout } from "./aboutContent";
 import type { SiteContent } from "./types";
 
 const STORAGE_KEY = "siteContent_v1";
@@ -66,7 +67,7 @@ function mergeWithDefault(p: Partial<SiteContent>): SiteContent {
     albums: p.albums ?? DEFAULT_CONTENT.albums,
     softwares: p.softwares ?? DEFAULT_CONTENT.softwares,
     socialMedia: p.socialMedia ?? DEFAULT_CONTENT.socialMedia,
-    about: { ...DEFAULT_CONTENT.about, ...(p.about ?? {}) },
+    about: mergeAbout(p.about),
   };
 }
 

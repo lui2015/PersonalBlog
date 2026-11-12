@@ -114,13 +114,19 @@ export interface AboutTimelineItem {
   desc: string;
 }
 
+export interface AboutSkill {
+  id: string;
+  name: string; // 技能 / 证书名称
+  certificate: string; // 证书图片 URL，空字符串表示未上传
+}
+
 export interface AboutContent {
   name: string; // 姓名
   role: string; // 职位
   bio: string; // 个人简介
   avatar: string; // 头像图片 URL
   socialLinks: AboutSocialLink[];
-  skillTree: string[]; // SKILL TREE 标签
+  skillTree: AboutSkill[]; // SKILL TREE 标签（每项可单独编辑并关联证书图片）
   timeline: AboutTimelineItem[]; // TIMELINE 履历
 }
 

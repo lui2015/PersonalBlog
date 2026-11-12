@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/lib/AuthContext";
 import { useContent } from "@/lib/ContentContext";
 import { DEFAULT_CONTENT } from "@/lib/defaultContent";
+import { normalizeSkillTree } from "@/lib/aboutContent";
 import AboutEditor from "@/components/about/AboutEditor";
 import EditorModal from "@/components/admin/EditorModal";
 import { btnPrimary, btnGhost } from "@/components/admin/AdminPanel";
@@ -16,11 +17,21 @@ export default function AboutPage() {
   const { content, updateSection, flush, saveStatus } = useContent();
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<AboutContent | null>(null);
+  const [certPreview, setCertPreview] = useState<{ name: string; url: string } | null>(null);
 
   const about = content.about ?? DEFAULT_CONTENT.about;
   const timeline = about.timeline ?? [];
   const socialLinks = about.socialLinks ?? [];
-  const skillTree = about.skillTree ?? [];
+  const skillTree = normalizeSkillTree(about.skillTree);
+
+  useEffect(() => {
+    if (!certPreview) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCertPreview(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [certPreview]);
 
   const openEditor = () => {
     setDraft(structuredClone(about));
@@ -130,18 +141,32 @@ export default function AboutPage() {
             ◈ SKILL TREE
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {skillTree.map((skill, i) => (
-              <motion.div
-                key={`${skill}-${i}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 + i * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-                className="cyber-card px-4 py-3 text-center text-sm text-gray-300 hover:text-cyber-blue hover:border-cyber-blue/50 transition-all cursor-default"
-              >
-                {skill}
-              </motion.div>
-            ))}
+            {skillTree.map((skill, i) => {
+              const hasCert = Boolean(skill.certificate);
+              return (
+                <motion.button
+                  key={skill.id}
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + i * 0.05 }}
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() =>
+                    hasCert &&
+                    setCertPreview({ name: skill.name, url: skill.certificate })
+                  }
+                  title={hasCert ? "点击查看证书" : undefined}
+                  className={`cyber-card w-full px-4 py-3 text-center text-sm text-gray-300 hover:text-cyber-blue hover:border-cyber-blue/50 transition-all ${
+                    hasCert ? "cursor-pointer" : "cursor-default"
+                  }`}
+                >
+                  <span className="inline-flex items-center justify-center gap-1.5">
+                    {hasCert && <span className="text-xs">📜</span>}
+                    {skill.name}
+                  </span>
+                </motion.button>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -302,6 +327,44 @@ export default function AboutPage() {
       >
         {draft && <AboutEditor value={draft} onChange={setDraft} />}
       </EditorModal>
+
+      {/* 证书大图预览 */}
+      <AnimatePresence>
+        {certPreview && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setCertPreview(null)}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-cyber-black/90 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-3xl flex flex-col items-center gap-4"
+            >
+              <p className="text-sm text-cyber-blue font-[family-name:var(--font-mono)]">
+                📜 {certPreview.name} · 证书
+              </p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={certPreview.url}
+                alt={`${certPreview.name} 证书`}
+                className="max-h-[75vh] max-w-full object-contain rounded border border-cyber-border bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setCertPreview(null)}
+                className={btnGhost}
+              >
+                关闭
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

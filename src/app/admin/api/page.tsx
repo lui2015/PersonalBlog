@@ -286,14 +286,14 @@ curl -X PUT "${BASE_URL}/api/open/about" \\
 curl -X PUT "${BASE_URL}/api/open/about" \\
   -H 'Content-Type: application/json' \\
   -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \\
-  -d '{ "skillTree": ["PMP", "敏捷管理", "研发效能", "AI Coding"] }'
+  -d '{ "skillTree": [{"id":"sk1","name":"PMP","certificate":""},{"id":"sk2","name":"敏捷管理","certificate":"/uploads/agile-cert.jpg"}] }'
 \`\`\`
 
 **字段说明**：
 - name / role / bio: 姓名、职位、个人简介
 - avatar: 头像图片 URL（可先用 /api/upload 上传，用返回的 absoluteUrl）
 - socialLinks: [{ id, name, url, icon }] 社交链接数组
-- skillTree: string[] SKILL TREE 标签数组
+- skillTree: [{ id, name, certificate }] 技能标签数组，certificate 为证书图片 URL（先用 /api/upload 上传），留空表示无证书
 - timeline: [{ id, year, title, desc }] 履历时间线数组
 
 站点地址：${BASE_URL}`,

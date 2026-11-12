@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { CONTENT_FILE, DATA_DIR } from "./paths";
 import { DEFAULT_CONTENT } from "../defaultContent";
+import { mergeAbout } from "../aboutContent";
 import type { SiteContent } from "../types";
 
 /** 确保 data 目录存在 */
@@ -32,7 +33,8 @@ export async function readContent(): Promise<SiteContent> {
 export async function writeContent(content: SiteContent): Promise<void> {
   await ensureDataDir();
   const tmp = path.join(DATA_DIR, `site-content.${process.pid}.${Date.now()}.tmp`);
-  const data = JSON.stringify(content, null, 2);
+  // 统一在写入口归一技能标签，保证任何接口写入的数据都是新结构
+  const data = JSON.stringify({ ...content, about: mergeAbout(content.about) }, null, 2);
   await fs.writeFile(tmp, data, "utf-8");
   await fs.rename(tmp, CONTENT_FILE);
 }
@@ -71,7 +73,7 @@ function mergeWithDefault(p: Partial<SiteContent>): SiteContent {
     albums: p.albums ?? DEFAULT_CONTENT.albums,
     softwares: p.softwares ?? DEFAULT_CONTENT.softwares,
     socialMedia: p.socialMedia ?? DEFAULT_CONTENT.socialMedia,
-    about: { ...DEFAULT_CONTENT.about, ...(p.about ?? {}) },
+    about: mergeAbout(p.about),
   };
 }
 
