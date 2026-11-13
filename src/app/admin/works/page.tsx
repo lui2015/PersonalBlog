@@ -131,7 +131,7 @@ export default function WorksAdminPage() {
                   ↓
                 </button>
                 <Link
-                  href={`/blog/${w.slug}`}
+                  href={`/blog/${encodeURIComponent(w.slug)}`}
                   target="_blank"
                   className={btnGhost}
                 >

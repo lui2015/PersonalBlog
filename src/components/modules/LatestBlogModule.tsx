@@ -42,7 +42,7 @@ export default function LatestBlogModule() {
               whileHover={{ y: -5 }}
               className="cyber-card p-4 sm:p-5 group hover:border-cyber-blue/50 transition-all duration-300"
             >
-              <Link href={`/blog/${post.slug}`} className="block">
+              <Link href={`/blog/${encodeURIComponent(post.slug)}`} className="block">
                 <div className="flex items-center gap-2 mb-2 sm:mb-3">
                   <span className="text-[10px] px-2 py-0.5 border border-cyber-purple/50 text-cyber-purple rounded">
                     {post.category}

@@ -31,12 +31,34 @@ function parseMarkdown(md: string): Block[] {
   return blocks;
 }
 
+/** 客户端 useParams 对中文动态段会返回 percent-encoded 值，需兼容编码前后的形态 */
+function decodeSlug(value: string): string {
+  let result = value;
+  for (let i = 0; i < 2; i += 1) {
+    try {
+      const next = decodeURIComponent(result);
+      if (next === result) break;
+      result = next;
+    } catch {
+      break;
+    }
+  }
+  return result;
+}
+
 export default function BlogDetailPage() {
   const params = useParams();
-  const slug = params.slug as string;
+  const rawSlug = String(params.slug ?? "");
+  const slug = decodeSlug(rawSlug);
   const { content, ready } = useContent();
 
-  const post = content.works.find((w) => w.slug === slug);
+  // 兼容：原始值 / 解码值 / 编码值，并允许用 id 或标题访问，避免中文 slug 误判 404
+  const candidates = new Set([rawSlug, slug]);
+  const matches = (value: string) =>
+    candidates.has(value) || candidates.has(encodeURIComponent(value));
+  const post = content.works.find(
+    (w) => matches(w.slug) || matches(w.id) || matches(w.title)
+  );
 
   if (!ready) {
     return (
@@ -59,6 +81,23 @@ export default function BlogDetailPage() {
           <p className="text-gray-500 mb-6">
             没有找到 slug 为 <code className="text-cyber-pink">{slug}</code> 的作品
           </p>
+          {content.works.length > 0 && (
+            <div className="mb-6 text-sm text-gray-500">
+              <p className="mb-2">可访问的文章：</p>
+              <ul className="space-y-1">
+                {content.works.map((w) => (
+                  <li key={w.id}>
+                    <Link
+                      href={`/blog/${encodeURIComponent(w.slug)}`}
+                      className="text-cyber-blue hover:underline"
+                    >
+                      {w.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <Link
             href="/blog"
             className="text-sm text-cyber-blue hover:underline font-[family-name:var(--font-mono)]"

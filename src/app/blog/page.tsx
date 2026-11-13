@@ -90,7 +90,7 @@ export default function BlogPage() {
                 className="group relative"
               >
                 <Link
-                  href={`/blog/${work.slug}`}
+                  href={`/blog/${encodeURIComponent(work.slug)}`}
                   className="block overflow-hidden rounded-lg border border-cyber-border bg-cyber-black/50 transition-all hover:border-cyber-blue hover:shadow-[0_0_20px_rgba(0,240,255,0.25)]"
                 >
                   <div className="relative aspect-[16/9] overflow-hidden">

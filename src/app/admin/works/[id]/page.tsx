@@ -129,7 +129,7 @@ export default function WorkEditorPage() {
               ✓ 已保存
             </span>
           )}
-          <Link href={`/blog/${draft.slug}`} target="_blank" className={btnGhost}>
+          <Link href={`/blog/${encodeURIComponent(draft.slug)}`} target="_blank" className={btnGhost}>
             预览
           </Link>
           <Link href="/admin/works" className={btnGhost}>
