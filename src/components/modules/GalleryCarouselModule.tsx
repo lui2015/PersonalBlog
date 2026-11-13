@@ -135,7 +135,7 @@ function Lightbox({
   );
 }
 
-/* ---- 单张照片（瀑布流卡片） ---- */
+/* ---- 单张照片（横图网格卡片） ---- */
 function PhotoCard({
   photo,
   index,
@@ -153,15 +153,17 @@ function PhotoCard({
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, delay: (index % 8) * 0.05, ease: [0.32, 0.72, 0, 1] }}
-      className="group relative block mb-3 sm:mb-4 break-inside-avoid rounded-xl overflow-hidden border border-cyber-pink/15 bg-cyber-dark/60 hover:border-cyber-pink/50 transition-all duration-300 hover:shadow-[0_0_28px_rgba(236,72,153,0.25)] cursor-pointer text-left"
+      className="group relative block rounded-xl overflow-hidden border border-cyber-pink/15 bg-cyber-dark/60 hover:border-cyber-pink/50 transition-all duration-300 hover:shadow-[0_0_28px_rgba(236,72,153,0.25)] cursor-pointer text-left"
     >
-      {/* 图片：保持原始比例 */}
-      <img
-        src={photo.src}
-        alt={photo.title}
-        className="w-full h-auto block object-cover transition-transform duration-700 group-hover:scale-[1.06]"
-        loading="lazy"
-      />
+      {/* 图片容器：统一 4:3 横图比例，竖图居中裁切 */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden">
+        <img
+          src={photo.src}
+          alt={photo.title}
+          className="w-full h-full object-cover object-center block transition-transform duration-700 group-hover:scale-[1.06]"
+          loading="lazy"
+        />
+      </div>
 
       {/* 渐变遮罩 + 标题浮层 */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-300" />
@@ -193,7 +195,7 @@ function PhotoCard({
   );
 }
 
-/* ---- 主模块：摄影展瀑布流 ---- */
+/* ---- 主模块：摄影展横图网格 ---- */
 export default function GalleryCarouselModule() {
   const { content } = useContent();
   const albums: GalleryAlbum[] = content.albums;
@@ -239,8 +241,8 @@ export default function GalleryCarouselModule() {
         </a>
       </div>
 
-      {/* 摄影展瀑布流：多图同屏，保持原始比例 */}
-      <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 sm:gap-4">
+      {/* 摄影展网格：所有照片统一 4:3 横图卡片，竖图裁切后整齐对齐 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         {displayPhotos.map((photo, i) => (
           <PhotoCard key={photo.id} photo={photo} index={i} onClick={() => openLightbox(i)} />
         ))}
