@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0f2c"/><stop offset="1" stop-color="#00b3b3"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.20"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <circle cx="630" cy="210" r="130" fill="#ffffff" opacity="0.10"/>
+  <path d="M0 560 L190 370 L350 510 L530 310 L800 590 L800 800 L0 800 Z" fill="url(#hill)"/>
+  <path d="M0 670 L250 490 L430 630 L610 470 L800 670 L800 800 L0 800 Z" fill="#000000" opacity="0.25"/>
+  <g stroke="#ffffff" stroke-opacity="0.12" stroke-width="1" fill="none">
+    <path d="M0 200 H800 M0 400 H800 M0 600 H800 M200 0 V800 M400 0 V800 M600 0 V800"/>
+  </g>
+  <text x="48" y="92" fill="#ffffff" fill-opacity="0.88" font-family="sans-serif" font-size="28" letter-spacing="8">GALLERY</text>
+  <text x="48" y="140" fill="#ffffff" fill-opacity="0.58" font-family="sans-serif" font-size="18" letter-spacing="4">光影瞬间 01</text>
+</svg>

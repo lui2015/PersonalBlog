@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useContent } from "@/lib/ContentContext";
 import { useAuth } from "@/lib/AuthContext";
@@ -8,6 +8,16 @@ import type { GalleryAlbum } from "@/lib/types";
 import CyberButton from "@/components/ui/CyberButton";
 import AlbumEditorModal from "@/components/admin/AlbumEditorModal";
 import { btnPrimary } from "@/components/admin/AdminPanel";
+
+const FALLBACK_IMAGE = "/images/gallery/g1.svg";
+
+/** 图片加载失败时回退到站内占位图，避免出现黑框 */
+function handleImageError(e: SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget;
+  if (img.dataset.fallback === "1") return;
+  img.dataset.fallback = "1";
+  img.src = FALLBACK_IMAGE;
+}
 
 export default function GalleryPage() {
   const { content, ready, updateSection } = useContent();
@@ -101,6 +111,7 @@ export default function GalleryPage() {
                   <img
                     src={album.cover}
                     alt={album.name}
+                    onError={handleImageError}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -180,6 +191,7 @@ export default function GalleryPage() {
                       <img
                         src={photo.src}
                         alt={photo.title}
+                        onError={handleImageError}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
@@ -203,7 +215,12 @@ export default function GalleryPage() {
             onClick={() => setLightboxImage(null)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={lightboxImage} alt="" className="max-h-[90vh] max-w-full rounded-lg" />
+            <img
+              src={lightboxImage}
+              alt=""
+              onError={handleImageError}
+              className="max-h-[90vh] max-w-full rounded-lg"
+            />
             <button
               onClick={() => setLightboxImage(null)}
               className="absolute right-6 top-6 text-gray-300 transition-colors hover:text-cyber-pink"

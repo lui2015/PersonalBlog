@@ -1,5 +1,11 @@
 import type { SiteContent } from "./types";
 
+/** 站内摄影占位图：避免依赖国内不可达的 picsum.photos 外链 */
+export const GALLERY_IMAGES = Array.from(
+  { length: 6 },
+  (_, i) => `/images/gallery/g${i + 1}.svg`
+);
+
 export const DEFAULT_CONTENT: SiteContent = {
   hero: {
     title: "鲁力铭",
@@ -297,44 +303,44 @@ T extends U ? X : Y 是类型系统的开关。
     {
       id: "a1",
       name: "旅行碎片",
-      cover: "https://picsum.photos/seed/album1/600/400",
+      cover: GALLERY_IMAGES[0],
       count: 8,
       photos: Array.from({ length: 8 }, (_, i) => ({
         id: `a1-p${i + 1}`,
-        src: `https://picsum.photos/seed/travel${i}/800/600`,
+        src: GALLERY_IMAGES[i % GALLERY_IMAGES.length],
         title: `旅行瞬间 ${i + 1}`,
       })),
     },
     {
       id: "a2",
       name: "日常记录",
-      cover: "https://picsum.photos/seed/album2/600/400",
+      cover: GALLERY_IMAGES[1],
       count: 6,
       photos: Array.from({ length: 6 }, (_, i) => ({
         id: `a2-p${i + 1}`,
-        src: `https://picsum.photos/seed/daily${i}/800/600`,
+        src: GALLERY_IMAGES[(i + 1) % GALLERY_IMAGES.length],
         title: `日常 ${i + 1}`,
       })),
     },
     {
       id: "a3",
       name: "光影摄影",
-      cover: "https://picsum.photos/seed/album3/600/400",
+      cover: GALLERY_IMAGES[2],
       count: 9,
       photos: Array.from({ length: 9 }, (_, i) => ({
         id: `a3-p${i + 1}`,
-        src: `https://picsum.photos/seed/photo${i}/800/600`,
+        src: GALLERY_IMAGES[(i + 2) % GALLERY_IMAGES.length],
         title: `光影 ${i + 1}`,
       })),
     },
     {
       id: "a4",
       name: "创意视觉",
-      cover: "https://picsum.photos/seed/album4/600/400",
+      cover: GALLERY_IMAGES[3],
       count: 6,
       photos: Array.from({ length: 6 }, (_, i) => ({
         id: `a4-p${i + 1}`,
-        src: `https://picsum.photos/seed/creative${i}/800/600`,
+        src: GALLERY_IMAGES[(i + 3) % GALLERY_IMAGES.length],
         title: `创意 ${i + 1}`,
       })),
     },
