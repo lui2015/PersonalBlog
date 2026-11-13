@@ -8,6 +8,7 @@ import {
   makeId,
   matchKeyword,
   sortItems,
+  withDerivedFields,
 } from "@/lib/server/openApi";
 
 export const runtime = "nodejs";
@@ -58,7 +59,9 @@ export async function GET(req: Request, ctx: Ctx) {
   const sorted = sortItems(matched, section, order);
   const total = sorted.length;
   const start = (page - 1) * pageSize;
-  const items = sorted.slice(start, start + pageSize);
+  const items = sorted
+    .slice(start, start + pageSize)
+    .map((x) => withDerivedFields(section, x));
 
   return NextResponse.json({
     ok: true,

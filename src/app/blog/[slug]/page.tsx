@@ -4,32 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useContent } from "@/lib/ContentContext";
-
-interface Block {
-  type: "h2" | "h3" | "code" | "list" | "p";
-  content: string;
-}
-
-function parseMarkdown(md: string): Block[] {
-  const blocks: Block[] = [];
-  const lines = md.replace(/\r\n/g, "\n").split("\n\n");
-  for (const raw of lines) {
-    const para = raw.trim();
-    if (!para) continue;
-    if (para.startsWith("## ")) {
-      blocks.push({ type: "h2", content: para.replace(/^##\s+/, "") });
-    } else if (para.startsWith("### ")) {
-      blocks.push({ type: "h3", content: para.replace(/^###\s+/, "") });
-    } else if (para.startsWith("```")) {
-      blocks.push({ type: "code", content: para.replace(/```\w*\n?/g, "") });
-    } else if (/^\d+\.\s/.test(para) || /^-\s/.test(para)) {
-      blocks.push({ type: "list", content: para });
-    } else {
-      blocks.push({ type: "p", content: para });
-    }
-  }
-  return blocks;
-}
+import { markdownToHtml } from "@/lib/markdown";
 
 /** 客户端 useParams 对中文动态段会返回 percent-encoded 值，需兼容编码前后的形态 */
 function decodeSlug(value: string): string {
@@ -109,7 +84,7 @@ export default function BlogDetailPage() {
     );
   }
 
-  const blocks = parseMarkdown(post.content);
+  const contentHtml = markdownToHtml(post.content);
 
   return (
     <div className="relative z-10 pt-24 pb-16">
@@ -185,56 +160,10 @@ export default function BlogDetailPage() {
           className="prose prose-invert max-w-none"
         >
           <div className="cyber-card p-8 md:p-12">
-            <div className="space-y-6 text-gray-300 leading-relaxed">
-              {blocks.map((block, i) => {
-                if (block.type === "h2") {
-                  return (
-                    <h2
-                      key={i}
-                      className="font-[family-name:var(--font-orbitron)] text-xl text-cyber-blue mt-8 mb-4"
-                    >
-                      {block.content}
-                    </h2>
-                  );
-                }
-                if (block.type === "h3") {
-                  return (
-                    <h3
-                      key={i}
-                      className="font-[family-name:var(--font-rajdhani)] text-lg text-cyber-purple mt-6 mb-3"
-                    >
-                      {block.content}
-                    </h3>
-                  );
-                }
-                if (block.type === "code") {
-                  return (
-                    <pre
-                      key={i}
-                      className="bg-cyber-black border border-cyber-border p-4 rounded overflow-x-auto font-[family-name:var(--font-mono)] text-sm text-cyber-green"
-                    >
-                      <code>{block.content}</code>
-                    </pre>
-                  );
-                }
-                if (block.type === "list") {
-                  return (
-                    <div key={i} className="pl-4 space-y-2">
-                      {block.content.split("\n").map((line, j) => (
-                        <p key={j} className="text-gray-300">
-                          {line}
-                        </p>
-                      ))}
-                    </div>
-                  );
-                }
-                return (
-                  <p key={i} className="text-gray-300 whitespace-pre-line">
-                    {block.content}
-                  </p>
-                );
-              })}
-            </div>
+            <div
+              className="article-body"
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
           </div>
         </motion.article>
       </div>

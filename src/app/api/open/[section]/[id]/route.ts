@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { mutateContent, readContent } from "@/lib/server/content";
 import { checkApiAuth } from "@/lib/server/auth";
-import { SECTION_KEYS, SECTION_META } from "@/lib/server/openApi";
+import { SECTION_KEYS, SECTION_META, withDerivedFields } from "@/lib/server/openApi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +31,11 @@ export async function GET(_req: Request, ctx: Ctx) {
   if (!item) {
     return NextResponse.json({ ok: false, error: "not found", id }, { status: 404 });
   }
-  return NextResponse.json({ ok: true, section, data: item });
+  return NextResponse.json({
+    ok: true,
+    section,
+    data: withDerivedFields(section, item),
+  });
 }
 
 /** PUT /api/open/{section}/{id} — 局部更新单条（合并字段），需要认证 */

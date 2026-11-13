@@ -43,8 +43,9 @@ console.log(res.items, res.total, res.hasMore);  // hasMore 为 true 时 page+1 
 // 2) 关键词搜索
 const found = await request('/api/open/works?q=Next.js');
 
-// 3) 单条详情
+// 3) 单条详情（works 额外返回 contentHtml，可直接给 rich-text 渲染）
 const detail = await request('/api/open/works/w1');
+console.log(detail.data.contentHtml);
 
 // 4) 首页信息（单例对象）
 const hero = await request('/api/open/hero');
@@ -155,7 +156,7 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 主要字段：
 - poems: id, title, author, dynasty, date, content（必填 title, content）
 - quotes: id, text, author（必填 text）
-- works: id, slug, title, excerpt, date, category, tags[], readTime, cover, content（必填 title, slug）
+- works: id, slug, title, excerpt, date, category, tags[], readTime, cover, content(Markdown), contentHtml(只读派生 HTML)（必填 title, slug）
 - videos: id, title, category, duration, cover, views, date, src（必填 title）
 - albums: id, name, cover, count, photos[{id,src,title}]（必填 name）
 - softwares: id, name, image, description, url（必填 name）
@@ -221,7 +222,7 @@ const SECTIONS = [
   { key: "skills", label: "技能雷达", kind: "数组", required: "name, level", fields: "id, name, level" },
   { key: "myskills", label: "技能作品", kind: "数组", required: "name, url", fields: "id, name, url, description?" },
   { key: "quotes", label: "我的思考", kind: "数组", required: "text", fields: "id, text, author" },
-  { key: "works", label: "文章作品", kind: "数组", required: "title, slug", fields: "id, slug, title, excerpt, date, category, tags[], readTime, cover, content" },
+  { key: "works", label: "文章作品", kind: "数组", required: "title, slug", fields: "id, slug, title, excerpt, date, category, tags[], readTime, cover, content(Markdown), contentHtml(只读)" },
   { key: "videos", label: "视频作品", kind: "数组", required: "title", fields: "id, title, category, duration, cover, views, date, src" },
   { key: "albums", label: "摄影相册", kind: "数组", required: "name", fields: "id, name, cover, count, photos[{id,src,title}]" },
   { key: "softwares", label: "软件作品", kind: "数组", required: "name", fields: "id, name, image, description, url" },

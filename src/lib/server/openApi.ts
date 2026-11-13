@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import type { SiteContent } from "../types";
+import { markdownToHtml } from "../markdown";
 
 /** 开放接口支持的模块（与 SiteContent 字段一一对应） */
 export interface SectionMeta {
@@ -142,7 +143,8 @@ export const SECTION_META: Record<string, SectionMeta> = {
       tags: "标签数组 string[]",
       readTime: "阅读时长，如 5 min",
       cover: "封面图片 URL",
-      content: "正文 Markdown",
+      content: "正文 Markdown（支持标题/加粗/斜体/链接/图片/列表/引用/代码块/分隔线）",
+      contentHtml: "正文渲染后的安全 HTML（只读派生字段，由 content 自动生成，写入时忽略）",
     },
     orderField: "date",
     idPrefix: "work",
@@ -280,4 +282,18 @@ export function matchKeyword(item: Record<string, unknown>, q: string): boolean 
     if (Array.isArray(v)) return v.some((x) => typeof x === "string" && x.toLowerCase().includes(k));
     return false;
   });
+}
+
+/**
+ * 接口输出时附加只读派生字段（不落库）。
+ * works.contentHtml：把 Markdown 正文渲染成语义 HTML，供小程序 rich-text 直接使用。
+ */
+export function withDerivedFields(
+  section: string,
+  item: Record<string, unknown>
+): Record<string, unknown> {
+  if (section === "works" && typeof item.content === "string") {
+    return { ...item, contentHtml: markdownToHtml(item.content) };
+  }
+  return item;
 }

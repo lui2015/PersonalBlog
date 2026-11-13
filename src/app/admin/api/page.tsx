@@ -220,7 +220,8 @@ curl -X POST "${BASE_URL}/api/upload" -F "file=@/path/to/cover.jpg" -H "X-Admin-
 curl -s "${BASE_URL}/api/content" > data.json
 
 # 编辑 data.json → works 数组末尾追加：
-# { "id": "article_唯一ID", "slug": "url友好名", "title": "文章标题", "excerpt": "摘要", "date": "2026-08-19", "category": "分类", "tags": ["标签1","标签2"], "readTime": "5分钟", "cover": "封面url(可选)", "content": "正文HTML或Markdown" }
+# { "id": "article_唯一ID", "slug": "url友好名", "title": "文章标题", "excerpt": "摘要", "date": "2026-08-19", "category": "分类", "tags": ["标签1","标签2"], "readTime": "5分钟", "cover": "封面url(可选)", "content": "正文 Markdown（## 标题、**加粗**、列表等）" }
+# 注意：contentHtml 是接口读取时自动生成的只读 HTML，无需也不应写入
 
 # 提交更新
 curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-Admin-User: luli" -H "X-Admin-Pass: luli116574" -d @data.json
@@ -234,7 +235,7 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-
 - tags: 标签数组
 - readTime: 阅读时长，如 "5分钟"
 - cover: 封面图片 URL（可选）
-- content: 文章正文内容
+- content: 文章正文 Markdown（后台编辑器支持格式工具栏、预览与复制；接口读取时额外返回只读 contentHtml 渲染后的 HTML）
 
 站点地址：${BASE_URL}`,
   },
@@ -466,7 +467,7 @@ curl -s -X PUT "${BASE_URL}/api/content?user=luli&pass=luli116574" \\
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-[family-name:var(--font-mono)]">
               {[
                 { name: "SoftwareWork", fields: "{ id, name, image, description, url }" },
-                { name: "Work", fields: "{ id, slug, title, excerpt, date, category, tags, readTime, cover, content }" },
+                { name: "Work", fields: "{ id, slug, title, excerpt, date, category, tags, readTime, cover, content(Markdown), contentHtml(只读派生) }" },
                 { name: "Photo/GalleryPhoto", fields: "{ id, src, title }" },
                 { name: "Quote", fields: "{ id, text, author }" },
                 { name: "Poem", fields: "{ id, title, author, date, content }" },

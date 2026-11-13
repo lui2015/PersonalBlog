@@ -1,7 +1,7 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1.2 ｜ 更新日期：2026-11-12
-> 本次更新：SKILL TREE 技能标签升级为 `{ id, name, certificate }[]`，支持逐项编辑与证书图片，示例同步为线上真实数据。
+> 版本：v1.3 ｜ 更新日期：2026-11-13
+> 本次更新：文章正文支持 Markdown 格式编辑 / 预览 / 复制；开放接口 `works` 新增只读派生字段 `contentHtml`（渲染后的安全 HTML）。
 > 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
@@ -171,7 +171,7 @@ GET https://www.luliming.xyz/api/open/quotes?page=1&pageSize=20&order=desc
 GET https://www.luliming.xyz/api/open/works/w1
 ```
 ```json
-{ "ok": true, "section": "works", "data": { "id": "w1", "slug": "building-cyberpunk-ui", "title": "...", "content": "..." } }
+{ "ok": true, "section": "works", "data": { "id": "w1", "slug": "building-cyberpunk-ui", "title": "...", "content": "## 小标题\n这是一段 **加粗** 文字", "contentHtml": "<h2>小标题</h2>\n<p>这是一段 <strong>加粗</strong> 文字</p>" } }
 ```
 未找到：`404 { "ok": false, "error": "not found", "id": "w1" }`
 
@@ -434,6 +434,34 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 
 ---
 
+### 4.11 文章正文格式与 `contentHtml`
+
+`works[].content` 存 **Markdown 原文**。后台编辑器提供格式工具栏（标题 / 加粗 / 斜体 / 链接 / 图片 / 引用 / 列表 / 代码块 / 分隔线）、实时预览，以及「复制 Markdown」「复制 HTML」。
+
+**接口输出格式**：`GET /api/open/works`（列表 `items[]`）与 `GET /api/open/works/{id}`（详情 `data`）都会额外返回只读派生字段 `contentHtml` —— 由服务端按同一套规则渲染的语义 HTML，小程序可直接交给 `rich-text` 展示，无需自己解析 Markdown。
+
+```json
+{
+  "content": "## 引言\n这是 **重点**，见 [官网](https://example.com)\n\n- 第一点\n- 第二点",
+  "contentHtml": "<h2>引言</h2>\n<p>这是 <strong>重点</strong>，见 <a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer\">官网</a></p>\n<ul><li>第一点</li><li>第二点</li></ul>"
+}
+```
+
+| 语法 | 渲染结果 |
+|------|----------|
+| `# ` ~ `###### ` | `<h2>` ~ `<h6>`（页面 h1 是文章标题） |
+| `**粗体**` / `*斜体*` / `` `代码` `` | `<strong>` / `<em>` / `<code>` |
+| `[文字](https://…)` / `![说明](/uploads/…)` | `<a>` / `<img>` |
+| `- ` / `1. ` 列表、`> ` 引用、` ``` ` 代码块、`---` 分隔线 | `<ul>/<ol>/<li>`、`<blockquote>`、`<pre>`、`<hr>` |
+| 段落内单个换行 | `<br />`；空行分段为多个 `<p>` |
+
+**约束**
+- `contentHtml` **只读**：POST / PUT 传入会被写入口忽略，`/api/content` 全量回写也不会污染数据；请勿当作存储字段。
+- 所有用户文本都做 HTML 转义；链接 / 图片只允许 `http(s)`、`mailto:`、站内路径与锚点，`javascript:` / `data:` 等伪协议会被丢弃，可安全用于 `rich-text` 或 `dangerouslySetInnerHTML`。
+- Web 端 `/blog/{slug}` 详情页、后台编辑器预览与接口 `contentHtml` 使用**同一个渲染器**，所见即所得。
+
+---
+
 ## 5. 数据模块与字段字典
 
 | section | 名称 | 条数(示例) | 排序字段 | 说明 |
@@ -463,7 +491,7 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `skills` | `id` `name` `level`(0-100 number) |
 | `myskills` | `id` `name` `url` `description?` |
 | `quotes` | `id` `text` `author` |
-| `works` | `id` `slug` `title` `excerpt` `date` `category` `tags`(string[]) `readTime` `cover` `content` |
+| `works` | `id` `slug` `title` `excerpt` `date` `category` `tags`(string[]) `readTime` `cover` `content`(Markdown) `contentHtml`(只读派生 HTML，见 4.11) |
 | `videos` | `id` `title` `category` `duration` `cover` `views` `date` `src` |
 | `albums` | `id` `name` `cover` `count`(number) `photos`(`[{id,src,title}]`) |
 | `softwares` | `id` `name` `image` `description` `url` |
@@ -513,8 +541,9 @@ const res = await request('/api/open/quotes?page=1&pageSize=20&order=desc');
 // 搜索
 const found = await request('/api/open/works?q=Next.js');
 
-// 单条详情
+// 单条详情（works 额外返回 contentHtml，可直接交给小程序 rich-text）
 const detail = await request('/api/open/works/w1');
+// detail.data.content → Markdown 原文；detail.data.contentHtml → 渲染后的语义 HTML
 
 // 首页信息
 const hero = await request('/api/open/hero');
@@ -634,3 +663,4 @@ wx.chooseMedia({
 7. **对象模块 vs 数组模块**：`hero` / `about` 是单例对象，用 `PUT /api/open/{section}` 做**字段合并**（无 `{id}` 路径）；其余模块是数组，`PUT` 不带 id 时是**整块替换**，务必先 GET 再改。响应中的 `mode` 可用来区分 `merged` / `replaced`。
 8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
 9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
+10. **文章正文格式**：`works[].content` 为 Markdown；列表 / 详情接口额外返回只读 `contentHtml`（渲染后的安全 HTML，见 4.11）。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML；`contentHtml` 写入时会被忽略，请勿回传。

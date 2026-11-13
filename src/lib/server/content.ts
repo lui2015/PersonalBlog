@@ -33,8 +33,20 @@ export async function readContent(): Promise<SiteContent> {
 export async function writeContent(content: SiteContent): Promise<void> {
   await ensureDataDir();
   const tmp = path.join(DATA_DIR, `site-content.${process.pid}.${Date.now()}.tmp`);
-  // 统一在写入口归一技能标签，保证任何接口写入的数据都是新结构
-  const data = JSON.stringify({ ...content, about: mergeAbout(content.about) }, null, 2);
+  // 写入口统一清洗：归一技能标签结构；剔除客户端回传的只读派生字段 contentHtml
+  const works = Array.isArray(content.works)
+    ? (content.works.map((w) => {
+        const { contentHtml: _ignored, ...rest } =
+          w as unknown as Record<string, unknown>;
+        void _ignored;
+        return rest;
+      }) as unknown as SiteContent["works"])
+    : content.works;
+  const data = JSON.stringify(
+    { ...content, about: mergeAbout(content.about), works },
+    null,
+    2
+  );
   await fs.writeFile(tmp, data, "utf-8");
   await fs.rename(tmp, CONTENT_FILE);
 }
