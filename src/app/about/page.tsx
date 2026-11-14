@@ -11,10 +11,15 @@ import AboutEditor from "@/components/about/AboutEditor";
 import EditorModal from "@/components/admin/EditorModal";
 import { btnPrimary, btnGhost } from "@/components/admin/AdminPanel";
 import type { AboutContent } from "@/lib/types";
+import { formatApkSize, useApk } from "@/lib/useApk";
 
 export default function AboutPage() {
   const { authed } = useAuth();
   const { content, updateSection, flush, saveStatus } = useContent();
+  const { meta } = useApk();
+  const apkUrl = meta?.url ?? "/app-debug.apk";
+  const sizeText =
+    meta?.exists && meta.size ? `(${formatApkSize(meta.size)})` : "(6.1 MB)";
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<AboutContent | null>(null);
   const [certPreview, setCertPreview] = useState<{ name: string; url: string } | null>(null);
@@ -266,8 +271,8 @@ export default function AboutPage() {
 
               {/* Direct Download Button */}
               <a
-                href="/app-debug.apk"
-                download="app-debug.apk"
+                href={apkUrl}
+                download="luliming-app.apk"
                 className="group relative inline-flex items-center gap-3 px-10 py-4 bg-transparent border-2 border-cyber-purple text-cyber-purple font-[family-name:var(--font-orbitron)] text-lg tracking-wider overflow-hidden transition-all duration-300 hover:bg-cyber-purple hover:text-white hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] active:scale-95"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
@@ -277,7 +282,7 @@ export default function AboutPage() {
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
                 <span>直接下载 APK</span>
-                <span className="text-xs font-[family-name:var(--font-mono)] opacity-60 ml-1">(6.1 MB)</span>
+                <span className="text-xs font-[family-name:var(--font-mono)] opacity-60 ml-1">{sizeText}</span>
               </a>
 
               {/* Copy Link */}

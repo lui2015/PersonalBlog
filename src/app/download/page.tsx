@@ -1,15 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
+import { useAuth } from "@/lib/AuthContext";
+import { formatApkSize, useApk } from "@/lib/useApk";
 
 const APP_NAME = "鲁力铭 App";
-const APK_URL = "/app-debug.apk";
 const DOWNLOAD_PAGE_URL = "https://www.luliming.xyz/download";
 
 export default function DownloadPage() {
   const [copied, setCopied] = useState(false);
+  const { authed } = useAuth();
+  const { meta, upload } = useApk();
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<string | null>(null);
+  const apkInputRef = useRef<HTMLInputElement>(null);
+
+  const apkUrl = meta?.url ?? "/app-debug.apk";
+  const sizeText =
+    meta?.exists && meta.size ? `(${formatApkSize(meta.size)})` : "(6.1 MB)";
+
+  const handleApkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadMsg(null);
+    const result = await upload(file);
+    setUploading(false);
+    setUploadMsg(
+      result.ok
+        ? "✓ APK 已更新，下载链接即时生效"
+        : `上传失败：${result.error || "未知错误"}`
+    );
+    if (apkInputRef.current) apkInputRef.current.value = "";
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -76,8 +101,8 @@ export default function DownloadPage() {
 
             {/* Direct Download Button */}
             <a
-              href={APK_URL}
-              download="app-debug.apk"
+              href={apkUrl}
+              download="luliming-app.apk"
               className="group relative inline-flex items-center gap-3 px-10 py-4 bg-transparent border-2 border-cyber-purple text-cyber-purple font-[family-name:var(--font-orbitron)] text-lg tracking-wider overflow-hidden transition-all duration-300 hover:bg-cyber-purple hover:text-white hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] active:scale-95"
             >
               {/* Animated background sweep */}
@@ -99,7 +124,7 @@ export default function DownloadPage() {
               </svg>
               <span>直接下载 APK</span>
               <span className="text-xs font-[family-name:var(--font-mono)] opacity-60 ml-1">
-                (6.1 MB)
+                {sizeText}
               </span>
             </a>
 
@@ -145,6 +170,56 @@ export default function DownloadPage() {
             <span>安装时请在系统设置中允许「未知来源」应用</span>
           </p>
         </motion.div>
+
+        {/* Admin: APK 上传替换 */}
+        {authed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 border-2 border-dashed border-cyber-purple/40 p-6"
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex-1">
+                <h3 className="font-[family-name:var(--font-orbitron)] text-sm text-cyber-purple mb-1">
+                  ◈ 管理员操作 · 更新 APK
+                </h3>
+                <p className="text-xs text-gray-500 font-[family-name:var(--font-mono)]">
+                  {meta?.exists
+                    ? `当前已上传新包：${formatApkSize(meta.size)}${
+                        meta.updatedAt
+                          ? ` · ${new Date(meta.updatedAt).toLocaleString()}`
+                          : ""
+                      }`
+                    : "当前使用内置安装包（public/app-debug.apk），上传后将自动替换"}
+                </p>
+              </div>
+              <button
+                onClick={() => apkInputRef.current?.click()}
+                disabled={uploading}
+                className="shrink-0 px-6 py-2.5 border-2 border-cyber-purple text-cyber-purple text-sm font-[family-name:var(--font-mono)] tracking-wider transition-all duration-300 hover:bg-cyber-purple hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploading ? "上传中..." : meta?.exists ? "替换 APK" : "上传 APK"}
+              </button>
+              <input
+                ref={apkInputRef}
+                type="file"
+                accept=".apk,application/vnd.android.package-archive"
+                onChange={handleApkUpload}
+                className="hidden"
+              />
+            </div>
+            {uploadMsg && (
+              <p
+                className={`mt-3 text-xs font-[family-name:var(--font-mono)] ${
+                  uploadMsg.startsWith("✓") ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {uploadMsg}
+              </p>
+            )}
+          </motion.div>
+        )}
       </div>
     </div>
   );

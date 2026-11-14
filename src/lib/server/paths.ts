@@ -12,3 +12,7 @@ export const DATA_DIR =
     : path.join(process.cwd(), ".data");
 
 export const CONTENT_FILE = path.join(DATA_DIR, "site-content.json");
+
+/** 管理员上传的 APK 安装包（固定文件名，上传即原子替换） */
+export const APK_DIR = path.join(DATA_DIR, "apk");
+export const APK_FILE = path.join(APK_DIR, "app-release.apk");

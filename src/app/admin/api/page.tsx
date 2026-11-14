@@ -118,7 +118,112 @@ curl -s ${BASE_URL}/api/miniprogram/tools
 
 请每次进入工具页都重新请求接口，直接遍历 groups 渲染，不要在客户端再做开关判断。`,
   },
+  {
+    method: "POST",
+    path: "/api/apk",
+    description: "上传 APK 安装包，替换 /download 页的下载文件（请求头携带管理员账号密码，最大 100MB）",
+    auth: true,
+    responseExample: `{ "ok": true, "url": "/api/apk/download", "size": 6400000 }`,
+    prompt: `请帮我替换站点下载页的 APK 安装包：
+
+\`\`\`bash
+# 上传新 APK（请求头携带管理员账号密码，上传即原子替换）
+curl -s -X POST ${BASE_URL}/api/apk \\
+  -H 'X-Admin-User: luli' \\
+  -H 'X-Admin-Pass: luli116574' \\
+  -F "file=@/path/to/app-release.apk"
+\`\`\`
+
+上传成功后，/download 与 /about 页的下载按钮和大小显示会自动更新。`,
+  },
 ];
+
+/**
+ * 通用作品上传总提示词：AI 读取 /api/open 数据字典后，
+ * 自动识别作品类型并写入对应模块，覆盖摄影 / 软件 / 诗词 / 文章等任意类型。
+ */
+const MASTER_PROMPT = `你是个人博客「鲁力铭」的内容管理助手。我会用自然语言描述要新增、修改或删除的作品（摄影、软件、诗词、文章、视频、思考、技能、相册、自媒体、关于我、APK 安装包等）。请你自动识别作品类型，调用站点开放接口完成操作，最后向我报告结果。
+
+站点地址：${BASE_URL}
+写操作认证：请求头 X-Admin-User: luli / X-Admin-Pass: luli116574（也可用查询参数 ?user=luli&pass=luli116574）；只读接口无需认证。
+
+## 第 0 步：先读数据字典，不要凭记忆猜字段
+\`\`\`bash
+curl -s "${BASE_URL}/api/open"
+\`\`\`
+响应 sections 数组包含每个模块的 key（接口路径名）、label、description、kind（array 列表 / object 单例）、required（必填字段）、fields（字段说明）、count。后续所有模块名、字段名、必填项一律以该响应为准。
+
+## 第 1 步：把我的描述映射到模块
+| 我说的作品 | 模块 key |
+| --- | --- |
+| 摄影 / 照片 / 相框图片 | photos（首页照片）或 albums（相册） |
+| 相册 / 一组照片 / AboutMe 相册 | albums |
+| 软件 / 项目作品 | softwares |
+| 诗词 | poems |
+| 文章 / 博客 | works |
+| 视频 | videos |
+| 思考 / 语录 | quotes |
+| 技能作品 | myskills（技能雷达图则是 skills） |
+| 自媒体平台 / 二维码 | socialMedia |
+| 统计数字 | stats |
+| 首页姓名 / 副标题 / 头像 | hero（单例对象） |
+| 关于我 / 履历 / 技能树 / 社交链接 | about（单例对象） |
+| APK 安装包 | 不走 /api/open，用 POST /api/apk |
+
+规则：
+- hero / about 是单例对象，只能 PUT 字段合并，不能新增或删除
+- 往已有相册追加照片：先 GET /api/open/albums/{id} 取当前 photos 数组，再 PUT /api/open/albums/{id} 传「追加后完整的 photos 数组」（PUT 单条为字段合并，数组字段需传完整数组），不要用 POST 新建相册
+- 类型不明确时，先对照 /api/open 的 label / description 找最接近的模块并向我确认，不要臆造模块名
+
+## 第 2 步：本地文件先上传
+- 图片（封面 / 照片 / 二维码 / 头像 / 证书）：POST /api/upload，multipart 字段名 file，支持 jpg/png/webp/gif/svg，单张 ≤8MB。取响应的 url（站内相对路径，Web 页面用）或 absoluteUrl（完整地址，小程序用）
+\`\`\`bash
+curl -s -X POST "${BASE_URL}/api/upload" \\
+  -F "file=@/path/to/cover.jpg" \\
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574'
+\`\`\`
+- 多张图片逐张上传并记住每个 URL；上传失败要如实告诉我，不要填假 URL
+- APK 安装包：POST /api/apk（-F "file=@/path/to/app.apk"，≤100MB），上传后下载页立即生效
+- 纯文本内容（诗词 / 思考 / 文章）无需上传文件
+
+## 第 3 步：只写目标模块，不整包覆盖
+新增一条：
+\`\`\`bash
+curl -s -X POST "${BASE_URL}/api/open/{section}" \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \\
+  -d '{ "字段名": "值" }'
+\`\`\`
+- id 可省略，服务端自动生成；必填字段缺失会返回 400 并给出 missing required fields，按提示补齐后重试
+- 修改某条：PUT /api/open/{section}/{id}，只传要改的字段（合并更新）
+- 删除某条：DELETE /api/open/{section}/{id}
+- 单例模块（hero / about）：PUT /api/open/{section} 字段合并，只传要改的字段；替换数组字段必须传完整数组
+- 严禁用 PUT /api/content 整包写入、或 PUT /api/open/{section} 整数组替换来「新增一条」，那会覆盖掉其它已有数据
+
+## 第 4 步：验证并汇报
+\`\`\`bash
+curl -s "${BASE_URL}/api/open/{section}?q=关键词"
+\`\`\`
+确认新条目存在后，告诉我：作品类型、写入的模块 key、新条目 id、关键字段，以及对应页面链接。
+
+## 字段要点（详情以第 0 步数据字典为准）
+- poems: title / content 必填，author、dynasty、date 可选
+- photos: src 必填（填上传返回的 url），title / desc 可选
+- softwares: name 必填，image / description / url 可选
+- works: title / slug 必填，content 为 Markdown 正文；contentHtml 是只读派生字段，不要写入
+- videos: title 必填，src 为 Bilibili 嵌入地址或 BV 号
+- quotes: text 必填；myskills: name / url 必填；skills: name / level(0-100)
+- albums: name 必填，photos 为 [{ id, src, title }] 数组
+- socialMedia: name 必填，qr / icon / desc / color 可选
+- 日期统一 YYYY-MM-DD；id 全局唯一；中文内容保持原文
+
+## 执行要求
+1. 只做我要求的变更，不改动其它模块和条目
+2. 缺少必要信息（标题、正文、图片路径等）先问我，不要编造内容
+3. 每步检查响应：HTTP 2xx 且 ok 为 true 才算成功；失败原样给出错误信息并停止，不要静默重试
+4. 涉及删除条目或整块替换时，必须先向我确认
+5. 完成后给出简洁结果摘要
+`;
 
 /** 常用场景：一键复制提示词 */
 const scenarios = [
@@ -361,6 +466,7 @@ function CodeBlock({ code, language = "bash" }: { code: string; language?: strin
 
 export default function OpenPlatformPage() {
   const [activeTab, setActiveTab] = useState<"endpoints" | "scenarios" | "miniprogram">("endpoints");
+  const [masterOpen, setMasterOpen] = useState(false);
 
   return (
     <AdminPanel
@@ -509,8 +615,48 @@ curl -s -X PUT "${BASE_URL}/api/content?user=luli&pass=luli116574" \\
       {activeTab === "scenarios" && (
         <div className="space-y-5">
           <p className="text-xs text-gray-500">
-            选择场景后一键复制完整提示词，直接粘贴给 AI 助手即可自动执行操作。
+            选择场景后一键复制完整提示词，直接粘贴给 AI 助手即可自动执行操作；也可直接使用下方总提示词，让 AI 自动识别任意类型的作品。
           </p>
+
+          {/* 通用总提示词（置顶） */}
+          <div className="cyber-card p-5 space-y-3 border-2 border-cyber-purple/50 bg-cyber-purple/5">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h3 className="text-sm text-cyber-purple font-[family-name:var(--font-orbitron)] flex items-center gap-2">
+                  <span>🌟</span> 通用作品上传 · 总提示词
+                </h3>
+                <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+                  一条提示词覆盖任意类型作品：复制后粘贴给任意 AI 助手，用自然语言描述要上传的内容，
+                  AI 会自动读取接口数据字典、识别作品类型、上传图片并写入对应模块。
+                </p>
+              </div>
+              <CopyButton text={MASTER_PROMPT} label="复制总提示词 →" />
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {["摄影", "软件", "诗词", "文章", "视频", "思考", "技能", "相册", "自媒体", "关于我", "APK"].map((t) => (
+                <span
+                  key={t}
+                  className="text-[10px] px-2 py-0.5 border border-cyber-purple/30 text-cyber-purple/80 font-[family-name:var(--font-mono)]"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setMasterOpen((v) => !v)}
+              className="text-[11px] text-gray-500 hover:text-cyber-purple transition-colors font-[family-name:var(--font-mono)]"
+            >
+              {masterOpen ? "▲ 收起提示词全文" : "▼ 查看提示词全文"}
+            </button>
+            {masterOpen && (
+              <pre className="bg-cyber-black/40 border border-cyber-border/30 p-3 max-h-96 overflow-y-auto text-[11px] text-gray-400 whitespace-pre-wrap leading-relaxed font-[family-name:var(--font-mono)]">
+                {MASTER_PROMPT}
+              </pre>
+            )}
+          </div>
+
           {scenarios.map((s) => (
             <div key={s.title} className="cyber-card p-5 space-y-3">
               <div className="flex items-center justify-between">

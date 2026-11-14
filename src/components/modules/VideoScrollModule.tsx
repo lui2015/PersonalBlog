@@ -117,11 +117,6 @@ function ThumbCard({
             {video.duration || "--:--"}
           </span>
         </div>
-
-        {/* 时长 */}
-        <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono text-white bg-black/70 px-1 py-px rounded">
-          {video.duration || "--:--"}
-        </span>
       </div>
 
       {/* 标题 + 描述 */}
@@ -138,6 +133,7 @@ function ThumbCard({
             </>
           )}
         </p>
+      </div>
       </div>
     </button>
   );
