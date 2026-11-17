@@ -235,3 +235,26 @@ tail -n 12 /tmp/build.log; cat .next/BUILD_ID 2>/dev/null
 
 真实内容始终在 `/opt/luliming-blog/data`（`site-content.json` + `uploads/`），由 `.env` 的 `DATA_DIR` 指定。任何部署、清理、构建操作都不得触碰该目录。
 
+### COS 对象存储
+
+站点图片存放在腾讯云 COS `lyman-1258661753`（ap-guangzhou），独立前缀 `personalblog/`，与其他项目互不干扰：
+
+- `personalblog/uploads/` ← `DATA_DIR/uploads/` 的上传文件
+- `personalblog/images/` ← release 的 `public/images/`（头像、二维码、占位图）
+- `personalblog/data/` ← `site-content.json` 及历史备份
+- `personalblog/data/backups/` ← 引用改写前的备份
+- `personalblog/data/daily/` ← 每日备份（保留 14 天）
+
+运维工具 `/opt/luliming-blog/cos/cos_tool.py`（源码 `deploy/cos/cos_tool.py`）。它复用服务器上已有的 COS 凭据与 Python SDK，凭据只在 `/opt/experience/backend/.env`，不进仓库、不进日志：
+
+```bash
+PY=/opt/experience/backend/.venv/bin/python
+TOOL=/opt/luliming-blog/cos/cos_tool.py
+$PY $TOOL migrate   # 全量上传现有文件
+$PY $TOOL rewrite   # 改写 site-content.json 图片引用为 COS URL（先做本地+COS 备份）
+$PY $TOOL backup    # 每日备份（crontab 04:55）
+$PY $TOOL verify    # 统计 COS 对象
+```
+
+`POST /api/upload` 先写本地副本，再调用该工具的 `upload` 子命令同步 COS；COS 不可用时自动降级为本地 URL，不阻断上传。小程序后台需把 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` 加入 `downloadFile` / `image` 合法域名。
+

@@ -17,6 +17,7 @@
 | `uploadFile` 合法域名 | `https://www.luliming.xyz` | 上传图片到 `/api/upload` |
 | `downloadFile` 合法域名 | `https://www.luliming.xyz` | 下载/预览 `/uploads/...` 图片 |
 | `image`（若用 `<image>` 直接显示） | `https://www.luliming.xyz` | 显示头像、封面、二维码 |
+| `downloadFile` / `image`（COS 图片） | `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` | 站内图片已迁移到 COS，需在小程序后台一并配置为合法域名 |
 
 - 域名必须 **HTTPS**、已备案，且不能带端口和路径。
 - 开发阶段可在微信开发者工具勾选「不校验合法域名」临时调试。
@@ -299,14 +300,17 @@ curl -X POST https://www.luliming.xyz/api/upload \
 ```json
 {
   "ok": true,
-  "url": "/uploads/1787200000000_a1b2c3.png",
-  "absoluteUrl": "https://www.luliming.xyz/uploads/1787200000000_a1b2c3.png",
+  "url": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/1787200000000_a1b2c3.png",
+  "absoluteUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/1787200000000_a1b2c3.png",
+  "localUrl": "/uploads/1787200000000_a1b2c3.png",
+  "cosUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/1787200000000_a1b2c3.png",
   "size": 23456,
   "type": "image/png"
 }
 ```
-- `url` 相对路径，供 Web 端使用
-- `absoluteUrl` **完整地址，小程序请直接用这个**（`<image src>` 或存入 `image` / `cover` / `qr` / `src` 字段）
+- 文件同时写入本地 `DATA_DIR/uploads/`（灾备副本）与 COS `personalblog/uploads/`，对外统一返回 **COS 绝对 URL**
+- `url` = `cosUrl` = `absoluteUrl`（COS 地址），可直接存入 `image` / `cover` / `qr` / `src` / `avatar` 字段，也可直接给小程序 `<image src>` 使用
+- `localUrl` 为本地副本相对路径；COS 不可用时接口自动降级，此时 `url` / `absoluteUrl` 回退为站点本地地址，上传不会失败
 
 ---
 
@@ -664,3 +668,4 @@ wx.chooseMedia({
 8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
 9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
 10. **文章正文格式**：`works[].content` 为 Markdown；列表 / 详情接口额外返回只读 `contentHtml`（渲染后的安全 HTML，见 4.11）。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML；`contentHtml` 写入时会被忽略，请勿回传。
+11. **图片存储 COS**：站内图片已迁移到 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/`（下分 `uploads/` 与 `images/`）；`POST /api/upload` 同时写本地副本与 COS 并返回 COS 绝对 URL，小程序后台需把该 COS 域名加入 `downloadFile` / `image` 合法域名。`site-content.json` 仍保存在服务器本地作为运行时数据，并每日备份到 COS `personalblog/data/daily/`（保留 14 天）。

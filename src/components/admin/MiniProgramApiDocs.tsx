@@ -146,7 +146,7 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - DELETE /api/open/{section}/{id}    删除一条（需认证）
 - PUT  /api/open/{section}           数组模块=整块替换(慎用)；对象模块(hero/about)=字段合并，只更新传入字段，响应含 mode 与 data
 - GET  /api/content                  一次性获取全站数据
-- POST /api/upload                   上传图片(multipart, 字段名 file)，返回 { ok, url, absoluteUrl }；小程序请用 absoluteUrl
+- POST /api/upload                   上传图片(multipart, 字段名 file)，返回 { ok, url, absoluteUrl, localUrl, cosUrl }；图片存 COS，url/absoluteUrl 均为 COS 绝对地址，小程序需在后台配置 COS 域名
 
 ## 数据模块（section）
 对象模块：hero / about（单例，只支持 GET/PUT，PUT 为字段合并，无 {id} 路径）

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkApiAuth } from "@/lib/server/auth";
 import { storage } from "@/lib/server/storage";
+import { syncUploadToCos } from "@/lib/server/cosUpload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,11 +61,16 @@ export async function POST(req: Request) {
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
-  const url = await storage.save(buf, ext);
+  // 始终保留本地副本（灾备/回滚），再同步到 COS；COS 不可用时自动降级为本地 URL
+  const localUrl = await storage.save(buf, ext);
+  const cosUrl = await syncUploadToCos(localUrl);
+  const publicUrl = cosUrl ?? localUrl;
   return NextResponse.json({
     ok: true,
-    url,                              // 相对路径 /uploads/xxx.jpg（Web 用）
-    absoluteUrl: `${originOf(req)}${url}`, // 完整地址（小程序用）
+    url: publicUrl,                         // COS 绝对 URL（降级时为 /uploads/xxx）
+    absoluteUrl: cosUrl ?? `${originOf(req)}${localUrl}`, // 完整地址（小程序用）
+    localUrl,                               // 本地副本路径，始终可用
+    ...(cosUrl ? { cosUrl } : {}),
     size: buf.length,
     type,
   });

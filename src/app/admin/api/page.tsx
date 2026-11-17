@@ -85,7 +85,7 @@ curl -s -X PUT ${BASE_URL}/api/content \\
     path: "/api/upload",
     description: "上传图片文件（请求头携带管理员账号密码），返回图片 URL",
     auth: true,
-    responseExample: `{ "ok": true, "url": "/uploads/xxx.jpg" }`,
+    responseExample: `{ "ok": true, "url": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.jpg", "localUrl": "/uploads/xxx.jpg" }`,
     prompt: `请帮我上传一张图片到站点：
 
 \`\`\`bash
@@ -96,7 +96,7 @@ curl -s -X POST ${BASE_URL}/api/upload \\
   -F "file=@/path/to/your/image.jpg"
 \`\`\`
 
-返回的 \`url\` 字段就是图片地址，可用于 softwares 的 image 字段或 works 的 cover 字段。`,
+返回的 \`url\` / \`absoluteUrl\` 是 COS 绝对地址，可直接用于 softwares 的 image 字段、works 的 cover 字段或小程序 <image src>；\`localUrl\` 是服务器本地副本（自动保留）。`,
   },
 ];
 
