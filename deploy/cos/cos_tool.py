@@ -9,7 +9,11 @@
   migrate             上传全部 uploads、public/images、数据 JSON / 备份到 COS
   rewrite             备份 site-content.json，并把本地图片引用改写为 COS 绝对 URL
   backup              每日备份 site-content.json，清理 14 天前的旧备份
+  fix-acl             批量补齐图片对象 public-read，修复匿名访问 403
   verify              统计 COS 上 personalblog/ 前缀的对象
+
+图片对象（uploads/、images/）必须 public-read 才能被浏览器直接加载；
+data/ 下的 JSON 与备份显式设为 private，不对外暴露。
 """
 from __future__ import annotations
 
@@ -76,6 +80,10 @@ def content_type(path: Path) -> str:
     return guessed or "application/octet-stream"
 
 
+def acl_for(key: str) -> str:
+    return "private" if key.startswith(f"{PREFIX}/data/") else "public-read"
+
+
 def put_file(c, local: Path, key: str) -> None:
     with local.open("rb") as fh:
         c.put_object(
@@ -83,6 +91,7 @@ def put_file(c, local: Path, key: str) -> None:
             Body=fh,
             Key=key,
             ContentType=content_type(local),
+            ACL=acl_for(key),
         )
 
 
@@ -212,15 +221,34 @@ def cmd_verify() -> None:
     print(json.dumps({"ok": True, "count": len(keys), "sample": keys[:5]}))
 
 
+def cmd_fix_acl() -> None:
+    """归一全部对象 ACL：图片 public-read，数据 JSON / 备份 private。"""
+    c = client()
+    resp = c.list_objects(Bucket=BUCKET, Prefix=f"{PREFIX}/", MaxKeys=1000)
+    public = 0
+    private = 0
+    for obj in resp.get("Contents", []):
+        key = obj["Key"]
+        c.put_object_acl(Bucket=BUCKET, Key=key, ACL=acl_for(key))
+        if acl_for(key) == "public-read":
+            public += 1
+        else:
+            private += 1
+    print(json.dumps({"ok": True, "public": public, "private": private}))
+
+
 def main() -> None:
     if len(sys.argv) < 2:
-        raise RuntimeError("usage: cos_tool.py <upload|migrate|rewrite|backup|verify> [arg]")
+        raise RuntimeError(
+            "usage: cos_tool.py <upload|migrate|rewrite|backup|fix-acl|verify> [arg]"
+        )
     cmd, args = sys.argv[1], sys.argv[2:]
     handlers = {
         "upload": lambda: cmd_upload(args[0]),
         "migrate": cmd_migrate,
         "rewrite": cmd_rewrite,
         "backup": cmd_backup,
+        "fix-acl": cmd_fix_acl,
         "verify": cmd_verify,
     }
     if cmd not in handlers:

@@ -253,8 +253,11 @@ TOOL=/opt/luliming-blog/cos/cos_tool.py
 $PY $TOOL migrate   # 全量上传现有文件
 $PY $TOOL rewrite   # 改写 site-content.json 图片引用为 COS URL（先做本地+COS 备份）
 $PY $TOOL backup    # 每日备份（crontab 04:55）
+$PY $TOOL fix-acl   # 批量补齐图片对象 public-read（历史对象匿名访问 403 时执行）
 $PY $TOOL verify    # 统计 COS 对象
 ```
+
+图片对象（`uploads/`、`images/`）上传时带 `ACL=public-read`，否则浏览器直接加载会返回 `403 AccessDenied`；`data/` 下的 JSON 与备份显式设为 `ACL=private`，不对外暴露。`fix-acl` 会对全部对象重新归一化这两类 ACL。
 
 `POST /api/upload` 先写本地副本，再调用该工具的 `upload` 子命令同步 COS；COS 不可用时自动降级为本地 URL，不阻断上传。小程序后台需把 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` 加入 `downloadFile` / `image` 合法域名。
 
