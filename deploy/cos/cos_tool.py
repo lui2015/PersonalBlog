@@ -32,6 +32,8 @@ PREFIX = os.environ.get("COS_PREFIX", "personalblog").strip("/")
 
 def load_env(path: Path) -> dict[str, str]:
     cfg: dict[str, str] = {}
+    if not path.exists():
+        return cfg
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
@@ -129,30 +131,27 @@ def cmd_migrate() -> None:
     print(json.dumps({"ok": True, **stats, "base": BASE}))
 
 
-COS_URL_RE = re.compile(r"https://[^\s\"'<>]*myqcloud\.com/[^\s\"'<>]*")
-PICSUM_RE = re.compile(r"https?://picsum\.photos/[^\s\"'<>)]*")
-UPLOADS_RE = re.compile(r"/uploads/([A-Za-z0-9._-]+)")
-IMAGES_RE = re.compile(r"/images/([A-Za-z0-9._/-]+)")
+URL_RE = re.compile(
+    r"https://[^\s\"'<>]*myqcloud\.com/[^\s\"'<>]*"
+    r"|https?://picsum\.photos/[^\s\"'<>)]*"
+    r"|/uploads/[A-Za-z0-9._-]+"
+    r"|/images/[A-Za-z0-9._/-]+"
+)
 
 
 def rewrite_text(text: str, counter: list[int]) -> str:
-    stash: list[str] = []
+    """单次扫描替换：已有 COS URL 原样保留；picsum 与本地路径改写为 COS 绝对 URL。
+    新生成的 URL 不会被再次匹配，天然幂等。"""
+    def repl(match: re.Match[str]) -> str:
+        value = match.group(0)
+        if "myqcloud.com" in value:
+            return value
+        if "picsum.photos" in value:
+            counter[0] += 1
+            return f"{BASE}/images/gallery/g{(counter[0] - 1) % 6 + 1}.svg"
+        return f"{BASE}{value}"
 
-    def protect(match: re.Match[str]) -> str:
-        stash.append(match.group(0))
-        return f"\x00{len(stash) - 1}\x00"
-
-    text = COS_URL_RE.sub(protect, text)
-
-    def picsum_repl(_match: re.Match[str]) -> str:
-        counter[0] += 1
-        return f"{BASE}/images/gallery/g{(counter[0] - 1) % 6 + 1}.svg"
-
-    text = PICSUM_RE.sub(picsum_repl, text)
-    text = UPLOADS_RE.sub(lambda m: f"{BASE}/uploads/{m.group(1)}", text)
-    text = IMAGES_RE.sub(lambda m: f"{BASE}/images/{m.group(1)}", text)
-    text = re.sub(r"\x00(\d+)\x00", lambda m: stash[int(m.group(1))], text)
-    return text
+    return URL_RE.sub(repl, text)
 
 
 def walk(value, counter: list[int]):
