@@ -5,15 +5,18 @@
 对象统一放在独立前缀 personalblog/ 下，与其他项目互不干扰。
 
 子命令：
-  upload <local-url>  同步单个 /uploads/xxx 到 COS，stdout 输出 {"url": "https://..."}
+  put <name>          从 stdin 读文件内容，直接写入 COS（不落本地盘），输出 {"url": ...}
+  delete <cos-url>    删除本站 personalblog/uploads/ 下的对象
+  upload <local-url>  兼容旧链路：同步一个已存在的本地 /uploads/xxx 文件
   migrate             上传全部 uploads、public/images、数据 JSON / 备份到 COS
   rewrite             备份 site-content.json，并把本地图片引用改写为 COS 绝对 URL
   backup              每日备份 site-content.json，清理 14 天前的旧备份
-  fix-acl             批量补齐图片对象 public-read，修复匿名访问 403
+  fix-acl             归一全部对象 ACL
   verify              统计 COS 上 personalblog/ 前缀的对象
 
 图片对象（uploads/、images/）必须 public-read 才能被浏览器直接加载；
 data/ 下的 JSON 与备份显式设为 private，不对外暴露。
+新上传走 put：文件字节只存在于 Node 进程内存与本进程的 stdin，服务器磁盘不产生副本。
 """
 from __future__ import annotations
 
@@ -71,13 +74,33 @@ def client():
     )
 
 
+EXPLICIT_CONTENT_TYPES = {
+    ".svg": "image/svg+xml",
+    ".html": "text/html; charset=utf-8",
+    ".htm": "text/html; charset=utf-8",
+    ".txt": "text/plain; charset=utf-8",
+    ".md": "text/markdown; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".bak": "application/json; charset=utf-8",
+    ".pdf": "application/pdf",
+}
+
+# 允许通过 put 上传的扩展名白名单。Content-Type 一律由扩展名推导，
+# 不接受客户端声明，避免把 HTML 伪装成图片等类型混淆。
+ALLOWED_UPLOAD_EXT = frozenset(
+    {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg",
+     ".html", ".htm", ".txt", ".md", ".pdf", ".json"}
+)
+SAFE_NAME_RE = re.compile(r"[A-Za-z0-9._-]{1,128}")
+
+
 def content_type(path: Path) -> str:
-    guessed = mimetypes.guess_type(str(path))[0]
-    if path.suffix.lower() == ".svg":
-        return "image/svg+xml"
-    if path.suffix.lower() in {".json", ".bak"}:
-        return "application/json; charset=utf-8"
-    return guessed or "application/octet-stream"
+    suffix = path.suffix.lower()
+    return (
+        EXPLICIT_CONTENT_TYPES.get(suffix)
+        or mimetypes.guess_type(str(path))[0]
+        or "application/octet-stream"
+    )
 
 
 def acl_for(key: str) -> str:
@@ -85,6 +108,7 @@ def acl_for(key: str) -> str:
 
 
 def put_file(c, local: Path, key: str) -> None:
+    """从本地文件读取（仅 migrate / backup / rewrite 等运维命令使用）。"""
     with local.open("rb") as fh:
         c.put_object(
             Bucket=BUCKET,
@@ -95,15 +119,53 @@ def put_file(c, local: Path, key: str) -> None:
         )
 
 
+def put_bytes(c, data: bytes, key: str, name: str) -> None:
+    """内存字节直传 COS，不创建任何本地文件。"""
+    c.put_object(
+        Bucket=BUCKET,
+        Body=data,
+        Key=key,
+        ContentType=content_type(Path(name)),
+        ACL=acl_for(key),
+    )
+
+
 def url_for(key: str) -> str:
     return f"{PUBLIC_BASE}/{key}"
 
 
 # ---------------- 子命令 ----------------
 
+def cmd_put(name: str) -> None:
+    """新上传主链路：stdin → COS 内存直传，服务器磁盘零占用。"""
+    if not SAFE_NAME_RE.fullmatch(name):
+        raise RuntimeError("invalid upload filename")
+    if Path(name).suffix.lower() not in ALLOWED_UPLOAD_EXT:
+        raise RuntimeError("unsupported file extension")
+    data = sys.stdin.buffer.read()
+    if not data:
+        raise RuntimeError("empty upload body")
+    key = f"{PREFIX}/uploads/{name}"
+    put_bytes(client(), data, key, name)
+    print(json.dumps({"ok": True, "url": url_for(key), "key": key, "size": len(data)}))
+
+
+def cmd_delete(url: str) -> None:
+    """只接受本站 COS uploads/ 前缀的绝对 URL，杜绝误删他人对象。"""
+    own = f"{PUBLIC_BASE}/{PREFIX}/uploads/"
+    if not url.startswith(own):
+        raise RuntimeError("refuse to delete foreign url")
+    name = url[len(own):]
+    if not SAFE_NAME_RE.fullmatch(name):
+        raise RuntimeError("invalid object name")
+    client().delete_object(Bucket=BUCKET, Key=f"{PREFIX}/uploads/{name}")
+    print(json.dumps({"ok": True, "deleted": name}))
+
+
 def cmd_upload(arg: str) -> None:
+    """兼容旧链路：同步一个已存在的本地文件到 COS。"""
     name = Path(arg).name
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", name):
+    if not SAFE_NAME_RE.fullmatch(name):
         raise RuntimeError("invalid upload filename")
     local = UPLOADS_DIR / name
     if not local.is_file():
@@ -240,10 +302,12 @@ def cmd_fix_acl() -> None:
 def main() -> None:
     if len(sys.argv) < 2:
         raise RuntimeError(
-            "usage: cos_tool.py <upload|migrate|rewrite|backup|fix-acl|verify> [arg]"
+            "usage: cos_tool.py <put|delete|upload|migrate|rewrite|backup|fix-acl|verify> [arg]"
         )
     cmd, args = sys.argv[1], sys.argv[2:]
     handlers = {
+        "put": lambda: cmd_put(args[0]),
+        "delete": lambda: cmd_delete(args[0]),
         "upload": lambda: cmd_upload(args[0]),
         "migrate": cmd_migrate,
         "rewrite": cmd_rewrite,

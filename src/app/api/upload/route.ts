@@ -1,28 +1,37 @@
 import { NextResponse } from "next/server";
 import { checkApiAuth } from "@/lib/server/auth";
 import { storage } from "@/lib/server/storage";
-import { syncUploadToCos } from "@/lib/server/cosUpload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8MB
-const ALLOWED = new Map<string, string>([
+const MAX_BYTES = 20 * 1024 * 1024; // 20MB
+
+/** 允许的 MIME → 扩展名；Content-Type 由 COS 工具按扩展名推导，不信任客户端声明 */
+const MIME_EXT = new Map<string, string>([
   ["image/jpeg", ".jpg"],
   ["image/png", ".png"],
   ["image/webp", ".webp"],
   ["image/gif", ".gif"],
   ["image/svg+xml", ".svg"],
+  ["text/html", ".html"],
+  ["text/plain", ".txt"],
+  ["text/markdown", ".md"],
+  ["application/pdf", ".pdf"],
+  ["application/json", ".json"],
 ]);
+const ALLOWED_EXT = new Set([...MIME_EXT.values(), ".jpeg", ".htm"]);
 
-/** 推断对外访问的绝对地址前缀（小程序需要完整 URL 才能显示图片） */
-function originOf(req: Request): string {
-  const env = (process.env.PUBLIC_BASE_URL || "").trim().replace(/\/$/, "");
-  if (env) return env;
-  const u = new URL(req.url);
-  const proto = req.headers.get("x-forwarded-proto") || u.protocol.replace(":", "");
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || u.host;
-  return `${proto}://${host}`;
+/** 优先用 MIME 定扩展名；md/html 等浏览器常报空或 octet-stream，再按文件名兜底 */
+function resolveExt(file: Blob): string | null {
+  const declared = (file.type || "").toLowerCase().split(";")[0].trim();
+  const byMime = MIME_EXT.get(declared);
+  if (byMime) return byMime;
+  const name =
+    typeof (file as File).name === "string" ? (file as File).name : "";
+  const dot = name.lastIndexOf(".");
+  const fromName = dot >= 0 ? name.slice(dot).toLowerCase() : "";
+  return ALLOWED_EXT.has(fromName) ? fromName : null;
 }
 
 export async function POST(req: Request) {
@@ -51,27 +60,40 @@ export async function POST(req: Request) {
     );
   }
 
-  const type = file.type || "application/octet-stream";
-  const ext = ALLOWED.get(type);
+  const ext = resolveExt(file);
   if (!ext) {
     return NextResponse.json(
-      { error: `unsupported type: ${type}` },
+      {
+        error:
+          "unsupported type: 仅支持 jpg/png/webp/gif/svg/html/txt/md/pdf/json",
+      },
       { status: 415 }
     );
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
-  // 始终保留本地副本（灾备/回滚），再同步到 COS；COS 不可用时自动降级为本地 URL
-  const localUrl = await storage.save(buf, ext);
-  const cosUrl = await syncUploadToCos(localUrl);
-  const publicUrl = cosUrl ?? localUrl;
+  let url: string;
+  try {
+    // 字节只在内存中流转 → COS；COS 失败直接报错，绝不回退写服务器磁盘
+    url = await storage.save(buf, ext);
+  } catch (err) {
+    console.error(
+      "[upload] COS 上传失败:",
+      err instanceof Error ? err.message : err
+    );
+    return NextResponse.json(
+      { error: "COS 上传失败，请稍后重试" },
+      { status: 502 }
+    );
+  }
+
   return NextResponse.json({
     ok: true,
-    url: publicUrl,                         // COS 绝对 URL（降级时为 /uploads/xxx）
-    absoluteUrl: cosUrl ?? `${originOf(req)}${localUrl}`, // 完整地址（小程序用）
-    localUrl,                               // 本地副本路径，始终可用
-    ...(cosUrl ? { cosUrl } : {}),
+    url,                       // COS 绝对 URL
+    absoluteUrl: url,          // 兼容旧客户端
+    cosUrl: url,               // 兼容旧客户端
+    storage: "cos",            // 明确：无本地副本
     size: buf.length,
-    type,
+    type: file.type || "application/octet-stream",
   });
 }

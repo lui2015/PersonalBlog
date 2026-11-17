@@ -30,7 +30,7 @@ const FORMAT_TOOLS: FormatTool[] = [
   { label: "B", title: "加粗", before: "**", after: "**", placeholder: "加粗文字" },
   { label: "I", title: "斜体", before: "*", after: "*", placeholder: "斜体文字" },
   { label: "🔗", title: "链接", before: "[", after: "](https://)", placeholder: "链接文字" },
-  { label: "🖼", title: "图片", before: "![", after: "](/uploads/image.jpg)", placeholder: "图片说明" },
+  { label: "🖼", title: "图片", before: "![", after: "](https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/image.jpg)", placeholder: "图片说明" },
   { label: "❝", title: "引用", before: "> ", placeholder: "引用内容" },
   { label: "•", title: "无序列表", before: "- ", placeholder: "列表项" },
   { label: "1.", title: "有序列表", before: "1. ", placeholder: "列表项" },

@@ -1,7 +1,7 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1.3 ｜ 更新日期：2026-11-13
-> 本次更新：文章正文支持 Markdown 格式编辑 / 预览 / 复制；开放接口 `works` 新增只读派生字段 `contentHtml`（渲染后的安全 HTML）。
+> 版本：v1.4 ｜ 更新日期：2026-11-17
+> 本次更新：`POST /api/upload` 改为纯 COS 上传（内存直传、服务器零落盘、无 `localUrl`），支持图片 / HTML / PDF / TXT / MD / JSON，最大 20MB；上一版：文章正文 Markdown 与 `contentHtml`。
 > 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
@@ -14,10 +14,8 @@
 | 用途 | 合法域名 | 说明 |
 |------|----------|------|
 | `request` 合法域名 | `https://www.luliming.xyz` | 调用所有 `/api/...` 接口 |
-| `uploadFile` 合法域名 | `https://www.luliming.xyz` | 上传图片到 `/api/upload` |
-| `downloadFile` 合法域名 | `https://www.luliming.xyz` | 下载/预览 `/uploads/...` 图片 |
-| `image`（若用 `<image>` 直接显示） | `https://www.luliming.xyz` | 显示头像、封面、二维码 |
-| `downloadFile` / `image`（COS 图片） | `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` | 站内图片已迁移到 COS，需在小程序后台一并配置为合法域名 |
+| `uploadFile` 合法域名 | `https://www.luliming.xyz` | 上传文件到 `/api/upload` |
+| `downloadFile` / `image` 合法域名 | `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` | 所有上传文件与站内图片均存 COS，无 `/uploads/...` 本地路径 |
 
 - 域名必须 **HTTPS**、已备案，且不能带端口和路径。
 - 开发阶段可在微信开发者工具勾选「不校验合法域名」临时调试。
@@ -34,7 +32,7 @@
 |------|----------|------|
 | 所有 `GET` 读取 | ❌ 公开 | 无需任何凭据，直接请求 |
 | `POST` / `PUT` / `DELETE` 写入 | ✅ 需要 | 管理员账号密码 |
-| `POST /api/upload` 上传图片 | ✅ 需要 | 管理员账号密码 |
+| `POST /api/upload` 上传文件 | ✅ 需要 | 管理员账号密码 |
 
 **认证方式（三选一，小程序推荐方式一）**
 
@@ -79,7 +77,7 @@ Cookie: admin_session=...
 |------|------|------|------|
 | GET | `/api/content` | ❌ | 一次性获取站点全部数据（大 JSON） |
 | PUT | `/api/content` | ✅ | 一次性覆盖全部数据（不推荐，易误删） |
-| POST | `/api/upload` | ✅ | 上传图片，返回图片 URL |
+| POST | `/api/upload` | ✅ | 上传文件（图片 / HTML / PDF 等），返回 COS 绝对 URL |
 | GET | `/api/me` | ❌ | 查询当前登录态 `{ authed, username }` |
 | POST | `/api/login` | ❌ | 账号密码登录，下发 Cookie（小程序不用） |
 | POST | `/api/logout` | ❌ | 清除登录 Cookie |
@@ -202,7 +200,7 @@ GET https://www.luliming.xyz/api/open/works/w1
 POST /api/open/softwares
 {
   "name": "我的小程序",
-  "image": "https://www.luliming.xyz/uploads/xxx.png",
+  "image": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.png",
   "description": "一个演示作品",
   "url": "https://example.com"
 }
@@ -286,14 +284,20 @@ PUT /api/open/about
 
 ---
 
-### 4.8 POST `/api/upload` — 上传图片
+### 4.8 POST `/api/upload` — 上传文件（仅存 COS）
 
-`multipart/form-data`，字段名 `file`。支持 `jpg/png/webp/gif/svg`，最大 **8MB**。
+`multipart/form-data`，字段名 `file`。支持 `jpg/png/webp/gif/svg/html/htm/txt/md/pdf/json`，最大 **20MB**。
 
 ```bash
+# 图片
 curl -X POST https://www.luliming.xyz/api/upload \
   -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \
   -F 'file=@/path/to/qrcode.png'
+
+# HTML 报告等任意白名单文件
+curl -X POST https://www.luliming.xyz/api/upload \
+  -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \
+  -F 'file=@/path/to/report.html'
 ```
 
 **响应**
@@ -302,15 +306,17 @@ curl -X POST https://www.luliming.xyz/api/upload \
   "ok": true,
   "url": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/1787200000000_a1b2c3.png",
   "absoluteUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/1787200000000_a1b2c3.png",
-  "localUrl": "/uploads/1787200000000_a1b2c3.png",
   "cosUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/1787200000000_a1b2c3.png",
+  "storage": "cos",
   "size": 23456,
   "type": "image/png"
 }
 ```
-- 文件同时写入本地 `DATA_DIR/uploads/`（灾备副本）与 COS `personalblog/uploads/`，对外统一返回 **COS 绝对 URL**
-- `url` = `cosUrl` = `absoluteUrl`（COS 地址），可直接存入 `image` / `cover` / `qr` / `src` / `avatar` 字段，也可直接给小程序 `<image src>` 使用
-- `localUrl` 为本地副本相对路径；COS 不可用时接口自动降级，此时 `url` / `absoluteUrl` 回退为站点本地地址，上传不会失败
+- 文件字节只在内存中流转，**直接写入 COS `personalblog/uploads/`**，服务器不生成 `/uploads/...` 本地副本，不再返回 `localUrl`
+- `url` = `cosUrl` = `absoluteUrl`（均为 COS 绝对地址），可直接存入 `image` / `cover` / `qr` / `src` / `avatar` 字段，也可直接给小程序 `<image src>` 使用
+- 对象名由服务端随机生成，Content-Type 由扩展名推导（不信任客户端声明的 MIME）；图片/文档对象为 `public-read`，可公网直读
+- COS 不可用或类型不在白名单时接口返回 `502` / `415`，**不会降级写本地磁盘**
+- HTML / SVG 属于可执行内容，仅允许受信任的管理员上传；托管在独立 COS 域名，与主站不同源
 
 ---
 
@@ -320,7 +326,7 @@ curl -X POST https://www.luliming.xyz/api/upload \
 
 ```json
 {
-  "hero": { "title": "鲁力铭", "subtitle": "...", "avatarText": "鲁", "avatarUrl": "/uploads/xxx.jpg" },
+  "hero": { "title": "鲁力铭", "subtitle": "...", "avatarText": "鲁", "avatarUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.jpg" },
   "poems": [], "photos": [], "stats": [], "skills": [], "myskills": [],
   "quotes": [], "works": [], "videos": [], "albums": [], "softwares": [], "socialMedia": [],
   "about": { "name": "...", "role": "...", "bio": "...", "avatar": "...", "socialLinks": [], "skillTree": [], "timeline": [] }
@@ -668,4 +674,4 @@ wx.chooseMedia({
 8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
 9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
 10. **文章正文格式**：`works[].content` 为 Markdown；列表 / 详情接口额外返回只读 `contentHtml`（渲染后的安全 HTML，见 4.11）。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML；`contentHtml` 写入时会被忽略，请勿回传。
-11. **图片存储 COS**：站内图片已迁移到 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/`（下分 `uploads/` 与 `images/`）；`POST /api/upload` 同时写本地副本与 COS 并返回 COS 绝对 URL，小程序后台需把该 COS 域名加入 `downloadFile` / `image` 合法域名。`site-content.json` 仍保存在服务器本地作为运行时数据，并每日备份到 COS `personalblog/data/daily/`（保留 14 天）。
+11. **文件存储 COS（纯 COS 上传）**：站内图片与所有新上传文件都在 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/`（下分 `uploads/` 与 `images/`）；`POST /api/upload` 把文件字节经内存直接写入 COS，**服务器磁盘不再产生上传副本**，也不再返回 `localUrl`，COS 失败返回 `502` 而非降级。小程序后台需把该 COS 域名加入 `downloadFile` / `image` 合法域名。`site-content.json` 仍保存在服务器本地作为运行时文字数据，并每日备份到 COS `personalblog/data/daily/`（保留 14 天）。

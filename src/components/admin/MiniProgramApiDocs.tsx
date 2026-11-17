@@ -88,7 +88,7 @@ await request('/api/open/about', {
   method: 'PUT', auth: true,
   data: { skillTree: [
     { id: 'sk1', name: 'PMP', certificate: '' },
-    { id: 'sk2', name: '敏捷管理', certificate: '/uploads/agile-cert.jpg' },
+    { id: 'sk2', name: '敏捷管理', certificate: 'https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/agile-cert.jpg' },
   ] },
 });`;
 
@@ -135,7 +135,8 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - 所有接口已开启 CORS，响应均为 JSON，Cache-Control: no-store
 
 ## 小程序后台必须配置的合法域名
-- request / uploadFile / downloadFile 合法域名：${BASE_URL}
+- request / uploadFile 合法域名：${BASE_URL}
+- downloadFile / image 合法域名：https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com（所有上传文件与站内图片都在 COS）
 
 ## 接口清单
 - GET  /api/open                     接口索引（所有模块、字段字典、条目数）
@@ -146,7 +147,7 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - DELETE /api/open/{section}/{id}    删除一条（需认证）
 - PUT  /api/open/{section}           数组模块=整块替换(慎用)；对象模块(hero/about)=字段合并，只更新传入字段，响应含 mode 与 data
 - GET  /api/content                  一次性获取全站数据
-- POST /api/upload                   上传图片(multipart, 字段名 file)，返回 { ok, url, absoluteUrl, localUrl, cosUrl }；图片存 COS，url/absoluteUrl 均为 COS 绝对地址，小程序需在后台配置 COS 域名
+- POST /api/upload                   上传文件(multipart, 字段名 file；图片/HTML/PDF/TXT/MD/JSON，最大20MB)，返回 { ok, url, absoluteUrl, cosUrl, storage:'cos' }；文件只存 COS、服务器无本地副本、无 localUrl，url/absoluteUrl/cosUrl 均为 COS 绝对地址
 
 ## 数据模块（section）
 对象模块：hero / about（单例，只支持 GET/PUT，PUT 为字段合并，无 {id} 路径）
@@ -210,7 +211,7 @@ const ENDPOINTS = [
   { method: "PUT", path: "/api/open/{section}/{id}", desc: "局部更新一条（合并字段）", auth: true },
   { method: "DELETE", path: "/api/open/{section}/{id}", desc: "删除一条", auth: true },
   { method: "PUT", path: "/api/open/{section}", desc: "数组模块=整块替换（慎用）；对象模块 hero/about=字段合并", auth: true },
-  { method: "POST", path: "/api/upload", desc: "上传图片，返回 url 与 absoluteUrl", auth: true },
+  { method: "POST", path: "/api/upload", desc: "上传文件（图片/HTML/PDF 等），直接存 COS，返回 COS 绝对 URL", auth: true },
   { method: "GET", path: "/api/content", desc: "一次性获取全站数据（兼容旧接口）", auth: false },
 ];
 
@@ -298,8 +299,8 @@ export default function MiniProgramApiDocs() {
         </p>
         <div className="text-[11px] font-[family-name:var(--font-mono)] text-gray-400 space-y-1">
           <div>• <span className="text-cyber-blue">request</span> 合法域名 → 调用所有 /api/... 接口</div>
-          <div>• <span className="text-cyber-blue">uploadFile</span> 合法域名 → 上传图片</div>
-          <div>• <span className="text-cyber-blue">downloadFile</span> / image → 显示 /uploads/... 图片</div>
+          <div>• <span className="text-cyber-blue">uploadFile</span> 合法域名 → 调用 /api/upload 上传文件</div>
+          <div>• <span className="text-cyber-blue">downloadFile</span> / image → COS 域名 https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com（新上传与站内图片均在此，不再有 /uploads/... 本地路径）</div>
           <div className="pt-1 text-gray-600">开发阶段可在微信开发者工具勾选「不校验合法域名」临时调试；示例占位图还涉及 images.unsplash.com、picsum.photos，如需显示也要加入。</div>
         </div>
       </div>

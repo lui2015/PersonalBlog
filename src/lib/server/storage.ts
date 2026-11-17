@@ -1,47 +1,27 @@
 import "server-only";
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { randomBytes } from "node:crypto";
-import { UPLOADS_DIR } from "./paths";
+import {
+  deleteUploadFromCos,
+  makeObjectName,
+  putUploadToCos,
+} from "./cosUpload";
 
 /**
- * 文件存储抽象。当前只有磁盘实现；未来切 COS 只需实现同样的接口。
+ * 文件存储：只写腾讯云 COS，不在 Lighthouse 磁盘上保留任何上传副本。
+ * save() 返回 COS 绝对 URL；delete() 删除对应 COS 对象。
  */
 export interface FileStorage {
-  /** 保存上传文件，返回可对外访问的 URL（相对路径，如 /uploads/xxx.jpg） */
   save(buf: Buffer, ext: string): Promise<string>;
-  /** 删除一个先前 save 返回的 URL 对应的文件 */
   delete(publicUrl: string): Promise<void>;
 }
 
-class DiskStorage implements FileStorage {
+class CosStorage implements FileStorage {
   async save(buf: Buffer, ext: string): Promise<string> {
-    await fs.mkdir(UPLOADS_DIR, { recursive: true });
-    const safeExt = sanitizeExt(ext);
-    const name = `${Date.now()}_${randomBytes(6).toString("hex")}${safeExt}`;
-    const full = path.join(UPLOADS_DIR, name);
-    await fs.writeFile(full, buf);
-    return `/uploads/${name}`;
+    return putUploadToCos(makeObjectName(sanitizeExt(ext)), buf);
   }
 
   async delete(publicUrl: string): Promise<void> {
-    if (!publicUrl.startsWith("/uploads/")) return;
-    const name = path.basename(publicUrl); // 防穿越
-    if (!name || name === "." || name === "..") return;
-    const full = path.join(UPLOADS_DIR, name);
-    try {
-      await fs.unlink(full);
-    } catch (err: unknown) {
-      if (
-        typeof err === "object" &&
-        err !== null &&
-        "code" in err &&
-        (err as { code?: string }).code === "ENOENT"
-      ) {
-        return;
-      }
-      throw err;
-    }
+    if (!publicUrl.startsWith("https://")) return;
+    await deleteUploadFromCos(publicUrl);
   }
 }
 
@@ -52,4 +32,4 @@ function sanitizeExt(ext: string): string {
   return e;
 }
 
-export const storage: FileStorage = new DiskStorage();
+export const storage: FileStorage = new CosStorage();

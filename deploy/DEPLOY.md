@@ -233,14 +233,14 @@ tail -n 12 /tmp/build.log; cat .next/BUILD_ID 2>/dev/null
 
 ### 数据安全
 
-真实内容始终在 `/opt/luliming-blog/data`（`site-content.json` + `uploads/`），由 `.env` 的 `DATA_DIR` 指定。任何部署、清理、构建操作都不得触碰该目录。
+运行时文字数据始终在 `/opt/luliming-blog/data/site-content.json`，由 `.env` 的 `DATA_DIR` 指定。任何部署、清理、构建操作都不得触碰该目录。该目录下的历史 `uploads/` 是迁移前遗留的灾备副本，新上传已不再写入。
 
 ### COS 对象存储
 
-站点图片存放在腾讯云 COS `lyman-1258661753`（ap-guangzhou），独立前缀 `personalblog/`，与其他项目互不干扰：
+站点上传文件存放在腾讯云 COS `lyman-1258661753`（ap-guangzhou），独立前缀 `personalblog/`，与其他项目互不干扰：
 
-- `personalblog/uploads/` ← `DATA_DIR/uploads/` 的上传文件
-- `personalblog/images/` ← release 的 `public/images/`（头像、二维码、占位图）
+- `personalblog/uploads/` ← 所有新上传（图片 / HTML / PDF / TXT / MD / JSON）
+- `personalblog/images/` ← release 的 `public/images/`（历史静态图，已迁移）
 - `personalblog/data/` ← `site-content.json` 及历史备份
 - `personalblog/data/backups/` ← 引用改写前的备份
 - `personalblog/data/daily/` ← 每日备份（保留 14 天）
@@ -250,14 +250,18 @@ tail -n 12 /tmp/build.log; cat .next/BUILD_ID 2>/dev/null
 ```bash
 PY=/opt/experience/backend/.venv/bin/python
 TOOL=/opt/luliming-blog/cos/cos_tool.py
-$PY $TOOL migrate   # 全量上传现有文件
+printf 'hello' | $PY $TOOL put demo.txt        # stdin 内存直传，不落本地盘
+$PY $TOOL delete <cos-url>                   # 删除本站 uploads/ 对象
+$PY $TOOL migrate   # 全量上传历史本地文件
 $PY $TOOL rewrite   # 改写 site-content.json 图片引用为 COS URL（先做本地+COS 备份）
 $PY $TOOL backup    # 每日备份（crontab 04:55）
-$PY $TOOL fix-acl   # 批量补齐图片对象 public-read（历史对象匿名访问 403 时执行）
+$PY $TOOL fix-acl   # 归一全部对象 ACL
 $PY $TOOL verify    # 统计 COS 对象
 ```
 
 图片对象（`uploads/`、`images/`）上传时带 `ACL=public-read`，否则浏览器直接加载会返回 `403 AccessDenied`；`data/` 下的 JSON 与备份显式设为 `ACL=private`，不对外暴露。`fix-acl` 会对全部对象重新归一化这两类 ACL。
 
-`POST /api/upload` 先写本地副本，再调用该工具的 `upload` 子命令同步 COS；COS 不可用时自动降级为本地 URL，不阻断上传。小程序后台需把 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` 加入 `downloadFile` / `image` 合法域名。
+`POST /api/upload` 走 **纯 COS 链路**：Next.js 把文件字节放进内存 → 经 stdin 传给 `cos_tool.py put` → 直接 `put_object` 写 COS，服务器磁盘不产生任何副本，也不再返回 `localUrl`。COS 失败时返回 `502`（不降级写本地，避免重新占用磁盘）。支持 `jpg/png/webp/gif/svg/html/htm/txt/md/pdf/json`，最大 20MB；Content-Type 由扩展名推导，不信任客户端声明。小程序后台需把 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` 加入 `downloadFile` / `image` 合法域名。
+
+> HTML / SVG 属于可执行内容，仅允许受信任的管理员上传；它们托管在独立的 COS 域名，与主站不同源。
 

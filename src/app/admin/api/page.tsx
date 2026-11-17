@@ -83,20 +83,20 @@ curl -s -X PUT ${BASE_URL}/api/content \\
   {
     method: "POST",
     path: "/api/upload",
-    description: "上传图片文件（请求头携带管理员账号密码），返回图片 URL",
+    description: "上传文件（图片 / HTML / PDF 等，直接存 COS，不落服务器磁盘），返回 COS 绝对 URL",
     auth: true,
-    responseExample: `{ "ok": true, "url": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.jpg", "localUrl": "/uploads/xxx.jpg" }`,
-    prompt: `请帮我上传一张图片到站点：
+    responseExample: `{ "ok": true, "url": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.jpg", "absoluteUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.jpg", "cosUrl": "https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/xxx.jpg", "storage": "cos", "size": 23456, "type": "image/jpeg" }`,
+    prompt: `请帮我上传一个文件到站点：
 
 \`\`\`bash
-# 上传图片（支持 jpg/png/webp/gif/svg，最大 8MB；请求头携带管理员账号密码）
+# 支持 jpg/png/webp/gif/svg/html/txt/md/pdf/json，最大 20MB，直接存 COS
 curl -s -X POST ${BASE_URL}/api/upload \\
   -H 'X-Admin-User: luli' \\
   -H 'X-Admin-Pass: luli116574' \\
   -F "file=@/path/to/your/image.jpg"
 \`\`\`
 
-返回的 \`url\` / \`absoluteUrl\` 是 COS 绝对地址，可直接用于 softwares 的 image 字段、works 的 cover 字段或小程序 <image src>；\`localUrl\` 是服务器本地副本（自动保留）。`,
+返回的 \`url\` / \`absoluteUrl\` / \`cosUrl\` 均为 COS 绝对地址，可直接用于 softwares 的 image 字段、works 的 cover 字段或小程序 <image src>。文件只存 COS，服务器本地不保留副本，也没有 \`localUrl\`；COS 不可用时接口返回 502 而不是降级写磁盘。HTML / SVG 仅允许受信任的管理员上传。`,
   },
 ];
 
@@ -287,7 +287,7 @@ curl -X PUT "${BASE_URL}/api/open/about" \\
 curl -X PUT "${BASE_URL}/api/open/about" \\
   -H 'Content-Type: application/json' \\
   -H 'X-Admin-User: luli' -H 'X-Admin-Pass: luli116574' \\
-  -d '{ "skillTree": [{"id":"sk1","name":"PMP","certificate":""},{"id":"sk2","name":"敏捷管理","certificate":"/uploads/agile-cert.jpg"}] }'
+  -d '{ "skillTree": [{"id":"sk1","name":"PMP","certificate":""},{"id":"sk2","name":"敏捷管理","certificate":"https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/uploads/agile-cert.jpg"}] }'
 \`\`\`
 
 **字段说明**：
