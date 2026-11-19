@@ -235,6 +235,24 @@ tail -n 12 /tmp/build.log; cat .next/BUILD_ID 2>/dev/null
 
 运行时文字数据始终在 `/opt/luliming-blog/data/site-content.json`，由 `.env` 的 `DATA_DIR` 指定。任何部署、清理、构建操作都不得触碰该目录。该目录下的历史 `uploads/` 是迁移前遗留的灾备副本，新上传已不再写入。
 
+### 管理员凭据与 PM2 重启（致命坑）
+
+`/opt/luliming-blog/.env` 的 `ADMIN_PASSWORD_HASH` 形如 `scrypt$<salt>$<hash>`，**含 `$`**。
+
+- 必须用单引号包裹：`ADMIN_PASSWORD_HASH='scrypt$...$...'`。`ecosystem.config.js` 的 `loadEnvFile()` 会剥离首尾引号，取到的值不变。
+- **禁止** `set -a; source /opt/luliming-blog/.env; set +a` 之后再 `pm2 restart luliming-blog --update-env`：值未加引号时 shell 会把 `$<salt>` / `$<hash>` 当变量展开成空，损坏后的哈希被 `--update-env` 注入 PM2 进程并覆盖 `ecosystem.config.js` 的正确值，表现为 `/api/login` 永远 401、后台登录不上，而页面和开放接口仍正常。
+- 正确的重启方式（让 `ecosystem.config.js` 自己从文件读凭据）：
+
+```bash
+cd /var/www/luliming-blog/current
+pm2 delete luliming-blog
+pm2 start ecosystem.config.js
+pm2 save
+```
+
+- 校验：`pm2 jlist` 中该应用的 `ADMIN_PASSWORD_HASH` 应为 168 字符、按 `$` 分 3 段、前缀 `scrypt$`；`curl -X POST https://www.luliming.xyz/api/login -H 'Content-Type: application/json' -d '{"username":"luli","password":"..."}'` 返回 200。
+- `/api/login` 现在与 `/api/open/*` 共用 `checkAdminCredentials()`：哈希异常时会在 PM2 错误日志打印告警，并回退到内置管理员校验，避免配置问题把管理员锁死。
+
 ### COS 对象存储
 
 站点上传文件存放在腾讯云 COS `lyman-1258661753`（ap-guangzhou），独立前缀 `personalblog/`，与其他项目互不干扰：

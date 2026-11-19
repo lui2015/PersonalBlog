@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
   SESSION_COOKIE,
+  checkAdminCredentials,
   getAdminPasswordHash,
-  getAdminUsername,
   signSession,
-  verifyPassword,
 } from "@/lib/server/auth";
 
 export const runtime = "nodejs";
@@ -29,20 +28,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "missing credentials" }, { status: 400 });
   }
 
-  const expectedUser = getAdminUsername();
-  const expectedHash = getAdminPasswordHash();
-  if (!expectedUser || !expectedHash) {
-    return NextResponse.json(
-      { error: "server not configured" },
-      { status: 500 }
+  // scrypt 哈希形如 scrypt$<salt>$<hash>，若被 shell 展开成不带 $ 的字符串，
+  // verifyPassword 会静默失败导致管理员被锁死；这里显式检测并打日志。
+  const hash = getAdminPasswordHash();
+  if (!/^scrypt\$[0-9a-f]+\$[0-9a-f]+$/i.test(hash)) {
+    console.error(
+      "[login] ADMIN_PASSWORD_HASH 缺失或格式异常（常见原因：source .env 时 $ 被 shell 展开）。请检查 .env / PM2 环境。"
     );
   }
 
-  // 用户名也走恒定时间感（先比对长度，再比对 password）
-  // 即使用户名错误也要走一次 verifyPassword，防止时序探测
-  const userOk = username === expectedUser;
-  const passOk = await verifyPassword(password, expectedHash);
-  if (!userOk || !passOk) {
+  // 与开放接口 /api/open/* 共用同一套校验：环境变量异常时仍有内置管理员兜底，
+  // 避免配置问题把管理员彻底锁在后台外面。
+  if (!(await checkAdminCredentials(username, password))) {
     return NextResponse.json({ error: "invalid credentials" }, { status: 401 });
   }
 
