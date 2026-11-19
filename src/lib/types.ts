@@ -130,6 +130,34 @@ export interface AboutContent {
   timeline: AboutTimelineItem[]; // TIMELINE 履历
 }
 
+/** 小程序里的单个工具；enabled=false 时小程序端隐藏 */
+export interface MiniProgramTool {
+  id: string;
+  name: string; // 工具名，如「工作日计算器」
+  desc: string; // 工具简介
+  icon: string; // emoji / 短字符图标
+  badge?: string; // 角标，如「原生计算」
+  route?: string; // 小程序页面路径（可选）
+  enabled: boolean;
+}
+
+/** 小程序工具分组；分组也可整体隐藏 */
+export interface MiniProgramToolGroup {
+  id: string;
+  name: string; // 分组名，如 WORK
+  subtitle: string; // 如「工作 · 效率」
+  color: string; // 主题色 hex
+  enabled: boolean;
+  tools: MiniProgramTool[];
+}
+
+/** 小程序工具配置（单例对象） */
+export interface MiniProgramToolsConfig {
+  title: string; // 列表标题，如 TOOL LIST
+  enabled: boolean; // 总开关：false 时小程序不展示任何工具
+  groups: MiniProgramToolGroup[];
+}
+
 export interface SiteContent {
   hero: {
     title: string;
@@ -149,4 +177,5 @@ export interface SiteContent {
   softwares: SoftwareWork[];
   socialMedia: SocialPlatform[]; // 自媒体平台（管理员可编辑）
   about: AboutContent; // 「关于我」页面（管理员可编辑）
+  miniProgramTools: MiniProgramToolsConfig; // 小程序工具显示 / 隐藏配置
 }

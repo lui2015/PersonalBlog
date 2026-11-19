@@ -62,6 +62,12 @@ export default function AdminHomePage() {
       desc: "AboutMe 相册（首页画框）",
       count: content.photos.length,
     },
+    {
+      href: "/admin/mini-tools",
+      label: "小程序工具配置",
+      desc: "分组 / 工具的显示与隐藏，提供对外接口",
+      count: content.miniProgramTools?.groups?.length ?? 0,
+    },
   ];
 
   const onExport = () => {

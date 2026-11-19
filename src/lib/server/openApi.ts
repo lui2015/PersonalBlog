@@ -235,6 +235,22 @@ export const SECTION_META: Record<string, SectionMeta> = {
     orderField: "id",
     idPrefix: "",
   },
+  miniProgramTools: {
+    key: "miniProgramTools",
+    label: "小程序工具配置",
+    description:
+      "小程序工具分组与工具的显示 / 隐藏配置（单例对象）；小程序端只读精简接口为 GET /api/miniprogram/tools",
+    kind: "object",
+    required: [],
+    fields: {
+      title: "工具列表标题",
+      enabled: "总开关，false 时小程序不展示任何工具",
+      groups:
+        "分组数组 [{ id, name, subtitle, color, enabled, tools: [{ id, name, desc, icon, badge, route, enabled }] }]",
+    },
+    orderField: "id",
+    idPrefix: "",
+  },
 };
 
 export const SECTION_KEYS = Object.keys(SECTION_META);

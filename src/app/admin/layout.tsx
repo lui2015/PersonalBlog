@@ -16,6 +16,7 @@ const navItems = [
   { href: "/admin/skills", label: "首页 · 技能", icon: "▲" },
   { href: "/admin/photos", label: "首页 · 相框", icon: "◫" },
   { href: "/admin/api", label: "开放平台", icon: "⚡" },
+  { href: "/admin/mini-tools", label: "小程序工具", icon: "⬡" },
 ];
 
 export default function AdminLayout({

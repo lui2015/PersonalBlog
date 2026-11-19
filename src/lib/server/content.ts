@@ -4,6 +4,7 @@ import path from "node:path";
 import { CONTENT_FILE, DATA_DIR } from "./paths";
 import { DEFAULT_CONTENT } from "../defaultContent";
 import { mergeAbout } from "../aboutContent";
+import { normalizeMiniProgramTools } from "../miniProgramTools";
 import type { SiteContent } from "../types";
 
 /** 确保 data 目录存在 */
@@ -43,7 +44,12 @@ export async function writeContent(content: SiteContent): Promise<void> {
       }) as unknown as SiteContent["works"])
     : content.works;
   const data = JSON.stringify(
-    { ...content, about: mergeAbout(content.about), works },
+    {
+      ...content,
+      about: mergeAbout(content.about),
+      works,
+      miniProgramTools: normalizeMiniProgramTools(content.miniProgramTools),
+    },
     null,
     2
   );
@@ -86,6 +92,7 @@ function mergeWithDefault(p: Partial<SiteContent>): SiteContent {
     softwares: p.softwares ?? DEFAULT_CONTENT.softwares,
     socialMedia: p.socialMedia ?? DEFAULT_CONTENT.socialMedia,
     about: mergeAbout(p.about),
+    miniProgramTools: normalizeMiniProgramTools(p.miniProgramTools),
   };
 }
 

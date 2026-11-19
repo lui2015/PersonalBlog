@@ -467,4 +467,53 @@ T extends U ? X : Y 是类型系统的开关。
       { id: "at6", year: "2025", title: "高级项目经理", desc: "腾讯科技 · CSIG 研发效能提升" },
     ],
   },
+  // 小程序工具配置：只预置已确认的分组/工具，其余可在后台「小程序工具」栏目新增或批量导入
+  miniProgramTools: {
+    title: "TOOL LIST",
+    enabled: true,
+    groups: [
+      {
+        id: "group_work",
+        name: "WORK",
+        subtitle: "工作 · 效率",
+        color: "#00f0ff",
+        enabled: true,
+        tools: [
+          {
+            id: "tool_workdays",
+            name: "工作日计算器",
+            desc: "计算两个日期之间的工作日数，或推算 N 个工作日后的日期，自动识别法定节假日与调休补班。",
+            icon: "📅",
+            badge: "原生计算",
+            enabled: true,
+          },
+        ],
+      },
+      {
+        id: "group_life",
+        name: "LIFE",
+        subtitle: "生活 · 测量",
+        color: "#ff2d78",
+        enabled: true,
+        tools: [
+          {
+            id: "tool_countdown",
+            name: "大事件倒计时",
+            desc: "记录每一个重要时刻，支持自然日与工作日两种倒计时方式，数据保存在本机。",
+            icon: "⌛",
+            badge: "本机存储",
+            enabled: true,
+          },
+          {
+            id: "tool_ruler",
+            name: "尺子",
+            desc: "屏幕刻度尺：厘米 / 英寸刻度与数字、横向 / 竖向、全屏铺满，拖动双游标测量，可用屏幕宽度或银行卡校准。",
+            icon: "📏",
+            badge: "本机校准",
+            enabled: true,
+          },
+        ],
+      },
+    ],
+  },
 };

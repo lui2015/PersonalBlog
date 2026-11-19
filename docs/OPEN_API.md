@@ -1,7 +1,7 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1.4 ｜ 更新日期：2026-11-17
-> 本次更新：`POST /api/upload` 改为纯 COS 上传（内存直传、服务器零落盘、无 `localUrl`），支持图片 / HTML / PDF / TXT / MD / JSON，最大 20MB；上一版：文章正文 Markdown 与 `contentHtml`。
+> 版本：v1.5 ｜ 更新日期：2026-11-19
+> 本次更新：新增「小程序工具配置」——`GET /api/miniprogram/tools` 公开只读（按配置过滤显示 / 隐藏项）、`GET/PUT /api/open/miniProgramTools` 配置读写；上一版：纯 COS 上传与文章正文 Markdown。
 > 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
@@ -78,6 +78,8 @@ Cookie: admin_session=...
 | GET | `/api/content` | ❌ | 一次性获取站点全部数据（大 JSON） |
 | PUT | `/api/content` | ✅ | 一次性覆盖全部数据（不推荐，易误删） |
 | POST | `/api/upload` | ✅ | 上传文件（图片 / HTML / PDF 等），返回 COS 绝对 URL |
+| GET | `/api/miniprogram/tools` | ❌ | 小程序工具配置（**仅返回显示项**），见 4.12 |
+| GET | `/api/open/miniProgramTools` | ❌ | 小程序工具完整配置（含隐藏项） |
 | GET | `/api/me` | ❌ | 查询当前登录态 `{ authed, username }` |
 | POST | `/api/login` | ❌ | 账号密码登录，下发 Cookie（小程序不用） |
 | POST | `/api/logout` | ❌ | 清除登录 Cookie |
@@ -472,6 +474,57 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 
 ---
 
+### 4.12 小程序工具配置 — 按配置显示 / 隐藏工具
+
+后台「小程序工具」栏目维护分组与工具的显示开关；小程序调用下面的公开接口后，直接渲染返回的 `groups` 即可，无需自己判断开关。
+
+**GET `/api/miniprogram/tools`**（公开，无需认证）
+
+默认只返回 `enabled` 的分组与工具，隐藏项与空分组一律不返回；加 `?all=1` 返回完整配置（含隐藏项）用于调试。
+
+```json
+{
+  "ok": true,
+  "visibleOnly": true,
+  "title": "TOOL LIST",
+  "enabled": true,
+  "totalGroups": 2,
+  "totalTools": 3,
+  "groups": [
+    {
+      "id": "group_work",
+      "name": "WORK",
+      "subtitle": "工作 · 效率",
+      "color": "#00f0ff",
+      "enabled": true,
+      "tools": [
+        {
+          "id": "tool_workdays",
+          "name": "工作日计算器",
+          "desc": "计算两个日期之间的工作日数，自动识别法定节假日与调休补班。",
+          "icon": "📅",
+          "badge": "原生计算",
+          "route": "",
+          "enabled": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+**配置读写**：`GET /api/open/miniProgramTools` 返回完整配置（含隐藏项，`kind: "object"`）；`PUT /api/open/miniProgramTools` 需管理员凭据，为**字段合并**（只传 `groups` 即整组替换）。数据结构：
+
+| 层级 | 字段 |
+|------|------|
+| 根 | `title` `enabled`(总开关) `groups` |
+| 分组 | `id` `name` `subtitle` `color` `enabled` `tools` |
+| 工具 | `id` `name` `desc` `icon` `badge?` `route?` `enabled` |
+
+> 根 / 分组 / 工具任意一级 `enabled=false`，该项都不会出现在 `/api/miniprogram/tools` 响应里。响应 `Cache-Control: no-store`，建议小程序每次进入工具页重新请求，后台改配置即时生效。分组与工具均可新增、删除、排序，也可在后台批量导入 / 导出 JSON。
+
+---
+
 ## 5. 数据模块与字段字典
 
 | section | 名称 | 条数(示例) | 排序字段 | 说明 |
@@ -489,6 +542,7 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `softwares` | 软件作品 | 12 | `id` | 软件/项目卡片 |
 | `socialMedia` | 自媒体平台 | 5 | `id` | 二维码平台 |
 | `about` | 关于我 | 1（对象） | — | 单例对象，只支持 GET/PUT；含社交链接/技能树/履历 |
+| `miniProgramTools` | 小程序工具配置 | 1（对象） | — | 单例对象；分组 / 工具显示开关，配套只读接口见 4.12 |
 
 **字段明细**
 
@@ -507,6 +561,7 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `softwares` | `id` `name` `image` `description` `url` |
 | `socialMedia` | `id` `name` `icon` `desc` `qr` `color` |
 | `about` | `name` `role` `bio` `avatar` `socialLinks`(`[{id,name,url,icon}]`) `skillTree`(`[{id,name,certificate}]`，兼容 string[]) `timeline`(`[{id,year,title,desc}]`) |
+| `miniProgramTools` | `title` `enabled` `groups`(`[{id,name,subtitle,color,enabled,tools:[{id,name,desc,icon,badge?,route?,enabled}]}]`) |
 
 > `poems` 实际数据含 `dynasty`（朝代）字段，属于扩展字段；接口不限制额外字段，可透传存储。
 > 图片类字段（`src` / `image` / `cover` / `qr` / `avatarUrl` / `icon`）建议填 `absoluteUrl` 完整地址，小程序才能直接显示。
@@ -675,3 +730,4 @@ wx.chooseMedia({
 9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
 10. **文章正文格式**：`works[].content` 为 Markdown；列表 / 详情接口额外返回只读 `contentHtml`（渲染后的安全 HTML，见 4.11）。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML；`contentHtml` 写入时会被忽略，请勿回传。
 11. **文件存储 COS（纯 COS 上传）**：站内图片与所有新上传文件都在 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/`（下分 `uploads/` 与 `images/`）；`POST /api/upload` 把文件字节经内存直接写入 COS，**服务器磁盘不再产生上传副本**，也不再返回 `localUrl`，COS 失败返回 `502` 而非降级。小程序后台需把该 COS 域名加入 `downloadFile` / `image` 合法域名。`site-content.json` 仍保存在服务器本地作为运行时文字数据，并每日备份到 COS `personalblog/data/daily/`（保留 14 天）。
+12. **小程序工具开关**：工具列表请用 `GET /api/miniprogram/tools`（只返回显示项），不要用 `PUT /api/content` 或 `/api/content` 里的 `miniProgramTools` 自行过滤；后台「小程序工具」栏目保存后即时生效，详见 4.12。`miniProgramTools` 与 `hero` / `about` 同为单例对象，`PUT /api/open/miniProgramTools` 是字段合并。

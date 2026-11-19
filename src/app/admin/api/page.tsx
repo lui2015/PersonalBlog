@@ -98,6 +98,26 @@ curl -s -X POST ${BASE_URL}/api/upload \\
 
 返回的 \`url\` / \`absoluteUrl\` / \`cosUrl\` 均为 COS 绝对地址，可直接用于 softwares 的 image 字段、works 的 cover 字段或小程序 <image src>。文件只存 COS，服务器本地不保留副本，也没有 \`localUrl\`；COS 不可用时接口返回 502 而不是降级写磁盘。HTML / SVG 仅允许受信任的管理员上传。`,
   },
+  {
+    method: "GET",
+    path: "/api/miniprogram/tools",
+    description: "小程序工具配置（公开只读）：按后台配置返回可见分组与工具",
+    auth: false,
+    responseExample: `{ "ok": true, "visibleOnly": true, "title": "TOOL LIST", "enabled": true, "totalGroups": 2, "totalTools": 3, "groups": [{ "id": "group_work", "name": "WORK", "subtitle": "工作 · 效率", "color": "#00f0ff", "enabled": true, "tools": [{ "id": "tool_workdays", "name": "工作日计算器", "desc": "...", "icon": "📅", "badge": "原生计算", "enabled": true }] }] }`,
+    prompt: `请帮我在小程序里做一个工具列表页，工具项由博客后台配置控制显示/隐藏：
+
+\`\`\`bash
+# 公开只读，无需认证；服务端已过滤隐藏项，直接渲染 groups
+curl -s ${BASE_URL}/api/miniprogram/tools
+\`\`\`
+
+配置入口：博客后台 →「小程序工具」栏目，可新增/删除/排序分组与工具，并用「显示 / 隐藏」开关控制。
+保存后接口即时生效（Cache-Control: no-store），小程序无需发版。
+完整配置（含隐藏项）：GET ${BASE_URL}/api/open/miniProgramTools；修改配置用 PUT（需管理员凭据，字段合并）。
+调试全量：${BASE_URL}/api/miniprogram/tools?all=1
+
+请每次进入工具页都重新请求接口，直接遍历 groups 渲染，不要在客户端再做开关判断。`,
+  },
 ];
 
 /** 常用场景：一键复制提示词 */

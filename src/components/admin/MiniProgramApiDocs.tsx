@@ -148,11 +148,13 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - PUT  /api/open/{section}           数组模块=整块替换(慎用)；对象模块(hero/about)=字段合并，只更新传入字段，响应含 mode 与 data
 - GET  /api/content                  一次性获取全站数据
 - POST /api/upload                   上传文件(multipart, 字段名 file；图片/HTML/PDF/TXT/MD/JSON，最大20MB)，返回 { ok, url, absoluteUrl, cosUrl, storage:'cos' }；文件只存 COS、服务器无本地副本、无 localUrl，url/absoluteUrl/cosUrl 均为 COS 绝对地址
+- GET  /api/miniprogram/tools        小程序工具配置（公开只读，只返回 enabled 的分组与工具；直接渲染 groups 即可实现按配置显示/隐藏工具）
+- GET  /api/open/miniProgramTools    完整配置（含隐藏项）；PUT /api/open/miniProgramTools 需认证，为字段合并
 
 ## 数据模块（section）
-对象模块：hero / about（单例，只支持 GET/PUT，PUT 为字段合并，无 {id} 路径）
+对象模块：hero / about / miniProgramTools（单例，只支持 GET/PUT，PUT 为字段合并，无 {id} 路径）
 数组模块：poems / photos / stats / skills / myskills / quotes / works / videos / albums / softwares / socialMedia
-共 13 个模块，字段字典可通过 GET /api/open 动态获取。
+共 14 个模块，字段字典可通过 GET /api/open 动态获取。
 
 主要字段：
 - poems: id, title, author, dynasty, date, content（必填 title, content）
@@ -168,10 +170,16 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - photos: id, src, title, desc（必填 src）
 - hero: title, subtitle, avatarText, avatarUrl
 - about: name, role, bio, avatar, socialLinks[{id,name,url,icon}], skillTree[{id,name,certificate}]（certificate 为证书图片 URL，兼容历史 string[]）, timeline[{id,year,title,desc}]（对象，PUT 合并字段；数组字段需传完整数组）
+- miniProgramTools: title, enabled(总开关), groups[{id,name,subtitle,color,enabled,tools[{id,name,desc,icon,badge?,route?,enabled}]}]（对象）
+
+## 小程序工具列表（按后台配置显示/隐藏）
+每次进入工具页请求 GET /api/miniprogram/tools，响应 { ok, visibleOnly:true, title, enabled, totalGroups, totalTools, groups }。
+服务端已过滤掉隐藏的分组/工具与空分组，直接遍历 groups 渲染即可，不要在客户端再做开关判断；后台改配置后无需发版。
+调试完整配置：GET /api/miniprogram/tools?all=1 或 GET /api/open/miniProgramTools。
 
 ## 统一响应
 成功 { ok: true, ... }（POST 为 201）；失败 { ok: false, error: "..." }
-错误码：400 参数/缺必填/id重复、401 未认证、404 不存在、405 不支持的操作、413 文件超8MB、415 类型不支持
+错误码：400 参数/缺必填/id重复、401 未认证、404 不存在、405 不支持的操作、413 文件超20MB、415 类型不支持
 
 ## 请求封装示例
 \`\`\`js
@@ -210,8 +218,10 @@ const ENDPOINTS = [
   { method: "POST", path: "/api/open/{section}", desc: "新增一条（id 可自动生成）", auth: true },
   { method: "PUT", path: "/api/open/{section}/{id}", desc: "局部更新一条（合并字段）", auth: true },
   { method: "DELETE", path: "/api/open/{section}/{id}", desc: "删除一条", auth: true },
-  { method: "PUT", path: "/api/open/{section}", desc: "数组模块=整块替换（慎用）；对象模块 hero/about=字段合并", auth: true },
+  { method: "PUT", path: "/api/open/{section}", desc: "数组模块=整块替换（慎用）；对象模块 hero/about/miniProgramTools=字段合并", auth: true },
   { method: "POST", path: "/api/upload", desc: "上传文件（图片/HTML/PDF 等），直接存 COS，返回 COS 绝对 URL", auth: true },
+  { method: "GET", path: "/api/miniprogram/tools", desc: "小程序工具配置（仅显示项，直接渲染 groups）", auth: false },
+  { method: "GET", path: "/api/open/miniProgramTools", desc: "小程序工具完整配置（含隐藏项）", auth: false },
   { method: "GET", path: "/api/content", desc: "一次性获取全站数据（兼容旧接口）", auth: false },
 ];
 
@@ -229,6 +239,7 @@ const SECTIONS = [
   { key: "softwares", label: "软件作品", kind: "数组", required: "name", fields: "id, name, image, description, url" },
   { key: "socialMedia", label: "自媒体平台", kind: "数组", required: "name", fields: "id, name, icon, desc, qr, color" },
   { key: "about", label: "关于我", kind: "对象", required: "—", fields: "name, role, bio, avatar, socialLinks[], skillTree[{id,name,certificate}], timeline[]" },
+  { key: "miniProgramTools", label: "小程序工具配置", kind: "对象", required: "—", fields: "title, enabled, groups[{id,name,subtitle,color,enabled,tools[]}]" },
 ];
 
 function CopyButton({ text, label = "复制" }: { text: string; label?: string }) {
