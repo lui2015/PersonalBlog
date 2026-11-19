@@ -1,7 +1,7 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1.5 ｜ 更新日期：2026-11-19
-> 本次更新：新增「小程序工具配置」——`GET /api/miniprogram/tools` 公开只读（按配置过滤显示 / 隐藏项）、`GET/PUT /api/open/miniProgramTools` 配置读写；上一版：纯 COS 上传与文章正文 Markdown。
+> 版本：v1.6 ｜ 更新日期：2026-11-19
+> 本次更新：全文补齐「小程序工具配置」接口的一致性（对象模块清单、14 个模块计数、错误码、§6.5 小程序调用示例），接口行为无变化；上一版新增 `GET /api/miniprogram/tools` 与 `GET/PUT /api/open/miniProgramTools`。
 > 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
@@ -69,7 +69,7 @@ Cookie: admin_session=...
 | POST | `/api/open/{section}` | ✅ | 新增一条 |
 | PUT | `/api/open/{section}/{id}` | ✅ | 局部更新一条（合并字段） |
 | DELETE | `/api/open/{section}/{id}` | ✅ | 删除一条 |
-| PUT | `/api/open/{section}` | ✅ | 数组模块＝整块替换（慎用）；对象模块（hero/about）＝字段合并 |
+| PUT | `/api/open/{section}` | ✅ | 数组模块＝整块替换（慎用）；对象模块（hero/about/miniProgramTools）＝字段合并 |
 
 ### 3.2 其他可用接口
 
@@ -125,6 +125,8 @@ Cookie: admin_session=...
 }
 ```
 
+> 上面为节选。共 **14 个模块**：11 个数组模块 + 3 个单例对象模块（`hero` / `about` / `miniProgramTools`）。字段字典以 `GET /api/open` 实时返回为准；`miniProgramTools` 结构与配套只读接口见 4.12。
+
 ---
 
 ### 4.2 GET `/api/open/{section}` — 模块列表
@@ -161,8 +163,8 @@ GET https://www.luliming.xyz/api/open/quotes?page=1&pageSize=20&order=desc
 }
 ```
 
-> **单例对象模块**（`hero`、`about`）不走分页，返回 `{ ok, section, kind: "object", data: {...} }`，没有 `total / page / items` 字段。
-> `about` 的完整响应示例见 [4.10](#410-get-about--关于我数据)。
+> **单例对象模块**（`hero`、`about`、`miniProgramTools`）不走分页，返回 `{ ok, section, kind: "object", data: {...} }`，没有 `total / page / items` 字段。
+> `about` 的完整响应示例见 [4.10](#410-get-about--关于我数据)；`miniProgramTools` 见 [4.12](#412-小程序工具配置--按配置显示--隐藏工具)。
 
 ---
 
@@ -224,7 +226,7 @@ POST /api/open/softwares
 
 只更新传入的字段，其余保持不变；`id` 不可修改（`patch` 中的 `id` 会被忽略）。
 
-> **对象模块（`hero` / `about`）不需要 `{id}`**：直接 `PUT /api/open/about` 传要修改的字段即可，效果同为合并。详见 [4.10](#410-get-about--关于我数据)。
+> **对象模块（`hero` / `about` / `miniProgramTools`）不需要 `{id}`**：直接 `PUT /api/open/about` 传要修改的字段即可，效果同为合并。详见 [4.10](#410-get-about--关于我数据) 与 [4.12](#412-小程序工具配置--按配置显示--隐藏工具)。
 
 ```json
 PUT /api/open/softwares/sw_xxx
@@ -255,7 +257,7 @@ DELETE /api/open/quotes/t_001
 | 模块类型 | 适用 section | 行为 |
 |----------|--------------|------|
 | `array` 数组模块 | `poems` `photos` `stats` `skills` `myskills` `quotes` `works` `videos` `albums` `softwares` `socialMedia` | **整块替换**，会覆盖原有全部条目（慎用） |
-| `object` 单例模块 | `hero` `about` | **字段合并**，只更新传入的字段，其余保持不变（安全，推荐） |
+| `object` 单例模块 | `hero` `about` `miniProgramTools` | **字段合并**，只更新传入的字段，其余保持不变（安全，推荐）；`miniProgramTools.groups` 是数组，传它会整组替换 |
 
 数组模块示例（Body 可直接传数组，也可传 `{ "data": [...] }`）：
 ```json
@@ -324,7 +326,7 @@ curl -X POST https://www.luliming.xyz/api/upload \
 
 ### 4.9 GET `/api/content` — 全量数据（兼容旧接口）
 
-一次性返回完整站点 JSON，包含全部 13 个模块。适合首次全量同步，不适合频繁调用。
+一次性返回完整站点 JSON，包含全部 14 个模块（含 `miniProgramTools`）。适合首次全量同步，不适合频繁调用；小程序工具列表请改用 [4.12](#412-小程序工具配置--按配置显示--隐藏工具) 的专用接口，它已按开关过滤掉隐藏项。
 
 ```json
 {
@@ -699,6 +701,45 @@ wx.chooseMedia({
 });
 ```
 
+### 6.5 工具列表（按后台配置显示 / 隐藏）
+
+```js
+// 每次进入工具页都重新请求，后台开关改动即时生效，小程序无需发版
+async function loadTools() {
+  const res = await request('/api/miniprogram/tools'); // 公开 GET，无需认证
+  if (!res.ok) return [];
+  // 服务端已过滤隐藏的分组 / 工具与空分组，直接渲染即可
+  return res.groups.map(g => ({
+    id: g.id,
+    name: g.name,
+    subtitle: g.subtitle,
+    color: g.color,
+    tools: g.tools.map(t => ({
+      id: t.id,
+      name: t.name,
+      desc: t.desc,
+      icon: t.icon,
+      badge: t.badge,
+      route: t.route,
+    })),
+  }));
+}
+
+// 不用统一封装时的 wx.request 版本
+wx.request({
+  url: BASE + '/api/miniprogram/tools',
+  success: (r) => {
+    if (!r.data.ok) return;
+    const { totalGroups, totalTools, groups } = r.data;
+    this.setData({ groups, totalGroups, totalTools });
+  },
+});
+```
+
+> 不要在客户端再判断 `enabled`：接口默认 `visibleOnly: true`，只返回可见项。
+> 调试 / 后台核对：`GET /api/miniprogram/tools?all=1` 或 `GET /api/open/miniProgramTools`（含隐藏项）。
+> 修改配置：`PUT /api/open/miniProgramTools`（需管理员凭据，字段合并；只传 `groups` 即整组替换），见 [4.12](#412-小程序工具配置--按配置显示--隐藏工具)。
+
 ---
 
 ## 7. 错误码与统一响应
@@ -712,8 +753,9 @@ wx.chooseMedia({
 | 401 | 未认证或凭据错误 | `{ "ok": false, "error": "unauthorized" }` |
 | 404 | 模块或条目不存在 | `{ "ok": false, "error": "..." }` |
 | 405 | 该模块不支持此操作（如 hero 新增/删除） | `{ "ok": false, "error": "..." }` |
-| 413 | 上传文件超过 8MB | `{ "error": "file too large..." }` |
+| 413 | 上传文件超过 20MB | `{ "error": "file too large..." }` |
 | 415 | 上传文件类型不支持 | `{ "error": "unsupported type..." }` |
+| 502 | COS 上传失败（接口不降级写本地磁盘） | `{ "error": "COS 上传失败，请稍后重试" }` |
 
 ---
 
@@ -725,7 +767,7 @@ wx.chooseMedia({
 4. **小程序审核**：个人主体小程序若含「用户发布内容」能力可能受限，建议仅做只读展示，写入能力留在管理员端。
 5. **图片域名**：站点数据中有 `images.unsplash.com` / `picsum.photos` 的示例占位图，若小程序要显示，需一并配置为合法域名。
 6. **HTTPS**：生产环境强制 HTTPS，请勿使用 `http://`。
-7. **对象模块 vs 数组模块**：`hero` / `about` 是单例对象，用 `PUT /api/open/{section}` 做**字段合并**（无 `{id}` 路径）；其余模块是数组，`PUT` 不带 id 时是**整块替换**，务必先 GET 再改。响应中的 `mode` 可用来区分 `merged` / `replaced`。
+7. **对象模块 vs 数组模块**：`hero` / `about` / `miniProgramTools` 是单例对象，用 `PUT /api/open/{section}` 做**字段合并**（无 `{id}` 路径）；其余 11 个模块是数组，`PUT` 不带 id 时是**整块替换**，务必先 GET 再改。响应中的 `mode` 可用来区分 `merged` / `replaced`。
 8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
 9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
 10. **文章正文格式**：`works[].content` 为 Markdown；列表 / 详情接口额外返回只读 `contentHtml`（渲染后的安全 HTML，见 4.11）。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML；`contentHtml` 写入时会被忽略，请勿回传。

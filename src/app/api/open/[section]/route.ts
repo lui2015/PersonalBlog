@@ -144,7 +144,7 @@ export async function POST(req: Request, ctx: Ctx) {
 /**
  * PUT /api/open/{section}
  * - 数组模块：整块替换整个数组（慎用，会覆盖全部条目）
- * - 对象模块（hero / about）：字段合并，只更新传入的字段，其余保持不变
+ * - 对象模块（hero / about / miniProgramTools）：字段合并，只更新传入的字段，其余保持不变
  * 需要认证。body 可直接传数组/对象，也可用 { data: ... } 包裹。
  */
 export async function PUT(req: Request, ctx: Ctx) {

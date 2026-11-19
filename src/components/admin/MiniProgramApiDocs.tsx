@@ -145,7 +145,7 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - POST /api/open/{section}           新增一条（需认证，id 可不传，服务端自动生成）
 - PUT  /api/open/{section}/{id}      局部更新一条（需认证，只传要改的字段）
 - DELETE /api/open/{section}/{id}    删除一条（需认证）
-- PUT  /api/open/{section}           数组模块=整块替换(慎用)；对象模块(hero/about)=字段合并，只更新传入字段，响应含 mode 与 data
+- PUT  /api/open/{section}           数组模块=整块替换(慎用)；对象模块(hero/about/miniProgramTools)=字段合并，只更新传入字段，响应含 mode 与 data
 - GET  /api/content                  一次性获取全站数据
 - POST /api/upload                   上传文件(multipart, 字段名 file；图片/HTML/PDF/TXT/MD/JSON，最大20MB)，返回 { ok, url, absoluteUrl, cosUrl, storage:'cos' }；文件只存 COS、服务器无本地副本、无 localUrl，url/absoluteUrl/cosUrl 均为 COS 绝对地址
 - GET  /api/miniprogram/tools        小程序工具配置（公开只读，只返回 enabled 的分组与工具；直接渲染 groups 即可实现按配置显示/隐藏工具）
@@ -405,7 +405,7 @@ ${BASE_URL}/api/open/quotes?user=luli&pass=luli116574`}
       {/* 数据模块字典 */}
       <div className="cyber-card p-5 space-y-3">
         <h3 className="text-sm text-cyber-blue font-[family-name:var(--font-orbitron)]">
-          📐 数据模块字典（13 个 section）
+          📐 数据模块字典（14 个 section）
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-[11px] font-[family-name:var(--font-mono)] border-collapse">
@@ -448,7 +448,8 @@ ${BASE_URL}/api/open/quotes?user=luli&pass=luli116574`}
             ["401", "未认证或凭据错误"],
             ["404", "模块或条目不存在"],
             ["405", "该模块不支持此操作"],
-            ["413 / 415", "文件超 8MB / 类型不支持"],
+            ["413 / 415", "文件超 20MB / 类型不支持"],
+            ["502", "COS 上传失败（不降级写本地）"],
           ].map(([code, desc]) => (
             <div key={code} className="bg-cyber-black/40 border border-cyber-border/30 p-2">
               <span className="text-cyber-pink">{code}</span>
