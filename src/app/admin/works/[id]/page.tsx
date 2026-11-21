@@ -243,7 +243,7 @@ export default function WorkEditorPage() {
         </Field>
 
         <div className="md:col-span-2">
-          <Field label="封面图片" hint="可粘贴 URL，也可上传本地图片（建议 800x400）">
+          <Field label="封面图片" hint="留空将使用默认配图；也可粘贴 URL 或上传本地图片（建议 800x400）">
             <ImageUploader
               value={draft.cover}
               onChange={(v) => setDraft({ ...draft, cover: v })}

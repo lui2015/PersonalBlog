@@ -152,6 +152,7 @@ const MASTER_PROMPT = `你是个人博客「鲁力铭」的内容管理助手。
 curl -s "${BASE_URL}/api/open"
 \`\`\`
 响应 sections 数组包含每个模块的 key（接口路径名）、label、description、kind（array 列表 / object 单例）、required（必填字段）、fields（字段说明）、count。后续所有模块名、字段名、必填项一律以该响应为准。
+响应还含 site 元数据：site.defaultAssets.articleCover（文章默认配图绝对地址）、site.contentFormats.works（正文源格式 Markdown / 渲染字段 contentHtml）、site.derivedFields.works（works 的只读派生字段清单），需要默认配图或确认文章格式时直接取用，不要硬编码。
 
 ## 第 1 步：把我的描述映射到模块
 | 我说的作品 | 模块 key |
@@ -210,7 +211,7 @@ curl -s "${BASE_URL}/api/open/{section}?q=关键词"
 - poems: title / content 必填，author、dynasty、date 可选
 - photos: src 必填（填上传返回的 url），title / desc 可选
 - softwares: name 必填，image / description / url 可选
-- works: title / slug 必填，content 为 Markdown 正文；contentHtml 是只读派生字段，不要写入
+- works: title / slug 必填，content 为 Markdown 正文（接口用只读 contentFormat 标明格式）；cover 可留空，读取时自动补默认配图（coverUrl / coverIsDefault）；contentFormat / contentHtml / coverUrl / coverIsDefault 均为只读派生字段，不要写入
 - videos: title 必填，src 为 Bilibili 嵌入地址或 BV 号
 - quotes: text 必填；myskills: name / url 必填；skills: name / level(0-100)
 - albums: name 必填，photos 为 [{ id, src, title }] 数组
@@ -359,8 +360,8 @@ curl -X PUT "${BASE_URL}/api/content" -H "Content-Type: application/json" -H "X-
 - category: 文章分类
 - tags: 标签数组
 - readTime: 阅读时长，如 "5分钟"
-- cover: 封面图片 URL（可选）
-- content: 文章正文 Markdown（后台编辑器支持格式工具栏、预览与复制；接口读取时额外返回只读 contentHtml 渲染后的 HTML）
+- cover: 封面图片 URL（可选，留空时 Web 与 /api/open/works 自动使用站内默认配图 /images/article-cover.svg）
+- content: 文章正文 Markdown（后台编辑器支持格式工具栏、预览与复制；/api/open/works 读取时额外返回只读 contentFormat=markdown、contentHtml 渲染后的 HTML、coverUrl 可直接显示的封面地址，coverIsDefault 标识是否为默认图）
 
 站点地址：${BASE_URL}`,
   },
@@ -593,7 +594,7 @@ curl -s -X PUT "${BASE_URL}/api/content?user=luli&pass=luli116574" \\
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-[family-name:var(--font-mono)]">
               {[
                 { name: "SoftwareWork", fields: "{ id, name, image, description, url }" },
-                { name: "Work", fields: "{ id, slug, title, excerpt, date, category, tags, readTime, cover, content(Markdown), contentHtml(只读派生) }" },
+                { name: "Work", fields: "{ id, slug, title, excerpt, date, category, tags, readTime, cover(可留空), content(Markdown), +只读 contentFormat/contentHtml/coverUrl/coverIsDefault }" },
                 { name: "Photo/GalleryPhoto", fields: "{ id, src, title }" },
                 { name: "Quote", fields: "{ id, text, author }" },
                 { name: "Poem", fields: "{ id, title, author, date, content }" },

@@ -61,7 +61,7 @@ export async function GET(req: Request, ctx: Ctx) {
   const start = (page - 1) * pageSize;
   const items = sorted
     .slice(start, start + pageSize)
-    .map((x) => withDerivedFields(section, x));
+    .map((x) => withDerivedFields(section, x, req));
 
   return NextResponse.json({
     ok: true,
@@ -132,7 +132,10 @@ export async function POST(req: Request, ctx: Ctx) {
       list.push(item);
       return item;
     });
-    return NextResponse.json({ ok: true, section, data: created }, { status: 201 });
+    return NextResponse.json(
+      { ok: true, section, data: withDerivedFields(section, created, req) },
+      { status: 201 }
+    );
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : String(e) },

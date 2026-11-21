@@ -6,6 +6,7 @@ import { useContent } from "@/lib/ContentContext";
 import AdminPanel, { btnPrimary, btnGhost, btnDanger } from "@/components/admin/AdminPanel";
 import type { Work } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { articleCover, handleArticleCoverError } from "@/lib/coverFallback";
 
 function makeSlug(title: string) {
   const base = title
@@ -87,8 +88,9 @@ export default function WorksAdminPage() {
                 <div className="relative w-28 h-20 shrink-0 overflow-hidden rounded border border-cyber-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={w.cover}
+                    src={articleCover(w.cover)}
                     alt={w.title}
+                    onError={handleArticleCoverError}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 scanlines opacity-50" />

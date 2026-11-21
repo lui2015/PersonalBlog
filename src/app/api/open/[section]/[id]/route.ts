@@ -16,7 +16,7 @@ function badSection() {
 }
 
 /** GET /api/open/{section}/{id} — 获取单条，公开 */
-export async function GET(_req: Request, ctx: Ctx) {
+export async function GET(req: Request, ctx: Ctx) {
   const { section, id } = await ctx.params;
   const meta = SECTION_META[section];
   if (!meta) return badSection();
@@ -34,7 +34,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   return NextResponse.json({
     ok: true,
     section,
-    data: withDerivedFields(section, item),
+    data: withDerivedFields(section, item, req),
   });
 }
 

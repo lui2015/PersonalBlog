@@ -9,6 +9,7 @@ import type { Work } from "@/lib/types";
 import CyberButton from "@/components/ui/CyberButton";
 import WorkEditorModal from "@/components/admin/WorkEditorModal";
 import { btnPrimary } from "@/components/admin/AdminPanel";
+import { articleCover, handleArticleCoverError } from "@/lib/coverFallback";
 
 export default function BlogPage() {
   const { content, ready, updateSection } = useContent();
@@ -96,8 +97,9 @@ export default function BlogPage() {
                   <div className="relative aspect-[16/9] overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={work.cover}
+                      src={articleCover(work.cover)}
                       alt={work.title}
+                      onError={handleArticleCoverError}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <span className="absolute left-3 top-3 rounded bg-cyber-pink/90 px-2 py-0.5 text-xs font-semibold text-cyber-black">

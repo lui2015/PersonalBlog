@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { CONTENT_FILE, DATA_DIR } from "./paths";
 import { DEFAULT_CONTENT } from "../defaultContent";
+import { WORK_DERIVED_FIELDS } from "../siteAssets";
 import { mergeAbout } from "../aboutContent";
 import { normalizeMiniProgramTools } from "../miniProgramTools";
 import type { SiteContent } from "../types";
@@ -34,14 +35,17 @@ export async function readContent(): Promise<SiteContent> {
 export async function writeContent(content: SiteContent): Promise<void> {
   await ensureDataDir();
   const tmp = path.join(DATA_DIR, `site-content.${process.pid}.${Date.now()}.tmp`);
-  // 写入口统一清洗：归一技能标签结构；剔除客户端回传的只读派生字段 contentHtml
+  // 写入口统一清洗：归一技能标签结构；剔除客户端回传的只读派生字段
+  // （contentHtml / contentFormat / coverUrl / coverIsDefault，均由读取接口生成）
+  const derivedFields = new Set<string>(WORK_DERIVED_FIELDS);
   const works = Array.isArray(content.works)
-    ? (content.works.map((w) => {
-        const { contentHtml: _ignored, ...rest } =
-          w as unknown as Record<string, unknown>;
-        void _ignored;
-        return rest;
-      }) as unknown as SiteContent["works"])
+    ? (content.works.map((w) =>
+        Object.fromEntries(
+          Object.entries(w as unknown as Record<string, unknown>).filter(
+            ([key]) => !derivedFields.has(key)
+          )
+        )
+      ) as unknown as SiteContent["works"])
     : content.works;
   const data = JSON.stringify(
     {

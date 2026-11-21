@@ -43,9 +43,12 @@ console.log(res.items, res.total, res.hasMore);  // hasMore 为 true 时 page+1 
 // 2) 关键词搜索
 const found = await request('/api/open/works?q=Next.js');
 
-// 3) 单条详情（works 额外返回 contentHtml，可直接给 rich-text 渲染）
+// 3) 单条详情（works 额外返回文章格式与可直接显示的封面）
 const detail = await request('/api/open/works/w1');
-console.log(detail.data.contentHtml);
+console.log(detail.data.contentFormat);    // 'markdown'（正文源格式）
+console.log(detail.data.contentHtml);      // 渲染后的语义 HTML
+console.log(detail.data.coverUrl);         // 直接放进 <image src>，未配图时为默认配图
+console.log(detail.data.coverIsDefault);   // true 表示用的是默认图
 
 // 4) 首页信息（单例对象）
 const hero = await request('/api/open/hero');
@@ -54,8 +57,10 @@ const hero = await request('/api/open/hero');
 const aboutRes = await request('/api/open/about');
 const { name, role, bio, avatar, socialLinks, skillTree, timeline } = aboutRes.data;
 
-// 6) 数据字典（所有模块 + 字段说明 + 条目数）
-const dict = await request('/api/open');`;
+// 6) 数据字典（模块字段 + 站点默认配图 / 文章格式声明）
+const dict = await request('/api/open');
+console.log(dict.site.defaultAssets.articleCover);
+console.log(dict.site.contentFormats.works);`;
 
 /** 写入示例 */
 const WRITE_SAMPLE = `const { request } = require('./utils/api');
@@ -139,9 +144,9 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 - downloadFile / image 合法域名：https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com（所有上传文件与站内图片都在 COS）
 
 ## 接口清单
-- GET  /api/open                     接口索引（所有模块、字段字典、条目数）
+- GET  /api/open                     接口索引（模块字段字典、条目数 + site 默认配图 / 文章格式元数据）
 - GET  /api/open/{section}           模块列表，参数 page / pageSize(默认20,最大200) / order(desc默认|asc) / q(搜索)
-- GET  /api/open/{section}/{id}      单条详情
+- GET  /api/open/{section}/{id}      单条详情（works 返回 contentFormat/contentHtml/coverUrl/coverIsDefault）
 - POST /api/open/{section}           新增一条（需认证，id 可不传，服务端自动生成）
 - PUT  /api/open/{section}/{id}      局部更新一条（需认证，只传要改的字段）
 - DELETE /api/open/{section}/{id}    删除一条（需认证）
@@ -159,7 +164,9 @@ const AI_PROMPT = `请帮我开发一个「个人版本微信小程序」，对�
 主要字段：
 - poems: id, title, author, dynasty, date, content（必填 title, content）
 - quotes: id, text, author（必填 text）
-- works: id, slug, title, excerpt, date, category, tags[], readTime, cover, content(Markdown), contentHtml(只读派生 HTML)（必填 title, slug）
+- works: id, slug, title, excerpt, date, category, tags[], readTime, cover(可留空), content(Markdown)（必填 title, slug）
+  - 只读派生：contentFormat='markdown'、contentHtml(渲染后 HTML)、coverUrl(可直接显示的封面，未配图时为默认配图)、coverIsDefault
+  - 默认配图绝对地址与格式声明：GET /api/open 的 site.defaultAssets.articleCover / site.contentFormats.works
 - videos: id, title, category, duration, cover, views, date, src（必填 title）
 - albums: id, name, cover, count, photos[{id,src,title}]（必填 name）
 - softwares: id, name, image, description, url（必填 name）
@@ -212,7 +219,7 @@ ${UPLOAD_SAMPLE}
 请直接给出完整的小程序项目代码（app.js / app.json / pages / utils）。`;
 
 const ENDPOINTS = [
-  { method: "GET", path: "/api/open", desc: "接口索引：所有模块、字段字典、条目数", auth: false },
+  { method: "GET", path: "/api/open", desc: "接口索引：模块字段字典、条目数 + site 默认配图 / 文章格式元数据", auth: false },
   { method: "GET", path: "/api/open/{section}", desc: "模块列表（分页 / 排序 / 搜索）", auth: false },
   { method: "GET", path: "/api/open/{section}/{id}", desc: "单条详情", auth: false },
   { method: "POST", path: "/api/open/{section}", desc: "新增一条（id 可自动生成）", auth: true },
@@ -233,7 +240,7 @@ const SECTIONS = [
   { key: "skills", label: "技能雷达", kind: "数组", required: "name, level", fields: "id, name, level" },
   { key: "myskills", label: "技能作品", kind: "数组", required: "name, url", fields: "id, name, url, description?" },
   { key: "quotes", label: "我的思考", kind: "数组", required: "text", fields: "id, text, author" },
-  { key: "works", label: "文章作品", kind: "数组", required: "title, slug", fields: "id, slug, title, excerpt, date, category, tags[], readTime, cover, content(Markdown), contentHtml(只读)" },
+  { key: "works", label: "文章作品", kind: "数组", required: "title, slug", fields: "id, slug, title, excerpt, date, category, tags[], readTime, cover(可留空), content(Markdown) ＋只读 contentFormat/contentHtml/coverUrl/coverIsDefault" },
   { key: "videos", label: "视频作品", kind: "数组", required: "title", fields: "id, title, category, duration, cover, views, date, src" },
   { key: "albums", label: "摄影相册", kind: "数组", required: "name", fields: "id, name, cover, count, photos[{id,src,title}]" },
   { key: "softwares", label: "软件作品", kind: "数组", required: "name", fields: "id, name, image, description, url" },
@@ -432,7 +439,7 @@ ${BASE_URL}/api/open/quotes?user=luli&pass=luli116574`}
           </table>
         </div>
         <p className="text-[11px] text-gray-600">
-          图片的字段（src / image / cover / qr / avatarUrl / icon）建议填上传接口返回的 <code className="text-cyber-blue">absoluteUrl</code> 完整地址，小程序才能直接显示。
+          图片的字段（src / image / cover / qr / avatarUrl / icon）建议填上传接口返回的 <code className="text-cyber-blue">absoluteUrl</code> 完整地址，小程序才能直接显示。文章 <code className="text-cyber-blue">cover</code> 可留空，读取 <code className="text-cyber-blue">/api/open/works</code> 时用只读字段 <code className="text-cyber-blue">coverUrl</code> 显示（自动补站内默认配图）。
         </p>
       </div>
 

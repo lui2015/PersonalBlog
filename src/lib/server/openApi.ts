@@ -2,6 +2,8 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import type { SiteContent } from "../types";
 import { markdownToHtml } from "../markdown";
+import { ARTICLE_COVER_FALLBACK } from "../siteAssets";
+import { absoluteAssetUrl } from "./publicUrl";
 
 /** 开放接口支持的模块（与 SiteContent 字段一一对应） */
 export interface SectionMeta {
@@ -142,9 +144,12 @@ export const SECTION_META: Record<string, SectionMeta> = {
       category: "分类",
       tags: "标签数组 string[]",
       readTime: "阅读时长，如 5 min",
-      cover: "封面图片 URL",
+      cover: "封面图片 URL（留空时接口通过 coverUrl 返回站内默认配图）",
       content: "正文 Markdown（支持标题/加粗/斜体/链接/图片/列表/引用/代码块/分隔线）",
-      contentHtml: "正文渲染后的安全 HTML（只读派生字段，由 content 自动生成，写入时忽略）",
+      contentFormat: "只读派生：正文源格式，固定为 markdown",
+      contentHtml: "只读派生：正文渲染后的安全 HTML，写入时忽略",
+      coverUrl: "只读派生：可直接显示的封面绝对地址；未配图时为默认配图",
+      coverIsDefault: "只读派生：布尔值，表示 coverUrl 是否为默认配图",
     },
     orderField: "date",
     idPrefix: "work",
@@ -301,15 +306,29 @@ export function matchKeyword(item: Record<string, unknown>, q: string): boolean 
 }
 
 /**
- * 接口输出时附加只读派生字段（不落库）。
- * works.contentHtml：把 Markdown 正文渲染成语义 HTML，供小程序 rich-text 直接使用。
+ * 接口输出时附加只读派生字段（不落库，写入口统一清洗）。
+ * works：
+ * - contentFormat / contentHtml：标明正文源格式为 Markdown，并给出渲染后的语义 HTML
+ * - coverUrl / coverIsDefault：未配图时返回站内默认配图的绝对地址，供小程序直接显示
  */
 export function withDerivedFields(
   section: string,
-  item: Record<string, unknown>
+  item: Record<string, unknown>,
+  req: Request
 ): Record<string, unknown> {
-  if (section === "works" && typeof item.content === "string") {
-    return { ...item, contentHtml: markdownToHtml(item.content) };
+  if (section !== "works") return item;
+
+  const cover = typeof item.cover === "string" ? item.cover.trim() : "";
+  const coverIsDefault = !cover;
+  const derived: Record<string, unknown> = {
+    contentFormat: "markdown",
+    coverIsDefault,
+    coverUrl: coverIsDefault
+      ? absoluteAssetUrl(req, ARTICLE_COVER_FALLBACK)
+      : cover,
+  };
+  if (typeof item.content === "string") {
+    derived.contentHtml = markdownToHtml(item.content);
   }
-  return item;
+  return { ...item, ...derived };
 }

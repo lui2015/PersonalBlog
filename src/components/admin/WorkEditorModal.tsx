@@ -243,12 +243,13 @@ export default function WorkEditorModal({ open, initial, onClose, onSave }: Prop
         </div>
 
         <div>
-          <label className={labelClass}>封面图</label>
+          <label className={labelClass}>封面图（留空使用默认配图）</label>
           <ImageUploader
             value={draft.cover}
             onChange={(v) => set("cover", v)}
             shape="rect"
             previewHeight={140}
+            placeholder="留空使用默认配图；也可粘贴 URL 或上传本地图片"
           />
         </div>
 

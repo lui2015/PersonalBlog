@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { readContent } from "@/lib/server/content";
 import { SECTION_META, SECTION_KEYS } from "@/lib/server/openApi";
+import { absoluteAssetUrl } from "@/lib/server/publicUrl";
+import { ARTICLE_COVER_FALLBACK, WORK_DERIVED_FIELDS } from "@/lib/siteAssets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +12,7 @@ export const dynamic = "force-dynamic";
  * 开放接口索引：列出所有可访问的数据模块、字段定义与当前条目数。
  * 公开，无需认证。小程序可用它做「数据字典」动态渲染。
  */
-export async function GET() {
+export async function GET(req: Request) {
   const content = await readContent();
   const sections = SECTION_KEYS.map((key) => {
     const meta = SECTION_META[key];
@@ -44,6 +46,23 @@ export async function GET() {
       q: "关键词搜索（匹配条目所有字符串字段）",
       page: "页码，默认 1",
       pageSize: "每页条数，默认 20，最大 200",
+    },
+    site: {
+      defaultAssets: {
+        articleCover: absoluteAssetUrl(req, ARTICLE_COVER_FALLBACK),
+        articleCoverPath: ARTICLE_COVER_FALLBACK,
+      },
+      contentFormats: {
+        works: {
+          source: "markdown",
+          sourceField: "content",
+          rendered: "html",
+          renderedField: "contentHtml",
+        },
+      },
+      derivedFields: {
+        works: WORK_DERIVED_FIELDS,
+      },
     },
     sections,
   });

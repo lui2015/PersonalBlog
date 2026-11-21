@@ -1,7 +1,8 @@
 # 个人博客开放接口文档（小程序客户端版）
 
-> 版本：v1.6 ｜ 更新日期：2026-11-19
-> 本次更新：全文补齐「小程序工具配置」接口的一致性（对象模块清单、14 个模块计数、错误码、§6.5 小程序调用示例），接口行为无变化；上一版新增 `GET /api/miniprogram/tools` 与 `GET/PUT /api/open/miniProgramTools`。
+> 版本：v1.7 ｜ 更新日期：2026-11-21
+> 本次更新：新增「文章格式 + 默认配图」的 API 支持与文档（§4.1 站点元数据、§4.11 只读派生字段、§5 字段表、§6.2 示例、§10）。`GET /api/open` 返回 `site.defaultAssets.articleCover` 与 `site.contentFormats.works`；`GET /api/open/works` 列表 / 详情额外返回 `contentFormat` / `contentHtml` / `coverUrl` / `coverIsDefault`。
+> 上一版（v1.6）：全文补齐「小程序工具配置」接口的一致性（对象模块清单、14 个模块计数、错误码、§6.5 小程序调用示例），接口行为无变化；再上一版新增 `GET /api/miniprogram/tools` 与 `GET/PUT /api/open/miniProgramTools`。
 > 用途：供「个人版本小程序客户端」读取与维护站点全部数据（含「关于我」页面）。
 > 线上 Base URL：`https://www.luliming.xyz`
 
@@ -15,7 +16,7 @@
 |------|----------|------|
 | `request` 合法域名 | `https://www.luliming.xyz` | 调用所有 `/api/...` 接口 |
 | `uploadFile` 合法域名 | `https://www.luliming.xyz` | 上传文件到 `/api/upload` |
-| `downloadFile` / `image` 合法域名 | `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com` | 所有上传文件与站内图片均存 COS，无 `/uploads/...` 本地路径 |
+| `downloadFile` / `image` 合法域名 | `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com`、`https://www.luliming.xyz` | 上传文件均存 COS；站内文章**默认配图** `/images/article-cover.svg` 由主站提供，需一并把主站域名加入合法域名 |
 
 - 域名必须 **HTTPS**、已备案，且不能带端口和路径。
 - 开发阶段可在微信开发者工具勾选「不校验合法域名」临时调试。
@@ -63,7 +64,7 @@ Cookie: admin_session=...
 
 | 方法 | 路径 | 认证 | 说明 |
 |------|------|------|------|
-| GET | `/api/open` | ❌ | 接口索引：所有模块、字段字典、条目数 |
+| GET | `/api/open` | ❌ | 接口索引：所有模块、字段字典、条目数、站点默认配图与文章格式 |
 | GET | `/api/open/{section}` | ❌ | 模块列表（分页/排序/搜索） |
 | GET | `/api/open/{section}/{id}` | ❌ | 单条详情 |
 | POST | `/api/open/{section}` | ✅ | 新增一条 |
@@ -94,7 +95,7 @@ Cookie: admin_session=...
 
 ### 4.1 GET `/api/open` — 接口索引 / 数据字典
 
-返回所有模块的元信息（字段名、含义、必填项、当前条数），小程序可用它动态生成表单或列表。
+返回所有模块的元信息（字段名、含义、必填项、当前条数），并附带站点级 `site` 元数据：默认配图绝对地址（`site.defaultAssets.articleCover`）、文章正文格式声明（`site.contentFormats.works`）与各模块的只读派生字段清单（`site.derivedFields`）。小程序可用它动态生成表单或列表，无需把默认图地址硬编码在客户端。
 
 **响应示例（节选）**
 ```json
@@ -108,6 +109,18 @@ Cookie: admin_session=...
     "q": "关键词搜索（匹配条目所有字符串字段）",
     "page": "页码，默认 1",
     "pageSize": "每页条数，默认 20，最大 200"
+  },
+  "site": {
+    "defaultAssets": {
+      "articleCover": "https://www.luliming.xyz/images/article-cover.svg",
+      "articleCoverPath": "/images/article-cover.svg"
+    },
+    "contentFormats": {
+      "works": { "source": "markdown", "sourceField": "content", "rendered": "html", "renderedField": "contentHtml" }
+    },
+    "derivedFields": {
+      "works": ["contentHtml", "contentFormat", "coverUrl", "coverIsDefault"]
+    }
   },
   "sections": [
     {
@@ -125,7 +138,7 @@ Cookie: admin_session=...
 }
 ```
 
-> 上面为节选。共 **14 个模块**：11 个数组模块 + 3 个单例对象模块（`hero` / `about` / `miniProgramTools`）。字段字典以 `GET /api/open` 实时返回为准；`miniProgramTools` 结构与配套只读接口见 4.12。
+> 上面为节选。共 **14 个模块**：11 个数组模块 + 3 个单例对象模块（`hero` / `about` / `miniProgramTools`）。字段字典与 `site` 元数据均以 `GET /api/open` 实时返回为准；文章格式与默认配图的字段用法见 4.11；`miniProgramTools` 结构与配套只读接口见 4.12。
 
 ---
 
@@ -448,11 +461,24 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 
 ---
 
-### 4.11 文章正文格式与 `contentHtml`
+### 4.11 文章格式、默认封面与只读派生字段
+
+#### 正文格式
 
 `works[].content` 存 **Markdown 原文**。后台编辑器提供格式工具栏（标题 / 加粗 / 斜体 / 链接 / 图片 / 引用 / 列表 / 代码块 / 分隔线）、实时预览，以及「复制 Markdown」「复制 HTML」。
 
-**接口输出格式**：`GET /api/open/works`（列表 `items[]`）与 `GET /api/open/works/{id}`（详情 `data`）都会额外返回只读派生字段 `contentHtml` —— 由服务端按同一套规则渲染的语义 HTML，小程序可直接交给 `rich-text` 展示，无需自己解析 Markdown。
+**接口输出格式**：`GET /api/open/works`（列表 `items[]`）、`GET /api/open/works/{id}`（详情 `data`）与 `POST /api/open/works`（新增响应）都会额外返回以下**只读派生字段**（原始 `cover` / `content` 保持不变）：
+
+| 字段 | 含义 |
+|------|------|
+| `contentFormat` | 正文源格式，固定为 `"markdown"` |
+| `contentHtml` | 服务端按同一套规则渲染的语义 HTML，可直接交给 `rich-text` |
+| `coverUrl` | **可直接显示的封面绝对地址**：`cover` 有值时原样返回，为空时指向站内默认配图 |
+| `coverIsDefault` | 布尔值，`true` 表示 `coverUrl` 用的是默认配图 |
+
+站点级的默认配图地址与格式声明也可从 `GET /api/open` 的 `site.defaultAssets.articleCover` / `site.contentFormats.works` 一次拉取（见 4.1），无需硬编码在客户端。
+
+**正文渲染示例**
 
 ```json
 {
@@ -469,8 +495,27 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `- ` / `1. ` 列表、`> ` 引用、` ``` ` 代码块、`---` 分隔线 | `<ul>/<ol>/<li>`、`<blockquote>`、`<pre>`、`<hr>` |
 | 段落内单个换行 | `<br />`；空行分段为多个 `<p>` |
 
+#### 默认封面
+
+`works[].cover` 允许留空（空字符串或空白）。Web 端与开放接口统一回退到站内默认配图：
+
+- 路径：`/images/article-cover.svg`；绝对地址从 `GET /api/open` 的 `site.defaultAssets.articleCover` 获取（当前为 `https://www.luliming.xyz/images/article-cover.svg`）
+- **显示请用 `coverUrl`**，不要直接把 `cover` 当图片地址（它可能为空）
+- `coverIsDefault === true` 表示展示的是默认图，可用于埋点或提示「暂无配图」
+- 小程序需在 `downloadFile` / `image` 合法域名中加入主站域名（见 §1）
+
+```json
+{
+  "cover": "",
+  "contentFormat": "markdown",
+  "coverUrl": "https://www.luliming.xyz/images/article-cover.svg",
+  "coverIsDefault": true
+}
+```
+
 **约束**
-- `contentHtml` **只读**：POST / PUT 传入会被写入口忽略，`/api/content` 全量回写也不会污染数据；请勿当作存储字段。
+- 上述 4 个派生字段（`contentFormat` / `contentHtml` / `coverUrl` / `coverIsDefault`）**均为只读**：POST / PUT 传入会被写入口统一剔除，`/api/content` 全量回写也不会污染数据；请勿当作存储字段或回传。
+- `GET /api/content` 返回**原始存储数据**（`cover` 保持原值，不含派生字段）；需要文章格式与默认配图请用 `GET /api/open/works`、`GET /api/open/works/{id}`，或 `GET /api/open` 的 `site` 元数据。
 - 所有用户文本都做 HTML 转义；链接 / 图片只允许 `http(s)`、`mailto:`、站内路径与锚点，`javascript:` / `data:` 等伪协议会被丢弃，可安全用于 `rich-text` 或 `dangerouslySetInnerHTML`。
 - Web 端 `/blog/{slug}` 详情页、后台编辑器预览与接口 `contentHtml` 使用**同一个渲染器**，所见即所得。
 
@@ -557,7 +602,7 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `skills` | `id` `name` `level`(0-100 number) |
 | `myskills` | `id` `name` `url` `description?` |
 | `quotes` | `id` `text` `author` |
-| `works` | `id` `slug` `title` `excerpt` `date` `category` `tags`(string[]) `readTime` `cover` `content`(Markdown) `contentHtml`(只读派生 HTML，见 4.11) |
+| `works` | `id` `slug` `title` `excerpt` `date` `category` `tags`(string[]) `readTime` `cover`(可留空) `content`(Markdown) ＋只读派生 `contentFormat` `contentHtml` `coverUrl` `coverIsDefault`（见 4.11） |
 | `videos` | `id` `title` `category` `duration` `cover` `views` `date` `src` |
 | `albums` | `id` `name` `cover` `count`(number) `photos`(`[{id,src,title}]`) |
 | `softwares` | `id` `name` `image` `description` `url` |
@@ -566,7 +611,7 @@ curl -X PUT https://www.luliming.xyz/api/open/about \
 | `miniProgramTools` | `title` `enabled` `groups`(`[{id,name,subtitle,color,enabled,tools:[{id,name,desc,icon,badge?,route?,enabled}]}]`) |
 
 > `poems` 实际数据含 `dynasty`（朝代）字段，属于扩展字段；接口不限制额外字段，可透传存储。
-> 图片类字段（`src` / `image` / `cover` / `qr` / `avatarUrl` / `icon`）建议填 `absoluteUrl` 完整地址，小程序才能直接显示。
+> 图片类字段（`src` / `image` / `cover` / `qr` / `avatarUrl` / `icon`）建议填 `absoluteUrl` 完整地址，小程序才能直接显示；`works[].cover` 可留空，读取 `/api/open/works` 时用只读字段 `coverUrl` 显示（自动补默认配图，见 4.11）。
 
 ---
 
@@ -608,9 +653,12 @@ const res = await request('/api/open/quotes?page=1&pageSize=20&order=desc');
 // 搜索
 const found = await request('/api/open/works?q=Next.js');
 
-// 单条详情（works 额外返回 contentHtml，可直接交给小程序 rich-text）
+// 单条详情（works 额外返回文章格式与可直接显示的封面）
 const detail = await request('/api/open/works/w1');
+// detail.data.contentFormat → 'markdown'（正文源格式）
 // detail.data.content → Markdown 原文；detail.data.contentHtml → 渲染后的语义 HTML
+// detail.data.coverUrl → 直接放进 <image src>（未配图时为默认配图）
+// detail.data.coverIsDefault → true 表示用的是默认配图
 
 // 首页信息
 const hero = await request('/api/open/hero');
@@ -620,8 +668,10 @@ const aboutRes = await request('/api/open/about');
 const { name, role, bio, avatar, socialLinks, skillTree, timeline } = aboutRes.data;
 // skillTree 每项为 { id, name, certificate }；certificate 非空时小程序可展示证书图片
 
-// 数据字典（所有模块和字段）
+// 数据字典（所有模块字段 + 站点默认配图 / 文章格式声明）
 const dict = await request('/api/open');
+console.log(dict.site.defaultAssets.articleCover);  // 默认配图绝对地址
+console.log(dict.site.contentFormats.works);        // { source: 'markdown', ... }
 ```
 
 ### 6.3 新增 / 修改 / 删除（需认证）
@@ -770,6 +820,6 @@ wx.request({
 7. **对象模块 vs 数组模块**：`hero` / `about` / `miniProgramTools` 是单例对象，用 `PUT /api/open/{section}` 做**字段合并**（无 `{id}` 路径）；其余 11 个模块是数组，`PUT` 不带 id 时是**整块替换**，务必先 GET 再改。响应中的 `mode` 可用来区分 `merged` / `replaced`。
 8. **「关于我」嵌套数组**：`socialLinks` / `skillTree` / `timeline` 按整体覆盖，不会逐条追加；新增履历请传完整 `timeline` 数组。
 9. **SKILL TREE 技能标签**：`skillTree` 为 `{ id, name, certificate }[]`，线上 8 项（PMP / ACP / NPDP / PBA / 高级软件设计师 / AI产品经理 / 证券从业 / 基金从业）；`certificate` 为 `""` 表示暂无证书，填写 `/uploads/...` 或 https 图片地址后，Web 端 `/about` 点击带 📜 的标签可查看大图。历史 `string[]` 读取时自动升级，也可直接写入。
-10. **文章正文格式**：`works[].content` 为 Markdown；列表 / 详情接口额外返回只读 `contentHtml`（渲染后的安全 HTML，见 4.11）。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML；`contentHtml` 写入时会被忽略，请勿回传。
+10. **文章格式与默认配图**：`works[].content` 为 Markdown（接口用 `contentFormat` 标明）；列表 / 详情返回只读 `contentHtml`（渲染后的安全 HTML）。`cover` 可留空，显示请用 `coverUrl`（未配图时自动指向站内默认配图，此时 `coverIsDefault=true`），默认图绝对地址见 `GET /api/open` 的 `site.defaultAssets.articleCover`（见 4.11）。以上 4 个派生字段均为只读，写入时统一剔除，请勿回传。后台编辑器支持格式工具栏、预览与复制 Markdown/HTML。
 11. **文件存储 COS（纯 COS 上传）**：站内图片与所有新上传文件都在 `https://lyman-1258661753.cos.ap-guangzhou.myqcloud.com/personalblog/`（下分 `uploads/` 与 `images/`）；`POST /api/upload` 把文件字节经内存直接写入 COS，**服务器磁盘不再产生上传副本**，也不再返回 `localUrl`，COS 失败返回 `502` 而非降级。小程序后台需把该 COS 域名加入 `downloadFile` / `image` 合法域名。`site-content.json` 仍保存在服务器本地作为运行时文字数据，并每日备份到 COS `personalblog/data/daily/`（保留 14 天）。
 12. **小程序工具开关**：工具列表请用 `GET /api/miniprogram/tools`（只返回显示项），不要用 `PUT /api/content` 或 `/api/content` 里的 `miniProgramTools` 自行过滤；后台「小程序工具」栏目保存后即时生效，详见 4.12。`miniProgramTools` 与 `hero` / `about` 同为单例对象，`PUT /api/open/miniProgramTools` 是字段合并。

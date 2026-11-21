@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useContent } from "@/lib/ContentContext";
 import { markdownToHtml } from "@/lib/markdown";
+import { articleCover, handleArticleCoverError } from "@/lib/coverFallback";
 
 /** 客户端 useParams 对中文动态段会返回 percent-encoded 值，需兼容编码前后的形态 */
 function decodeSlug(value: string): string {
@@ -136,22 +137,21 @@ export default function BlogDetailPage() {
           )}
         </motion.header>
 
-        {post.cover && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="relative mb-10 rounded overflow-hidden"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.cover}
-              alt="Cover"
-              className="w-full h-64 md:h-80 object-cover"
-            />
-            <div className="absolute inset-0 scanlines" />
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative mb-10 rounded overflow-hidden"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={articleCover(post.cover)}
+            alt="Cover"
+            onError={handleArticleCoverError}
+            className="w-full h-64 md:h-80 object-cover"
+          />
+          <div className="absolute inset-0 scanlines" />
+        </motion.div>
 
         <motion.article
           initial={{ opacity: 0, y: 20 }}
